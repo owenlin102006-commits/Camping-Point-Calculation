@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 搜查本部</title>
+    <!-- 引入 Tailwind CSS 魔法排版 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 柯南風格專屬色系與動畫 */
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+            color: #e2e8f0;
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+        }
+        
+        /* 案件卷宗卡片風格 */
+        .team-card {
+            background-color: #fdf6e3;
+            color: #1e293b;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .team-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 6px;
+            background-color: #b45309; /* 徽章金 */
+        }
+        .team-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            cursor: pointer;
+        }
+
+        .conan-red { color: #dc2626; } /* 領結紅文字 */
+        .conan-bg-red { background-color: #dc2626; } /* 領結紅背景 */
+        .conan-bg-red:hover { background-color: #b91c1c; }
+
+        .hidden-view { display: none !important; }
+        
+        /* 加分時的閃爍特效 */
+        @keyframes flash {
+            0% { background-color: #fdf6e3; }
+            50% { background-color: #fef08a; transform: scale(1.05); }
+            100% { background-color: #fdf6e3; }
+        }
+        .flash-animation { animation: flash 0.8s ease-out; }
+
+        /* 捲軸美化 */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <!-- 頂部導覽列 -->
+    <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <h1 class="text-3xl md:text-4xl font-bold tracking-wider text-yellow-400 drop-shadow-md">🔍 搜查本部戰況</h1>
+        <button id="viewBtn" onclick="toggleView()" class="conan-bg-red text-white px-6 py-2 rounded-full font-bold shadow-lg transition-transform hover:scale-105">
+            切換到阿笠博士後台 ⚙️
+        </button>
+    </div>
+
+    <!-- 🌟 前台：搜查本部大螢幕 -->
+    <div id="main-view" class="max-w-5xl mx-auto">
+        <div id="mainGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- 隊伍卡片會由 JS 生成於此 -->
+        </div>
+        
+        <!-- 最新案件紀錄跑馬燈 (大螢幕用) -->
+        <div class="mt-12 bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-white/20">
+            <h2 class="text-xl font-bold text-yellow-400 mb-4 flex items-center"><span class="text-2xl mr-2">📜</span> 最新搜查紀錄</h2>
+            <div id="mainLogs" class="space-y-3 h-48 overflow-y-auto pr-2">
+                <!-- 歷史紀錄生成於此 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ⚙️ 後台：阿笠博士控制中心 -->
+    <div id="admin-view" class="max-w-5xl mx-auto hidden-view">
+        <h2 class="text-2xl md:text-3xl font-bold text-yellow-400 mb-6 text-center drop-shadow-md">⚙️ 阿笠博士控制面板</h2>
+        <div id="adminGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- 後台控制卡片由 JS 生成於此 -->
+        </div>
+        <div class="mt-12 text-center">
+            <button onclick="openResetModal()" class="bg-slate-700 hover:bg-slate-600 text-white px-8 py-3 rounded-full font-bold shadow-lg transition border border-slate-500">
+                ⚠️ 全部分數歸零
+            </button>
+        </div>
+    </div>
+
+    <!-- ================= 彈出視窗區 ================= -->
+
+    <!-- 1. 前台：小隊分數放大遮罩 -->
+    <div id="focus-overlay" class="fixed inset-0 bg-black/90 z-40 hidden-view flex flex-col justify-center items-center cursor-pointer" onclick="hideFocus()">
+        <div class="text-yellow-400 text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg" id="focus-name">隊伍名稱</div>
+        <div class="text-white text-8xl md:text-[12rem] font-black drop-shadow-2xl conan-red" id="focus-score">0</div>
+        <p class="text-gray-400 mt-8 text-lg">點擊畫面任意處關閉</p>
+    </div>
+
+    <!-- 2. 前台：獨立小隊歷史紀錄視窗 -->
+    <div id="history-modal" class="fixed inset-0 bg-black/70 z-50 hidden-view flex justify-center items-center p-4">
+        <div class="bg-slate-100 rounded-xl shadow-2xl max-w-md w-full max-h-[80vh] flex flex-col overflow-hidden relative">
+            <div class="bg-slate-800 p-4 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-white" id="history-modal-title">小隊紀錄</h3>
+                <button onclick="closeHistory()" class="text-gray-300 hover:text-white text-2xl font-bold">&times;</button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-1 bg-[#fdf6e3]" id="history-modal-content">
+                <!-- 獨立紀錄生成於此 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 後台：加分/扣分專用輸入視窗 -->
+    <div id="score-modal" class="fixed inset-0 bg-black/80 z-50 hidden-view flex justify-center items-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-gray-800 relative">
+            <h3 class="text-xl font-bold text-center mb-2" id="score-modal-title">調整分數</h3>
+            <p class="text-center text-gray-500 mb-6" id="score-modal-desc">目前分數: 0</p>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-2">調整數值 (請輸入數字)</label>
+                <input type="number" id="score-input" class="w-full text-center text-3xl font-bold p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" value="10">
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-bold text-gray-700 mb-2">原因 / 關卡名稱</label>
+                <input type="text" id="reason-input" class="w-full text-lg p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" value="關卡報酬">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="submitScore(false)" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl text-lg shadow-md transition">
+                    ➖ 扣分
+                </button>
+                <button onclick="submitScore(true)" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-lg shadow-md transition">
+                    ➕ 加分
+                </button>
+            </div>
+            <button onclick="closeAddScore()" class="mt-4 w-full text-gray-500 hover:text-gray-700 p-2 font-bold">取消</button>
+        </div>
+    </div>
+
+    <!-- 4. 後台：更改隊伍名稱視窗 -->
+    <div id="rename-modal" class="fixed inset-0 bg-black/80 z-50 hidden-view flex justify-center items-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-gray-800">
+            <h3 class="text-xl font-bold mb-4 text-center">修改隊伍名稱</h3>
+            <input type="text" id="rename-input" class="w-full text-xl p-3 border-2 border-gray-300 rounded-lg mb-6 focus:outline-none focus:border-blue-500 text-center">
+            <div class="flex gap-4">
+                <button onclick="closeRenameModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition">取消</button>
+                <button onclick="saveName()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-md">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. 後台：歸零確認視窗 -->
+    <div id="reset-modal" class="fixed inset-0 bg-black/90 z-50 hidden-view flex justify-center items-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-gray-800 text-center">
+            <div class="text-5xl mb-4">⚠️</div>
+            <h3 class="text-2xl font-bold text-red-600 mb-2">警告：分數歸零</h3>
+            <p class="text-gray-600 mb-6">確定要將所有隊伍的分數與紀錄清空嗎？<br>此動作<span class="font-bold text-red-500">無法復原</span>喔！</p>
+            <div class="flex gap-4">
+                <button onclick="closeResetModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition">取消</button>
+                <button onclick="confirmReset()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition shadow-md">確定歸零</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= JavaScript 魔法區 ================= -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // 🔑 你的專屬 Firebase 鑰匙！
+        const firebaseConfig = {
+            apiKey: "AIzaSyCDrPTk42gRD9kzjocMr3hNJd4BORRQ8mc",
+            authDomain: "camping-point-calculation1.firebaseapp.com",
+            projectId: "camping-point-calculation1",
+            storageBucket: "camping-point-calculation1.firebasestorage.app",
+            messagingSenderId: "421598951475",
+            appId: "1:421598951475:web:106ee0d65a92dd55484b46",
+            measurementId: "G-7P91MPDRPF"
+        };
+
+        // 啟動 Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        // 資料庫儲存路徑
+        const docRef = doc(db, 'conanGame', 'scoreboard');
+
+        let scores = [0, 0, 0, 0, 0, 0];
+        let teamNames = ["第一小隊", "第二小隊", "第三小隊", "第四小隊", "第五小隊", "第六小隊"];
+        let logs = []; 
+
+        let pendingUpdateIndex = null; // 紀錄目前正在加分的小隊
+        let pendingRenameIndex = null; // 紀錄目前正在改名的小隊
+        let currentFocusIndex = null; // 紀錄目前前台放大的小隊
+
+        function initApp() {
+            onSnapshot(docRef, (snap) => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    scores = data.scores || [0, 0, 0, 0, 0, 0];
+                    teamNames = data.teamNames || ["第一小隊", "第二小隊", "第三小隊", "第四小隊", "第五小隊", "第六小隊"];
+                    logs = data.logs || [];
+                    
+                    render(); // 資料更新，重新繪製畫面
+                    
+                    // 如果前台有放大畫面，連動更新分數
+                    if (currentFocusIndex !== null) {
+                        document.getElementById('focus-score').innerText = scores[currentFocusIndex];
+                        document.getElementById('focus-name').innerText = teamNames[currentFocusIndex];
+                    }
+                } else {
+                    // 初始化空白檔案
+                    setDoc(docRef, { scores, teamNames, logs });
+                }
+            }, (error) => {
+                console.error("Firebase 讀取錯誤:", error);
+            });
+        }
+
+        function render() {
+            const mainGrid = document.getElementById('mainGrid');
+            const adminGrid = document.getElementById('adminGrid');
+            const mainLogs = document.getElementById('mainLogs');
+            
+            mainGrid.innerHTML = '';
+            adminGrid.innerHTML = '';
+            mainLogs.innerHTML = '';
+
+            for (let i = 0; i < 6; i++) {
+                // --- 前台卡片 ---
+                mainGrid.innerHTML += `
+                    <div class="team-card rounded-2xl p-6 md:p-8 shadow-lg flex flex-col items-center justify-center relative min-h-[160px]" id="team-card-${i}" onclick="showFocus(${i})">
+                        <!-- 歷史紀錄小按鈕 -->
+                        <button onclick="event.stopPropagation(); openHistory(${i})" class="absolute top-3 right-3 text-2xl hover:scale-125 transition drop-shadow-md z-10" title="查看紀錄">📜</button>
+                        
+                        <div class="text-2xl md:text-3xl font-bold text-gray-700 mb-2 mt-2">${teamNames[i]}</div>
+                        <div class="text-6xl md:text-7xl font-black conan-red my-2 drop-shadow-sm">${scores[i]}</div>
+                    </div>`;
+                
+                // --- 後台卡片 ---
+                adminGrid.innerHTML += `
+                    <div class="team-card rounded-2xl p-6 shadow-lg flex flex-col justify-between relative min-h-[180px]">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="font-bold text-xl text-gray-800">${teamNames[i]}</div>
+                            <button onclick="editName(${i})" class="text-gray-400 hover:text-blue-600 transition text-xl drop-shadow-sm hover:scale-110" title="修改隊名">✏️</button>
+                        </div>
+                        <div class="text-5xl md:text-6xl font-black text-center conan-red my-3 drop-shadow-sm">${scores[i]}</div>
+                        <button onclick="openAddScore(${i})" class="w-full conan-bg-red hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-md transition transform hover:scale-105 mt-2">
+                            調整分數 📝
+                        </button>
+                    </div>`;
+            }
+
+            // 繪製歷史紀錄跑馬燈 (最多顯示 10 筆最新的在畫面上)
+            const recentLogs = [...logs].reverse().slice(0, 10);
+            if (recentLogs.length === 0) {
+                mainLogs.innerHTML = '<div class="text-gray-400 italic text-center py-4">目前尚無搜查紀錄...</div>';
+            } else {
+                recentLogs.forEach(log => {
+                    const isPlus = log.change > 0;
+                    const colorClass = isPlus ? 'text-green-400' : 'text-red-400';
+                    const sign = isPlus ? '+' : '';
+                    mainLogs.innerHTML += `
+                        <div class="border-b border-white/10 pb-2 mb-2 last:border-0 text-sm md:text-base">
+                            <span class="text-gray-400 text-xs mr-2">[${log.time}]</span>
+                            <span class="font-bold text-white mr-2">${log.team}</span>
+                            <span class="font-bold ${colorClass} mx-2">${sign}${log.change}</span>
+                            <span class="text-gray-300">(${log.reason})</span>
+                        </div>`;
+                });
+            }
+        }
+
+        function toggleView() {
+            const mainView = document.getElementById('main-view');
+            const adminView = document.getElementById('admin-view');
+            const btn = document.getElementById('viewBtn');
+
+            if (mainView.classList.contains('hidden-view')) {
+                mainView.classList.remove('hidden-view');
+                adminView.classList.add('hidden-view');
+                btn.innerHTML = "切換到阿笠博士後台 ⚙️";
+                btn.classList.replace('bg-slate-700', 'conan-bg-red');
+            } else {
+                mainView.classList.add('hidden-view');
+                adminView.classList.remove('hidden-view');
+                btn.innerHTML = "切換回搜查本部 🌟";
+                btn.classList.replace('conan-bg-red', 'bg-slate-700');
+            }
+        }
+
+        function showFocus(index) {
+            currentFocusIndex = index;
+            document.getElementById('focus-score').innerText = scores[index];
+            document.getElementById('focus-name').innerText = teamNames[index];
+            document.getElementById('focus-overlay').classList.remove('hidden-view');
+        }
+
+        function hideFocus() {
+            currentFocusIndex = null;
+            document.getElementById('focus-overlay').classList.add('hidden-view');
+        }
+
+        function openHistory(index) {
+            const modal = document.getElementById('history-modal');
+            const title = document.getElementById('history-modal-title');
+            const content = document.getElementById('history-modal-content');
+            
+            title.innerText = `${teamNames[index]} - 搜查紀錄`;
+            content.innerHTML = '';
+            
+            // 過濾出這個小隊的紀錄
+            const teamLogs = logs.filter(log => log.team === teamNames[index]).reverse();
+            
+            if (teamLogs.length === 0) {
+                content.innerHTML = '<div class="text-gray-500 italic text-center py-8">這個小隊目前還沒有任何紀錄喔！</div>';
+            } else {
+                teamLogs.forEach(log => {
+                    const isPlus = log.change > 0;
+                    const colorClass = isPlus ? 'text-green-600' : 'text-red-600';
+                    const sign = isPlus ? '+' : '';
+                    content.innerHTML += `
+                        <div class="bg-white border-l-4 ${isPlus ? 'border-green-500' : 'border-red-500'} p-3 mb-3 shadow-sm rounded-r-lg">
+                            <div class="text-xs text-gray-500 mb-1">${log.time}</div>
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-gray-800 text-lg">${log.reason}</span>
+                                <span class="font-black ${colorClass} text-xl">${sign}${log.change}</span>
+                            </div>
+                        </div>`;
+                });
+            }
+            modal.classList.remove('hidden-view');
+        }
+
+        function closeHistory() {
+            document.getElementById('history-modal').classList.add('hidden-view');
+        }
+
+        function openAddScore(index) {
+            pendingUpdateIndex = index;
+            document.getElementById('score-modal-title').innerText = `調整 ${teamNames[index]} 分數`;
+            document.getElementById('score-modal-desc').innerText = `目前分數: ${scores[index]}`;
+            
+            // 重置輸入框
+            document.getElementById('score-input').value = '10';
+            const reasonInput = document.getElementById('reason-input');
+            reasonInput.value = '關卡報酬';
+            
+            document.getElementById('score-modal').classList.remove('hidden-view');
+            
+            // 自動選取原因文字，方便直接覆蓋打字
+            setTimeout(() => { reasonInput.select(); }, 50);
+        }
+
+        function closeAddScore() {
+            document.getElementById('score-modal').classList.add('hidden-view');
+            pendingUpdateIndex = null;
+        }
+
+        async function submitScore(isPlus) {
+            if (pendingUpdateIndex === null) return;
+            
+            let val = parseInt(document.getElementById('score-input').value);
+            const reason = document.getElementById('reason-input').value.trim() || '未填寫原因';
+            
+            if (isNaN(val) || val <= 0) {
+                alert("請輸入大於 0 的正確數字！");
+                return;
+            }
+
+            const changeAmount = isPlus ? val : -val;
+            const targetIndex = pendingUpdateIndex;
+            closeAddScore();
+
+            // 前台觸發閃爍動畫
+            const card = document.getElementById(`team-card-${targetIndex}`);
+            if(card) {
+                card.classList.remove('flash-animation');
+                void card.offsetWidth; // 觸發重繪
+                card.classList.add('flash-animation');
+            }
+
+            // 施展排隊魔法 (Transaction) 上傳至資料庫
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(docRef);
+                    if (!sfDoc.exists()) throw "資料庫不存在！";
+
+                    const data = sfDoc.data();
+                    let currentScores = data.scores || [0, 0, 0, 0, 0, 0];
+                    let currentLogs = data.logs || [];
+                    let currentTeamNames = data.teamNames || teamNames;
+
+                    // 計算新分數 (防呆: 不低於0)
+                    let newScore = currentScores[targetIndex] + changeAmount;
+                    if (newScore < 0) newScore = 0;
+                    
+                    // 實際變動的分數 (例如原本0分扣10分，實際變動是0)
+                    const actualChange = newScore - currentScores[targetIndex];
+                    currentScores[targetIndex] = newScore;
+
+                    // 記錄日誌
+                    const now = new Date();
+                    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                    currentLogs.push({
+                        team: currentTeamNames[targetIndex],
+                        change: actualChange,
+                        reason: reason,
+                        time: timeStr
+                    });
+
+                    // 限制紀錄數量避免資料庫爆掉 (保存最新 500 筆)
+                    if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
+
+                    // 寫回資料庫
+                    transaction.update(docRef, {
+                        scores: currentScores,
+                        logs: currentLogs
+                    });
+                });
+            } catch (e) {
+                console.error("更新失敗: ", e);
+            }
+        }
+
+        function editName(index) {
+            pendingRenameIndex = index;
+            document.getElementById('rename-input').value = teamNames[index];
+            document.getElementById('rename-modal').classList.remove('hidden-view');
+        }
+
+        function closeRenameModal() {
+            document.getElementById('rename-modal').classList.add('hidden-view');
+            pendingRenameIndex = null;
+        }
+
+        async function saveName() {
+            if (pendingRenameIndex === null) return;
+            const newName = document.getElementById('rename-input').value.trim();
+            if (newName === "") return;
+
+            const targetIndex = pendingRenameIndex;
+            closeRenameModal();
+
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(docRef);
+                    if (!sfDoc.exists()) return;
+                    
+                    let currentTeamNames = sfDoc.data().teamNames || teamNames;
+                    currentTeamNames[targetIndex] = newName;
+                    transaction.update(docRef, { teamNames: currentTeamNames });
+                });
+            } catch (e) {
+                console.error("改名失敗: ", e);
+            }
+        }
+
+        function openResetModal() { document.getElementById('reset-modal').classList.remove('hidden-view'); }
+        function closeResetModal() { document.getElementById('reset-modal').classList.add('hidden-view'); }
+
+        async function confirmReset() {
+            closeResetModal();
+            try {
+                await setDoc(docRef, {
+                    scores: [0, 0, 0, 0, 0, 0],
+                    teamNames: teamNames, // 保留目前的隊名
+                    logs: [] // 清空紀錄
+                });
+            } catch (e) {
+                console.error("歸零失敗: ", e);
+            }
+        }
+
+        window.toggleView = toggleView;
+        window.showFocus = showFocus;
+        window.hideFocus = hideFocus;
+        window.openHistory = openHistory;
+        window.closeHistory = closeHistory;
+        window.openAddScore = openAddScore;
+        window.closeAddScore = closeAddScore;
+        window.submitScore = submitScore;
+        window.editName = editName;
+        window.closeRenameModal = closeRenameModal;
+        window.saveName = saveName;
+        window.openResetModal = openResetModal;
+        window.closeResetModal = closeResetModal;
+        window.confirmReset = confirmReset;
+
+        // 啟動應用程式
+        initApp();
+    </script>
+</body>
+</html>
