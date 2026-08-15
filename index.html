@@ -55,9 +55,62 @@
         ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* ================= 🚀 專屬營隊啟動連線畫面特效 ================= */
+        #loadingScreen {
+            position: fixed;
+            inset: 0;
+            background: #0f172a; 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; 
+            transition: opacity 0.8s ease-out, visibility 0.8s ease-out;
+        }
+
+        .loading-logo {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%; 
+            object-fit: cover;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
+            animation: pulseLogo 1.5s infinite ease-in-out;
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 24px;
+            letter-spacing: 4px;
+            animation: blinkText 1.5s infinite;
+        }
+
+        @keyframes pulseLogo {
+            0% { transform: scale(0.95); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.9; }
+        }
+        @keyframes blinkText {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
     </style>
 </head>
 <body class="p-4 md:p-8">
+
+    <!-- 🚀 啟動連線畫面 -->
+    <div id="loadingScreen">
+        <!-- ⚠️ 確認檔名大小寫完全一致，並且放在同一個資料夾 -->
+        <img src="IMG_1716.jpg" alt="115 新生宿營 Logo" class="loading-logo" onerror="this.src='https://via.placeholder.com/200?text=Logo'; alert('找不到圖片，請檢查檔名或是否上傳！');">
+        <div class="loading-text">連線中...</div>
+    </div>
 
     <!-- 頂部導覽列 -->
     <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
@@ -69,25 +122,17 @@
 
     <!-- 🌟 前台：搜查本部大螢幕 -->
     <div id="main-view" class="max-w-5xl mx-auto">
-        <div id="mainGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- 隊伍卡片會由 JS 生成於此 -->
-        </div>
-        
-        <!-- 最新案件紀錄跑馬燈 (大螢幕用) -->
+        <div id="mainGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         <div class="mt-12 bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-white/20">
             <h2 class="text-xl font-bold text-yellow-400 mb-4 flex items-center"><span class="text-2xl mr-2">📜</span> 最新搜查紀錄</h2>
-            <div id="mainLogs" class="space-y-3 h-48 overflow-y-auto pr-2">
-                <!-- 歷史紀錄生成於此 -->
-            </div>
+            <div id="mainLogs" class="space-y-3 h-48 overflow-y-auto pr-2"></div>
         </div>
     </div>
 
     <!-- ⚙️ 後台：阿笠博士控制中心 -->
     <div id="admin-view" class="max-w-5xl mx-auto hidden-view">
         <h2 class="text-2xl md:text-3xl font-bold text-yellow-400 mb-6 text-center drop-shadow-md">⚙️ 阿笠博士控制面板</h2>
-        <div id="adminGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- 後台控制卡片由 JS 生成於此 -->
-        </div>
+        <div id="adminGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         <div class="mt-12 text-center">
             <button onclick="openResetModal()" class="bg-slate-700 hover:bg-slate-600 text-white px-8 py-3 rounded-full font-bold shadow-lg transition border border-slate-500">
                 ⚠️ 全部分數歸零
@@ -96,56 +141,42 @@
     </div>
 
     <!-- ================= 彈出視窗區 ================= -->
-
-    <!-- 1. 前台：小隊分數放大遮罩 -->
     <div id="focus-overlay" class="fixed inset-0 bg-black/90 z-40 hidden-view flex flex-col justify-center items-center cursor-pointer" onclick="hideFocus()">
         <div class="text-yellow-400 text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg" id="focus-name">隊伍名稱</div>
         <div class="text-white text-8xl md:text-[12rem] font-black drop-shadow-2xl conan-red" id="focus-score">0</div>
         <p class="text-gray-400 mt-8 text-lg">點擊畫面任意處關閉</p>
     </div>
 
-    <!-- 2. 前台：獨立小隊歷史紀錄視窗 -->
     <div id="history-modal" class="fixed inset-0 bg-black/70 z-50 hidden-view flex justify-center items-center p-4">
         <div class="bg-slate-100 rounded-xl shadow-2xl max-w-md w-full max-h-[80vh] flex flex-col overflow-hidden relative">
             <div class="bg-slate-800 p-4 flex justify-between items-center">
                 <h3 class="text-xl font-bold text-white" id="history-modal-title">小隊紀錄</h3>
                 <button onclick="closeHistory()" class="text-gray-300 hover:text-white text-2xl font-bold">&times;</button>
             </div>
-            <div class="p-4 overflow-y-auto flex-1 bg-[#fdf6e3]" id="history-modal-content">
-                <!-- 獨立紀錄生成於此 -->
-            </div>
+            <div class="p-4 overflow-y-auto flex-1 bg-[#fdf6e3]" id="history-modal-content"></div>
         </div>
     </div>
 
-    <!-- 3. 後台：加分/扣分專用輸入視窗 -->
     <div id="score-modal" class="fixed inset-0 bg-black/80 z-50 hidden-view flex justify-center items-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-gray-800 relative">
             <h3 class="text-xl font-bold text-center mb-2" id="score-modal-title">調整分數</h3>
             <p class="text-center text-gray-500 mb-6" id="score-modal-desc">目前分數: 0</p>
-            
             <div class="mb-4">
                 <label class="block text-sm font-bold text-gray-700 mb-2">調整數值 (請輸入數字)</label>
                 <input type="number" id="score-input" class="w-full text-center text-3xl font-bold p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" value="10">
             </div>
-            
             <div class="mb-6">
                 <label class="block text-sm font-bold text-gray-700 mb-2">原因 / 關卡名稱</label>
                 <input type="text" id="reason-input" class="w-full text-lg p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" value="關卡報酬">
             </div>
-
             <div class="grid grid-cols-2 gap-4">
-                <button onclick="submitScore(false)" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl text-lg shadow-md transition">
-                    ➖ 扣分
-                </button>
-                <button onclick="submitScore(true)" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-lg shadow-md transition">
-                    ➕ 加分
-                </button>
+                <button onclick="submitScore(false)" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl text-lg shadow-md transition">➖ 扣分</button>
+                <button onclick="submitScore(true)" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-lg shadow-md transition">➕ 加分</button>
             </div>
             <button onclick="closeAddScore()" class="mt-4 w-full text-gray-500 hover:text-gray-700 p-2 font-bold">取消</button>
         </div>
     </div>
 
-    <!-- 4. 後台：更改隊伍名稱視窗 -->
     <div id="rename-modal" class="fixed inset-0 bg-black/80 z-50 hidden-view flex justify-center items-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-gray-800">
             <h3 class="text-xl font-bold mb-4 text-center">修改隊伍名稱</h3>
@@ -157,7 +188,6 @@
         </div>
     </div>
 
-    <!-- 5. 後台：歸零確認視窗 -->
     <div id="reset-modal" class="fixed inset-0 bg-black/90 z-50 hidden-view flex justify-center items-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-gray-800 text-center">
             <div class="text-5xl mb-4">⚠️</div>
@@ -175,7 +205,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 🔑 你的專屬 Firebase 鑰匙！
         const firebaseConfig = {
             apiKey: "AIzaSyCDrPTk42gRD9kzjocMr3hNJd4BORRQ8mc",
             authDomain: "camping-point-calculation1.firebaseapp.com",
@@ -186,19 +215,18 @@
             measurementId: "G-7P91MPDRPF"
         };
 
-        // 啟動 Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        // 資料庫儲存路徑
         const docRef = doc(db, 'conanGame', 'scoreboard');
 
         let scores = [0, 0, 0, 0, 0, 0];
         let teamNames = ["第一小隊", "第二小隊", "第三小隊", "第四小隊", "第五小隊", "第六小隊"];
         let logs = []; 
 
-        let pendingUpdateIndex = null; // 紀錄目前正在加分的小隊
-        let pendingRenameIndex = null; // 紀錄目前正在改名的小隊
-        let currentFocusIndex = null; // 紀錄目前前台放大的小隊
+        let pendingUpdateIndex = null; 
+        let pendingRenameIndex = null; 
+        let currentFocusIndex = null; 
+        let isFirstLoad = true; // 🌟 這是我們新增的秘密武器：追蹤是否為第一次連線！
 
         function initApp() {
             onSnapshot(docRef, (snap) => {
@@ -208,17 +236,29 @@
                     teamNames = data.teamNames || ["第一小隊", "第二小隊", "第三小隊", "第四小隊", "第五小隊", "第六小隊"];
                     logs = data.logs || [];
                     
-                    render(); // 資料更新，重新繪製畫面
+                    render();
                     
-                    // 如果前台有放大畫面，連動更新分數
                     if (currentFocusIndex !== null) {
                         document.getElementById('focus-score').innerText = scores[currentFocusIndex];
                         document.getElementById('focus-name').innerText = teamNames[currentFocusIndex];
                     }
                 } else {
-                    // 初始化空白檔案
                     setDoc(docRef, { scores, teamNames, logs });
                 }
+
+                // 🌟 當資料庫第一次成功回傳資料時，我們才把 Loading 畫面關掉！
+                if (isFirstLoad) {
+                    isFirstLoad = false;
+                    // 為了視覺的滑順感，收到資料後稍微等 0.8 秒（讓呼吸動畫完整），然後優雅淡出
+                    setTimeout(() => {
+                        const loader = document.getElementById('loadingScreen');
+                        if (loader) {
+                            loader.classList.add('fade-out');
+                            setTimeout(() => loader.remove(), 800); // 動畫跑完後徹底移除
+                        }
+                    }, 800);
+                }
+
             }, (error) => {
                 console.error("Firebase 讀取錯誤:", error);
             });
@@ -234,17 +274,13 @@
             mainLogs.innerHTML = '';
 
             for (let i = 0; i < 6; i++) {
-                // --- 前台卡片 ---
                 mainGrid.innerHTML += `
                     <div class="team-card rounded-2xl p-6 md:p-8 shadow-lg flex flex-col items-center justify-center relative min-h-[160px]" id="team-card-${i}" onclick="showFocus(${i})">
-                        <!-- 歷史紀錄小按鈕 -->
                         <button onclick="event.stopPropagation(); openHistory(${i})" class="absolute top-3 right-3 text-2xl hover:scale-125 transition drop-shadow-md z-10" title="查看紀錄">📜</button>
-                        
                         <div class="text-2xl md:text-3xl font-bold text-gray-700 mb-2 mt-2">${teamNames[i]}</div>
                         <div class="text-6xl md:text-7xl font-black conan-red my-2 drop-shadow-sm">${scores[i]}</div>
                     </div>`;
                 
-                // --- 後台卡片 ---
                 adminGrid.innerHTML += `
                     <div class="team-card rounded-2xl p-6 shadow-lg flex flex-col justify-between relative min-h-[180px]">
                         <div class="flex justify-between items-center mb-2">
@@ -258,7 +294,6 @@
                     </div>`;
             }
 
-            // 繪製歷史紀錄跑馬燈 (最多顯示 10 筆最新的在畫面上)
             const recentLogs = [...logs].reverse().slice(0, 10);
             if (recentLogs.length === 0) {
                 mainLogs.innerHTML = '<div class="text-gray-400 italic text-center py-4">目前尚無搜查紀錄...</div>';
@@ -316,7 +351,6 @@
             title.innerText = `${teamNames[index]} - 搜查紀錄`;
             content.innerHTML = '';
             
-            // 過濾出這個小隊的紀錄
             const teamLogs = logs.filter(log => log.team === teamNames[index]).reverse();
             
             if (teamLogs.length === 0) {
@@ -348,14 +382,11 @@
             document.getElementById('score-modal-title').innerText = `調整 ${teamNames[index]} 分數`;
             document.getElementById('score-modal-desc').innerText = `目前分數: ${scores[index]}`;
             
-            // 重置輸入框
             document.getElementById('score-input').value = '10';
             const reasonInput = document.getElementById('reason-input');
             reasonInput.value = '關卡報酬';
             
             document.getElementById('score-modal').classList.remove('hidden-view');
-            
-            // 自動選取原因文字，方便直接覆蓋打字
             setTimeout(() => { reasonInput.select(); }, 50);
         }
 
@@ -379,15 +410,13 @@
             const targetIndex = pendingUpdateIndex;
             closeAddScore();
 
-            // 前台觸發閃爍動畫
             const card = document.getElementById(`team-card-${targetIndex}`);
             if(card) {
                 card.classList.remove('flash-animation');
-                void card.offsetWidth; // 觸發重繪
+                void card.offsetWidth; 
                 card.classList.add('flash-animation');
             }
 
-            // 施展排隊魔法 (Transaction) 上傳至資料庫
             try {
                 await runTransaction(db, async (transaction) => {
                     const sfDoc = await transaction.get(docRef);
@@ -398,15 +427,12 @@
                     let currentLogs = data.logs || [];
                     let currentTeamNames = data.teamNames || teamNames;
 
-                    // 計算新分數 (防呆: 不低於0)
                     let newScore = currentScores[targetIndex] + changeAmount;
                     if (newScore < 0) newScore = 0;
                     
-                    // 實際變動的分數 (例如原本0分扣10分，實際變動是0)
                     const actualChange = newScore - currentScores[targetIndex];
                     currentScores[targetIndex] = newScore;
 
-                    // 記錄日誌
                     const now = new Date();
                     const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
                     currentLogs.push({
@@ -416,10 +442,8 @@
                         time: timeStr
                     });
 
-                    // 限制紀錄數量避免資料庫爆掉 (保存最新 500 筆)
                     if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
 
-                    // 寫回資料庫
                     transaction.update(docRef, {
                         scores: currentScores,
                         logs: currentLogs
@@ -471,8 +495,8 @@
             try {
                 await setDoc(docRef, {
                     scores: [0, 0, 0, 0, 0, 0],
-                    teamNames: teamNames, // 保留目前的隊名
-                    logs: [] // 清空紀錄
+                    teamNames: teamNames, 
+                    logs: [] 
                 });
             } catch (e) {
                 console.error("歸零失敗: ", e);
@@ -494,7 +518,6 @@
         window.closeResetModal = closeResetModal;
         window.confirmReset = confirmReset;
 
-        // 啟動應用程式
         initApp();
     </script>
 </body>
