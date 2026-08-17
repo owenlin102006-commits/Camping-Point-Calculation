@@ -115,8 +115,10 @@
     <!-- 頂部導覽列 -->
     <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <h1 class="text-3xl md:text-4xl font-bold tracking-wider text-yellow-400 drop-shadow-md">🔍 搜查本部戰況</h1>
-        <button id="viewBtn" onclick="toggleView()" class="conan-bg-red text-white px-6 py-2 rounded-full font-bold shadow-lg transition-transform hover:scale-105">
+        <button id="viewBtn" onclick="toggleView()" class="conan-bg-red text-white px-6 py-2 rounded-full font-bold shadow-lg transition-transform hover:scale-105 relative">
             切換到後台 ⚙️
+            <!-- 🚨 新增：新戰報提醒標籤 -->
+            <span id="btn-pending-badge" class="absolute -top-2 -right-3 bg-yellow-400 text-red-800 text-xs font-black px-2 py-1 rounded-full animate-bounce hidden shadow-md border border-red-500">新戰報!</span>
         </button>
     </div>
 
@@ -131,8 +133,23 @@
 
     <!-- ⚙️ 後台：控制中心 -->
     <div id="admin-view" class="max-w-5xl mx-auto hidden-view">
+        
+        <!-- 🚨 新增：待審核戰報區塊 -->
+        <div class="mb-10 bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-600">
+            <h2 class="text-2xl font-bold text-yellow-400 mb-4 flex items-center">
+                <span>🚨 待審核戰報</span>
+                <span id="pending-count-badge" class="bg-red-600 text-white text-sm font-black px-3 py-1 rounded-full ml-3 hidden shadow-inner">0</span>
+            </h2>
+            <div id="pending-list" class="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-2">
+                <!-- 由 JS 動態產生待審核項目 -->
+            </div>
+        </div>
+
+        <div class="h-1 w-full bg-slate-700 rounded-full mb-10"></div> <!-- 分隔線 -->
+
         <h2 class="text-2xl md:text-3xl font-bold text-yellow-400 mb-6 text-center drop-shadow-md">⚙️ 控制面板</h2>
         <div id="adminGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        
         <div class="mt-12 text-center">
             <button onclick="openResetModal()" class="bg-slate-700 hover:bg-slate-600 text-white px-8 py-3 rounded-full font-bold shadow-lg transition border border-slate-500">
                 ⚠️ 全部分數歸零
@@ -230,12 +247,12 @@
         let scores = [0, 0, 0, 0, 0, 0];
         let teamNames = ["第一小隊", "第二小隊", "第三小隊", "第四小隊", "第五小隊", "第六小隊"];
         let logs = []; 
+        let pendingRequests = []; // 儲存等待審核的清單
 
         let pendingUpdateIndex = null; 
         let pendingRenameIndex = null; 
         let currentFocusIndex = null; 
         let isFirstLoad = true; 
-        let isProcessingPending = false; // 防止多重彈窗衝突的鎖
 
         // 🌟 初始化與即時監聽資料庫
         function initApp() {
@@ -245,19 +262,16 @@
                     scores = data.scores || [0, 0, 0, 0, 0, 0];
                     teamNames = data.teamNames || ["第一小隊", "第二小隊", "第三小隊", "第四小隊", "第五小隊", "第六小隊"];
                     logs = data.logs || [];
+                    pendingRequests = data.pendingRequests || [];
                     
-                    render(); // 更新畫面
+                    render(); // 更新前台/後台卡片
+                    renderPendingList(); // 更新後台審核區
+                    updateBadges(); // 更新紅點通知
                     
                     if (currentFocusIndex !== null) {
                         document.getElementById('focus-score').innerText = scores[currentFocusIndex];
                         document.getElementById('focus-name').innerText = teamNames[currentFocusIndex];
                     }
-
-                    // 🚨 攔截等待審核的分數請求 (來自其他遊戲，如白樺山莊)
-                    if (data.pendingRequests && data.pendingRequests.length > 0 && !isProcessingPending) {
-                        handlePendingRequests(data);
-                    }
-
                 } else {
                     setDoc(docRef, { scores, teamNames, logs, pendingRequests: [] });
                 }
@@ -278,71 +292,124 @@
             });
         }
 
-        // --- 🟡 STREAMING_CHUNK: 處理審核佇列 (核心機制) ---
-        async function handlePendingRequests(data) {
-            isProcessingPending = true; // 上鎖，避免重複觸發
-            const req = data.pendingRequests[0]; // 永遠先處理第一筆
+        // --- 🟡 STREAMING_CHUNK: 處理審核佇列面板與通知 ---
+        function updateBadges() {
+            const count = pendingRequests.length;
+            const btnBadge = document.getElementById('btn-pending-badge');
+            const countBadge = document.getElementById('pending-count-badge');
+
+            if (count > 0) {
+                btnBadge.innerText = `${count} 筆新戰報`;
+                btnBadge.classList.remove('hidden');
+                countBadge.innerText = count;
+                countBadge.classList.remove('hidden');
+            } else {
+                btnBadge.classList.add('hidden');
+                countBadge.classList.add('hidden');
+            }
+        }
+
+        function renderPendingList() {
+            const list = document.getElementById('pending-list');
             
-            // 延遲一點讓瀏覽器有空檔渲染畫面
-            setTimeout(async () => {
-                // 彈出確認視窗供總部人員核准
-                const isApproved = confirm(`🚨 收到前線關卡的成績回報！\n\n小隊：${req.team}\n項目：${req.reason}\n分數：+${req.score}\n\n請問是否「核准」將此分數加入總計分板？`);
-                
-                try {
-                    await runTransaction(db, async (transaction) => {
-                        const sfDoc = await transaction.get(docRef);
-                        if (!sfDoc.exists()) return;
-                        
-                        const currentData = sfDoc.data();
-                        let currentScores = currentData.scores || [0, 0, 0, 0, 0, 0];
-                        let currentLogs = currentData.logs || [];
-                        let currentTeamNames = currentData.teamNames || teamNames;
-                        
-                        // 不管有沒有核准，這筆資料處理完都要從陣列中刪除
-                        let updatedPending = (currentData.pendingRequests || []).filter(r => r.id !== req.id);
+            if (pendingRequests.length === 0) {
+                list.innerHTML = '<div class="text-gray-400 italic text-center py-6 bg-slate-700 rounded-lg">✅ 目前無待審核的戰況回報</div>';
+                return;
+            }
 
-                        if (isApproved) {
-                            const targetIndex = currentTeamNames.indexOf(req.team);
-                            
-                            // 隊伍名稱配對成功才能加分
-                            if (targetIndex !== -1) {
-                                currentScores[targetIndex] += req.score;
-                                currentLogs.push({
-                                    team: req.team,
-                                    change: req.score,
-                                    reason: req.reason + " (總部已核准)",
-                                    time: req.time || new Date().toLocaleTimeString()
-                                });
-                                // 限制日誌長度
-                                if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
-                            } else {
-                                alert(`❌ 找不到小隊名稱「${req.team}」，無法加分，但該筆請求已清除。`);
-                            }
-                        }
+            // 反轉陣列讓最新傳來的顯示在最上面
+            const reversedPending = [...pendingRequests].reverse();
 
-                        // 更新回 Firebase 資料庫
-                        transaction.update(docRef, {
-                            scores: currentScores,
-                            logs: currentLogs,
-                            pendingRequests: updatedPending
+            list.innerHTML = reversedPending.map(req => `
+                <div class="bg-slate-100 p-4 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4 border-l-4 border-yellow-500 shadow-md transform transition hover:-translate-y-1">
+                    <div class="flex-1 text-left w-full">
+                        <div class="text-xs text-gray-500 font-bold mb-1"><span class="bg-gray-200 px-2 py-0.5 rounded mr-2">時間：${req.time}</span></div>
+                        <div class="text-lg text-slate-800 font-black mb-1">小隊：<span class="text-blue-700">${req.team}</span></div>
+                        <div class="text-sm text-slate-600 font-bold flex items-center">
+                            項目：${req.reason} 
+                            <span class="text-green-600 text-xl font-black ml-3 bg-green-100 px-2 rounded">+${req.score} 分</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
+                        <button onclick="rejectRequest('${req.id}')" class="flex-1 md:flex-none bg-red-100 hover:bg-red-200 text-red-600 border border-red-300 px-4 py-3 rounded-lg font-bold transition">❌ 退回</button>
+                        <button onclick="approveRequest('${req.id}')" class="flex-1 md:flex-none bg-green-500 hover:bg-green-600 text-white shadow-md px-6 py-3 rounded-lg font-bold transition">✅ 核准加分</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 核准加分
+        async function approveRequest(reqId) {
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(docRef);
+                    if (!sfDoc.exists()) return;
+                    
+                    const data = sfDoc.data();
+                    let currentScores = data.scores || [0, 0, 0, 0, 0, 0];
+                    let currentLogs = data.logs || [];
+                    let currentTeamNames = data.teamNames || teamNames;
+                    let currentPending = data.pendingRequests || [];
+
+                    // 找出那筆 Request
+                    const targetReq = currentPending.find(r => r.id === reqId);
+                    if (!targetReq) return; // 可能已經被其他設備審核掉了
+
+                    const targetIndex = currentTeamNames.indexOf(targetReq.team);
+                    
+                    if (targetIndex !== -1) {
+                        currentScores[targetIndex] += targetReq.score;
+                        currentLogs.push({
+                            team: targetReq.team,
+                            change: targetReq.score,
+                            reason: targetReq.reason + " (總部已核准)",
+                            time: targetReq.time || new Date().toLocaleTimeString()
                         });
-                    });
-
-                    // 處理完成後的提示
-                    if (isApproved) {
-                        alert(`✅ 已成功核准並將 +${req.score} 分加入 ${req.team}！`);
+                        if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
                     } else {
-                        alert(`❌ 已退回 ${req.team} 的成績！`);
+                        alert(`❌ 找不到小隊名稱「${targetReq.team}」，無法加分，但該筆請求已從佇列中清除。`);
                     }
 
-                } catch (e) {
-                    console.error("審核作業失敗: ", e);
-                    alert('❌ 審核過程發生錯誤，請檢查網路連線。');
-                } finally {
-                    isProcessingPending = false; // 解鎖，處理下一筆
-                }
-            }, 100);
+                    // 從待審核清單中移除
+                    currentPending = currentPending.filter(r => r.id !== reqId);
+
+                    transaction.update(docRef, {
+                        scores: currentScores,
+                        logs: currentLogs,
+                        pendingRequests: currentPending
+                    });
+                });
+            } catch (e) {
+                console.error("核准作業失敗: ", e);
+                alert("核准失敗，請檢查網路連線。");
+            }
         }
+
+        // 退回不加分
+        async function rejectRequest(reqId) {
+            const confirmReject = confirm("確定要退回這筆成績嗎？退回後將不會加分！");
+            if (!confirmReject) return;
+
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(docRef);
+                    if (!sfDoc.exists()) return;
+                    
+                    const data = sfDoc.data();
+                    let currentPending = data.pendingRequests || [];
+
+                    // 從待審核清單中移除
+                    currentPending = currentPending.filter(r => r.id !== reqId);
+
+                    transaction.update(docRef, {
+                        pendingRequests: currentPending
+                    });
+                });
+            } catch (e) {
+                console.error("退回失敗: ", e);
+            }
+        }
+
 
         // --- 🟡 STREAMING_CHUNK: 畫面渲染與 UI 操作 ---
         function render() {
@@ -405,7 +472,7 @@
             if (mainView.classList.contains('hidden-view')) {
                 mainView.classList.remove('hidden-view');
                 adminView.classList.add('hidden-view');
-                btn.innerHTML = "切換到後台 ⚙️";
+                btn.innerHTML = `切換到後台 ⚙️ <span id="btn-pending-badge" class="absolute -top-2 -right-3 bg-yellow-400 text-red-800 text-xs font-black px-2 py-1 rounded-full animate-bounce hidden shadow-md border border-red-500">新戰報!</span>`;
                 btn.classList.replace('bg-slate-700', 'conan-bg-red');
             } else {
                 mainView.classList.add('hidden-view');
@@ -413,6 +480,7 @@
                 btn.innerHTML = "切換回搜查本部 🌟";
                 btn.classList.replace('conan-bg-red', 'bg-slate-700');
             }
+            updateBadges(); // 確保標籤顯示正確
         }
 
         function showFocus(index) {
@@ -619,6 +687,8 @@
         window.openResetModal = openResetModal;
         window.closeResetModal = closeResetModal;
         window.confirmReset = confirmReset;
+        window.approveRequest = approveRequest;
+        window.rejectRequest = rejectRequest;
 
         // 啟動應用程式
         initApp();
