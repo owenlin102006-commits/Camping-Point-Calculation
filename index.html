@@ -236,81 +236,113 @@
         let currentFocusIndex = null; 
         let isFirstLoad = true; 
 
-        // 🌟 新增：攔截並自動匯入戰情室傳送過來的分數
+        // 🌟 新增：攔截並自動匯入前線關卡傳送過來的分數
         async function importScoresIfNeeded() {
             const urlParams = new URLSearchParams(window.location.search);
-            let incomingScores = [];
-            let hasIncomingData = false;
+            const eventTeam = urlParams.get('eventTeam');
+            const eventScore = parseInt(urlParams.get('eventScore'), 10);
+            const eventReason = urlParams.get('eventReason') || '關卡任務';
 
-            // 檢查有沒有 team1 ~ team6 的參數
+            let incomingScores = [];
+            let hasBatchData = false;
+
             for (let i = 1; i <= 6; i++) {
                 const val = urlParams.get(`team${i}`);
                 if (val !== null) {
                     incomingScores.push(parseInt(val, 10) || 0);
-                    hasIncomingData = true;
+                    hasBatchData = true;
                 } else {
                     incomingScores.push(0);
                 }
             }
 
-            if (!hasIncomingData) return; // 如果網址沒有帶參數，就不做任何事
+            // 如果沒有任何參數，就不做任何事情
+            if (!eventTeam && !hasBatchData) return;
 
-            // ⚠️ 立即清除網址參數，防止重新整理時重複加分！
+            // ⚠️ 第一時間先清除網址參數，防止重新整理時重複觸發
             window.history.replaceState({}, document.title, window.location.pathname);
 
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const sfDoc = await transaction.get(docRef);
-                    
-                    let currentScores = [0, 0, 0, 0, 0, 0];
-                    let currentLogs = [];
-                    let currentTeamNames = teamNames;
-
-                    if (sfDoc.exists()) {
-                        const data = sfDoc.data();
-                        currentScores = data.scores || [0, 0, 0, 0, 0, 0];
-                        currentLogs = data.logs || [];
-                        currentTeamNames = data.teamNames || teamNames;
-                    } else {
-                        // 如果資料庫是空的，就先初始化
-                        transaction.set(docRef, { scores: currentScores, teamNames: currentTeamNames, logs: currentLogs });
-                    }
-
-                    let isUpdated = false;
-                    const now = new Date();
-                    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-
-                    // 將傳進來的分數加到當前分數中
-                    for (let i = 0; i < 6; i++) {
-                        if (incomingScores[i] > 0) {
-                            currentScores[i] += incomingScores[i];
-                            currentLogs.push({
-                                team: currentTeamNames[i],
-                                change: incomingScores[i],
-                                reason: "據點攻防戰資金匯入 🚩",
-                                time: timeStr
-                            });
-                            isUpdated = true;
+            // 🚀 處理單一小隊成績傳入 (此處將跳出確認視窗)
+            if (eventTeam && !isNaN(eventScore)) {
+                // 使用 setInterval 等待資料庫載入完成 (isFirstLoad 變成 false 代表已載入)
+                const checkReady = setInterval(async () => {
+                    if (!isFirstLoad) {
+                        clearInterval(checkReady);
+                        const targetIndex = teamNames.indexOf(eventTeam);
+                        
+                        if (targetIndex !== -1) {
+                            // 🔔 彈出原生確認視窗，要求計分板人員手動按下確認
+                            const isConfirmed = confirm(`🚨 收到前線案件成績回傳！\n\n🎯 小隊：${eventTeam}\n💰 加分：+${eventScore}\n📌 案件：${eventReason}\n\n是否確認核准並將分數加入總計分板？`);
+                            
+                            if (isConfirmed) {
+                                // 借用原有的 submitScore 邏輯寫入資料庫
+                                pendingUpdateIndex = targetIndex;
+                                document.getElementById('score-input').value = eventScore;
+                                document.getElementById('reason-input').value = eventReason;
+                                await submitScore(true);
+                                alert('✅ 分數已成功核准並寫入總計分板！');
+                            } else {
+                                alert('❌ 已取消，分數未寫入。');
+                            }
+                        } else {
+                            alert(`❌ 接收失敗：找不到小隊名稱「${eventTeam}」。請確認計分板隊名是否被更改過。`);
                         }
                     }
+                }, 200);
+                return; // 單一小隊處理完畢後直接 return
+            }
 
-                    if (isUpdated) {
-                        if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
-                        transaction.update(docRef, {
-                            scores: currentScores,
-                            logs: currentLogs
-                        });
-                    }
-                });
-                
-                // 延遲一點點跳提示，確保畫面已經載入
-                setTimeout(() => {
-                    alert('✅ 戰情室連線成功！各小隊據點資金已自動匯入總計分板！');
-                }, 500);
+            // 🚀 處理批次資料庫寫入 (舊版多小隊同時匯入邏輯)
+            if (hasBatchData) {
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        const sfDoc = await transaction.get(docRef);
+                        
+                        let currentScores = [0, 0, 0, 0, 0, 0];
+                        let currentLogs = [];
+                        let currentTeamNames = teamNames;
 
-            } catch (e) {
-                console.error("匯入分數失敗:", e);
-                alert('❌ 匯入分數失敗，請檢查網路連線。');
+                        if (sfDoc.exists()) {
+                            const data = sfDoc.data();
+                            currentScores = data.scores || [0, 0, 0, 0, 0, 0];
+                            currentLogs = data.logs || [];
+                            currentTeamNames = data.teamNames || teamNames;
+                        } else {
+                            transaction.set(docRef, { scores: currentScores, teamNames: currentTeamNames, logs: currentLogs });
+                        }
+
+                        let isUpdated = false;
+                        const now = new Date();
+                        const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
+                        for (let i = 0; i < 6; i++) {
+                            if (incomingScores[i] > 0) {
+                                currentScores[i] += incomingScores[i];
+                                currentLogs.push({
+                                    team: currentTeamNames[i],
+                                    change: incomingScores[i],
+                                    reason: "據點攻防戰資金匯入 🚩",
+                                    time: timeStr
+                                });
+                                isUpdated = true;
+                            }
+                        }
+
+                        if (isUpdated) {
+                            if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
+                            transaction.update(docRef, {
+                                scores: currentScores,
+                                logs: currentLogs
+                            });
+                        }
+                    });
+                    
+                    setTimeout(() => { alert('✅ 戰情室連線成功！各小隊據點資金已自動匯入總計分板！'); }, 500);
+
+                } catch (e) {
+                    console.error("匯入分數失敗:", e);
+                    alert('❌ 匯入分數失敗，請檢查網路連線。');
+                }
             }
         }
 
