@@ -114,9 +114,9 @@
     <!-- 頂部導覽列 -->
     <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <h1 class="text-3xl md:text-4xl font-bold tracking-wider text-yellow-400 drop-shadow-md">🔍 搜查本部戰況</h1>
+        <!-- 💡 修復點 1：文字與標籤分離，避免誤刪紅點 -->
         <button id="viewBtn" onclick="toggleView()" class="conan-bg-red text-white px-6 py-2 rounded-full font-bold shadow-lg transition-transform hover:scale-105 relative">
-            切換到後台 ⚙️
-            <!-- 🚨 新增：新戰報提醒標籤 -->
+            <span id="viewBtn-text">切換到後台 ⚙️</span>
             <span id="btn-pending-badge" class="absolute -top-2 -right-3 bg-yellow-400 text-red-800 text-xs font-black px-2 py-1 rounded-full animate-bounce hidden shadow-md border border-red-500">新戰報!</span>
         </button>
     </div>
@@ -133,7 +133,7 @@
     <!-- ⚙️ 後台：控制中心 -->
     <div id="admin-view" class="max-w-5xl mx-auto hidden-view">
         
-        <!-- 🚨 新增：待審核戰報區塊 -->
+        <!-- 🚨 待審核戰報區塊 -->
         <div class="mb-10 bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-600">
             <h2 class="text-2xl font-bold text-yellow-400 mb-4 flex items-center">
                 <span>🚨 待審核戰報</span>
@@ -240,7 +240,7 @@
         </div>
     </div>
 
-    <!-- ================= 🟡 STREAMING_CHUNK: JavaScript Firebase 邏輯區 ================= -->
+    <!-- ================= JavaScript Firebase 邏輯區 ================= -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -269,7 +269,7 @@
         let pendingRenameIndex = null; 
         let currentFocusIndex = null; 
         let isFirstLoad = true; 
-        let pendingImportScores = []; // 暫存接收到的外部據點戰分數
+        let pendingImportScores = []; 
 
         // 🌟 初始化與即時監聽資料庫
         function initApp() {
@@ -317,7 +317,6 @@
             const params = new URLSearchParams(window.location.search);
             pendingImportScores = [];
             
-            // 抓取網址內的 ?team1=300&team2=150...
             for (let i = 1; i <= 6; i++) {
                 const val = params.get(`team${i}`);
                 if (val && parseInt(val) > 0) {
@@ -326,10 +325,7 @@
             }
 
             if (pendingImportScores.length > 0) {
-                // 將網址清空，防止使用者按 F5 重新整理時重複觸發加分
                 window.history.replaceState(null, '', window.location.pathname);
-                
-                // 把抓到的分數寫入預覽清單
                 const detailsDiv = document.getElementById('import-details');
                 detailsDiv.innerHTML = pendingImportScores.map(s => 
                     `<div class="flex justify-between border-b border-slate-200 last:border-0 pb-1 pt-1">
@@ -337,8 +333,6 @@
                         <span class="text-green-600 font-black">+${s.score}</span>
                      </div>`
                 ).join('');
-                
-                // 彈出視窗
                 document.getElementById('import-modal').classList.remove('hidden-view');
             }
         }
@@ -362,7 +356,6 @@
                     let currentLogs = data.logs || [];
                     let currentTeamNames = data.teamNames || teamNames;
                     
-                    // 一次性把 6 個小隊的分數灌進去
                     pendingImportScores.forEach(item => {
                         currentScores[item.index] += item.score;
                         currentLogs.push({
@@ -374,7 +367,6 @@
                     });
                     
                     if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
-                    
                     transaction.update(docRef, { scores: currentScores, logs: currentLogs });
                 });
                 alert("✅ 據點戰分數匯入成功！所有資料已同步。");
@@ -382,24 +374,27 @@
                 console.error("匯入失敗: ", e);
                 alert("匯入失敗，請檢查網路連線。");
             }
-            pendingImportScores = []; // 清空緩存
+            pendingImportScores = []; 
         };
-        // ----------------------------------------------------
 
-        // --- 處理審核佇列面板與通知 ---
+        // --- 💡 修復點 2：加入安全防護網的紅點更新功能 ---
         function updateBadges() {
             const count = pendingRequests.length;
             const btnBadge = document.getElementById('btn-pending-badge');
             const countBadge = document.getElementById('pending-count-badge');
 
             if (count > 0) {
-                btnBadge.innerText = `${count} 筆新戰報`;
-                btnBadge.classList.remove('hidden');
-                countBadge.innerText = count;
-                countBadge.classList.remove('hidden');
+                if(btnBadge) {
+                    btnBadge.innerText = `${count} 筆新戰報`;
+                    btnBadge.classList.remove('hidden');
+                }
+                if(countBadge) {
+                    countBadge.innerText = count;
+                    countBadge.classList.remove('hidden');
+                }
             } else {
-                btnBadge.classList.add('hidden');
-                countBadge.classList.add('hidden');
+                if(btnBadge) btnBadge.classList.add('hidden');
+                if(countBadge) countBadge.classList.add('hidden');
             }
         }
 
@@ -411,7 +406,6 @@
                 return;
             }
 
-            // 反轉陣列讓最新傳來的顯示在最上面
             const reversedPending = [...pendingRequests].reverse();
 
             list.innerHTML = reversedPending.map(req => `
@@ -445,9 +439,8 @@
                     let currentTeamNames = data.teamNames || teamNames;
                     let currentPending = data.pendingRequests || [];
 
-                    // 找出那筆 Request
                     const targetReq = currentPending.find(r => r.id === reqId);
-                    if (!targetReq) return; // 可能已經被其他設備審核掉了
+                    if (!targetReq) return; 
 
                     const targetIndex = currentTeamNames.indexOf(targetReq.team);
                     
@@ -464,7 +457,6 @@
                         alert(`❌ 找不到小隊名稱「${targetReq.team}」，無法加分，但該筆請求已從佇列中清除。`);
                     }
 
-                    // 從待審核清單中移除
                     currentPending = currentPending.filter(r => r.id !== reqId);
 
                     transaction.update(docRef, {
@@ -492,7 +484,6 @@
                     const data = sfDoc.data();
                     let currentPending = data.pendingRequests || [];
 
-                    // 從待審核清單中移除
                     currentPending = currentPending.filter(r => r.id !== reqId);
 
                     transaction.update(docRef, {
@@ -516,7 +507,6 @@
             mainLogs.innerHTML = '';
 
             for (let i = 0; i < 6; i++) {
-                // 前台卡片
                 mainGrid.innerHTML += `
                     <div class="team-card rounded-2xl p-6 md:p-8 shadow-lg flex flex-col items-center justify-center relative min-h-[160px]" id="team-card-${i}" onclick="showFocus(${i})">
                         <button onclick="event.stopPropagation(); openHistory(${i})" class="absolute top-3 right-3 text-2xl hover:scale-125 transition drop-shadow-md z-10" title="查看紀錄">📜</button>
@@ -524,7 +514,6 @@
                         <div class="text-6xl md:text-7xl font-black conan-red my-2 drop-shadow-sm">${scores[i]}</div>
                     </div>`;
                 
-                // 後台卡片
                 adminGrid.innerHTML += `
                     <div class="team-card rounded-2xl p-6 shadow-lg flex flex-col justify-between relative min-h-[180px]">
                         <div class="flex justify-between items-center mb-2">
@@ -538,7 +527,6 @@
                     </div>`;
             }
 
-            // 渲染日誌 (最多顯示最新 10 筆)
             const recentLogs = [...logs].reverse().slice(0, 10);
             if (recentLogs.length === 0) {
                 mainLogs.innerHTML = '<div class="text-gray-400 italic text-center py-4">目前尚無搜查紀錄...</div>';
@@ -558,23 +546,25 @@
             }
         }
 
+        // 💡 修復點 3：切換時只改文字，保護紅點不死！
         function toggleView() {
             const mainView = document.getElementById('main-view');
             const adminView = document.getElementById('admin-view');
             const btn = document.getElementById('viewBtn');
+            const btnText = document.getElementById('viewBtn-text'); // 單抓文字區域
 
             if (mainView.classList.contains('hidden-view')) {
                 mainView.classList.remove('hidden-view');
                 adminView.classList.add('hidden-view');
-                btn.innerHTML = `切換到後台 ⚙️ <span id="btn-pending-badge" class="absolute -top-2 -right-3 bg-yellow-400 text-red-800 text-xs font-black px-2 py-1 rounded-full animate-bounce hidden shadow-md border border-red-500">新戰報!</span>`;
+                btnText.innerHTML = "切換到後台 ⚙️"; // 只改字！
                 btn.classList.replace('bg-slate-700', 'conan-bg-red');
             } else {
                 mainView.classList.add('hidden-view');
                 adminView.classList.remove('hidden-view');
-                btn.innerHTML = "切換回搜查本部 🌟";
+                btnText.innerHTML = "切換回搜查本部 🌟"; // 只改字！
                 btn.classList.replace('conan-bg-red', 'bg-slate-700');
             }
-            updateBadges(); // 確保標籤顯示正確
+            updateBadges(); 
         }
 
         function showFocus(index) {
@@ -641,7 +631,6 @@
             pendingUpdateIndex = null;
         }
 
-        // --- 手動修改分數邏輯 ---
         async function submitScore(isPlus) {
             if (pendingUpdateIndex === null) return;
             
@@ -746,7 +735,6 @@
         async function confirmReset() {
             const pwd = document.getElementById('reset-password').value;
             
-            // 檢查最高權限密碼
             if (pwd !== '1150918') {
                 alert('🛑 密碼錯誤！無法執行歸零程序！');
                 return;
@@ -758,7 +746,7 @@
                     scores: [0, 0, 0, 0, 0, 0],
                     teamNames: teamNames, 
                     logs: [],
-                    pendingRequests: [] // 歸零時也把待審核區清空
+                    pendingRequests: [] 
                 });
                 alert('✅ 驗證成功！所有分數與紀錄已重新歸零！');
             } catch (e) {
@@ -766,7 +754,6 @@
             }
         }
 
-        // 綁定到 window 使其能被 HTML 中的 onclick 調用
         window.toggleView = toggleView;
         window.showFocus = showFocus;
         window.hideFocus = hideFocus;
@@ -786,7 +773,6 @@
         window.cancelImport = cancelImport;
         window.confirmImport = confirmImport;
 
-        // 啟動應用程式
         initApp();
     </script>
 </body>
