@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔍 搜查本部</title>
+    <title>🔍 搜查本部戰況</title>
     <!-- 引入 Tailwind CSS 魔法排版 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -108,7 +108,7 @@
     <!-- 🚀 啟動連線畫面 -->
     <div id="loadingScreen">
         <!-- ⚠️ 確認檔名已經改成你 GitHub 上的 IMG_1716.jpg 囉！ -->
-        <img src="IMG_1716.jpg" alt="115 新生宿營 Logo" class="loading-logo" onerror="this.src='https://via.placeholder.com/200?text=Logo'; alert('找不到圖片，請檢查檔名或是否上傳！');">
+        <img src="IMG_1716.jpg" alt="115 新生宿營 Logo" class="loading-logo" onerror="this.src='https://placehold.co/200x200/1e3a8a/ffffff?text=連線中';">
         <div class="loading-text">連線中...</div>
     </div>
 
@@ -125,7 +125,7 @@
         <div id="mainGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         <div class="mt-12 bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-white/20">
             <h2 class="text-xl font-bold text-yellow-400 mb-4 flex items-center"><span class="text-2xl mr-2">📜</span> 最新搜查紀錄</h2>
-            <div id="mainLogs" class="space-y-3 h-48 overflow-y-auto pr-2"></div>
+            <div id="mainLogs" class="space-y-3 h-48 overflow-y-auto pr-2 custom-scrollbar"></div>
         </div>
     </div>
 
@@ -153,7 +153,7 @@
                 <h3 class="text-xl font-bold text-white" id="history-modal-title">小隊紀錄</h3>
                 <button onclick="closeHistory()" class="text-gray-300 hover:text-white text-2xl font-bold">&times;</button>
             </div>
-            <div class="p-4 overflow-y-auto flex-1 bg-[#fdf6e3]" id="history-modal-content"></div>
+            <div class="p-4 overflow-y-auto flex-1 bg-[#fdf6e3] custom-scrollbar" id="history-modal-content"></div>
         </div>
     </div>
 
@@ -163,7 +163,7 @@
             <p class="text-center text-gray-500 mb-6" id="score-modal-desc">目前分數: 0</p>
             <div class="mb-4">
                 <label class="block text-sm font-bold text-gray-700 mb-2">調整數值 (請輸入數字)</label>
-                <input type="number" id="score-input" class="w-full text-center text-3xl font-bold p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" value="10">
+                <input type="number" id="score-input" class="w-full text-center text-3xl font-bold p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" value="100">
             </div>
             <div class="mb-6">
                 <label class="block text-sm font-bold text-gray-700 mb-2">原因 / 關卡名稱</label>
@@ -188,14 +188,13 @@
         </div>
     </div>
 
-    <!-- 🔒 進化版！密碼保護的歸零確認視窗 -->
+    <!-- 🔒 密碼保護的歸零確認視窗 -->
     <div id="reset-modal" class="fixed inset-0 bg-black/90 z-50 hidden-view flex justify-center items-center p-4">
         <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-gray-800 text-center">
             <div class="text-5xl mb-4">⚠️</div>
             <h3 class="text-2xl font-bold text-red-600 mb-2">警告：分數歸零</h3>
             <p class="text-gray-600 mb-4">確定要將所有隊伍的分數與紀錄清空嗎？<br>此動作<span class="font-bold text-red-500">無法復原</span>喔！</p>
             
-            <!-- ✨ 新增的密碼輸入框 -->
             <div class="mb-6 text-left">
                 <label class="block text-sm font-bold text-gray-700 mb-2">請輸入最高權限密碼：</label>
                 <input type="password" id="reset-password" class="w-full text-center text-xl font-bold p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-red-500 placeholder-gray-400" placeholder="輸入密碼解鎖">
@@ -208,11 +207,12 @@
         </div>
     </div>
 
-    <!-- ================= 🟡 STREAMING_CHUNK: JavaScript 魔法區 ================= -->
+    <!-- ================= 🟡 STREAMING_CHUNK: JavaScript Firebase 邏輯區 ================= -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+        // 串接至宿營總計分板資料庫
         const firebaseConfig = {
             apiKey: "AIzaSyCDrPTk42gRD9kzjocMr3hNJd4BORRQ8mc",
             authDomain: "camping-point-calculation1.firebaseapp.com",
@@ -235,118 +235,9 @@
         let pendingRenameIndex = null; 
         let currentFocusIndex = null; 
         let isFirstLoad = true; 
+        let isProcessingPending = false; // 防止多重彈窗衝突的鎖
 
-        // 🌟 新增：攔截並自動匯入前線關卡傳送過來的分數
-        async function importScoresIfNeeded() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const eventTeam = urlParams.get('eventTeam');
-            const eventScore = parseInt(urlParams.get('eventScore'), 10);
-            const eventReason = urlParams.get('eventReason') || '關卡任務';
-
-            let incomingScores = [];
-            let hasBatchData = false;
-
-            for (let i = 1; i <= 6; i++) {
-                const val = urlParams.get(`team${i}`);
-                if (val !== null) {
-                    incomingScores.push(parseInt(val, 10) || 0);
-                    hasBatchData = true;
-                } else {
-                    incomingScores.push(0);
-                }
-            }
-
-            // 如果沒有任何參數，就不做任何事情
-            if (!eventTeam && !hasBatchData) return;
-
-            // ⚠️ 第一時間先清除網址參數，防止重新整理時重複觸發
-            window.history.replaceState({}, document.title, window.location.pathname);
-
-            // 🚀 處理單一小隊成績傳入 (此處將跳出確認視窗)
-            if (eventTeam && !isNaN(eventScore)) {
-                // 使用 setInterval 等待資料庫載入完成 (isFirstLoad 變成 false 代表已載入)
-                const checkReady = setInterval(async () => {
-                    if (!isFirstLoad) {
-                        clearInterval(checkReady);
-                        const targetIndex = teamNames.indexOf(eventTeam);
-                        
-                        if (targetIndex !== -1) {
-                            // 🔔 彈出原生確認視窗，要求計分板人員手動按下確認
-                            const isConfirmed = confirm(`🚨 收到前線案件成績回傳！\n\n🎯 小隊：${eventTeam}\n💰 加分：+${eventScore}\n📌 案件：${eventReason}\n\n是否確認核准並將分數加入總計分板？`);
-                            
-                            if (isConfirmed) {
-                                // 借用原有的 submitScore 邏輯寫入資料庫
-                                pendingUpdateIndex = targetIndex;
-                                document.getElementById('score-input').value = eventScore;
-                                document.getElementById('reason-input').value = eventReason;
-                                await submitScore(true);
-                                alert('✅ 分數已成功核准並寫入總計分板！');
-                            } else {
-                                alert('❌ 已取消，分數未寫入。');
-                            }
-                        } else {
-                            alert(`❌ 接收失敗：找不到小隊名稱「${eventTeam}」。請確認計分板隊名是否被更改過。`);
-                        }
-                    }
-                }, 200);
-                return; // 單一小隊處理完畢後直接 return
-            }
-
-            // 🚀 處理批次資料庫寫入 (舊版多小隊同時匯入邏輯)
-            if (hasBatchData) {
-                try {
-                    await runTransaction(db, async (transaction) => {
-                        const sfDoc = await transaction.get(docRef);
-                        
-                        let currentScores = [0, 0, 0, 0, 0, 0];
-                        let currentLogs = [];
-                        let currentTeamNames = teamNames;
-
-                        if (sfDoc.exists()) {
-                            const data = sfDoc.data();
-                            currentScores = data.scores || [0, 0, 0, 0, 0, 0];
-                            currentLogs = data.logs || [];
-                            currentTeamNames = data.teamNames || teamNames;
-                        } else {
-                            transaction.set(docRef, { scores: currentScores, teamNames: currentTeamNames, logs: currentLogs });
-                        }
-
-                        let isUpdated = false;
-                        const now = new Date();
-                        const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-
-                        for (let i = 0; i < 6; i++) {
-                            if (incomingScores[i] > 0) {
-                                currentScores[i] += incomingScores[i];
-                                currentLogs.push({
-                                    team: currentTeamNames[i],
-                                    change: incomingScores[i],
-                                    reason: "據點攻防戰資金匯入 🚩",
-                                    time: timeStr
-                                });
-                                isUpdated = true;
-                            }
-                        }
-
-                        if (isUpdated) {
-                            if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
-                            transaction.update(docRef, {
-                                scores: currentScores,
-                                logs: currentLogs
-                            });
-                        }
-                    });
-                    
-                    setTimeout(() => { alert('✅ 戰情室連線成功！各小隊據點資金已自動匯入總計分板！'); }, 500);
-
-                } catch (e) {
-                    console.error("匯入分數失敗:", e);
-                    alert('❌ 匯入分數失敗，請檢查網路連線。');
-                }
-            }
-        }
-
-        // --- 🟡 STREAMING_CHUNK: App Initialization ---
+        // 🌟 初始化與即時監聽資料庫
         function initApp() {
             onSnapshot(docRef, (snap) => {
                 if (snap.exists()) {
@@ -355,16 +246,23 @@
                     teamNames = data.teamNames || ["第一小隊", "第二小隊", "第三小隊", "第四小隊", "第五小隊", "第六小隊"];
                     logs = data.logs || [];
                     
-                    render();
+                    render(); // 更新畫面
                     
                     if (currentFocusIndex !== null) {
                         document.getElementById('focus-score').innerText = scores[currentFocusIndex];
                         document.getElementById('focus-name').innerText = teamNames[currentFocusIndex];
                     }
+
+                    // 🚨 攔截等待審核的分數請求 (來自其他遊戲，如白樺山莊)
+                    if (data.pendingRequests && data.pendingRequests.length > 0 && !isProcessingPending) {
+                        handlePendingRequests(data);
+                    }
+
                 } else {
-                    setDoc(docRef, { scores, teamNames, logs });
+                    setDoc(docRef, { scores, teamNames, logs, pendingRequests: [] });
                 }
 
+                // 解除開頭的載入動畫
                 if (isFirstLoad) {
                     isFirstLoad = false;
                     setTimeout(() => {
@@ -375,12 +273,78 @@
                         }
                     }, 800);
                 }
-
             }, (error) => {
                 console.error("Firebase 讀取錯誤:", error);
             });
         }
 
+        // --- 🟡 STREAMING_CHUNK: 處理審核佇列 (核心機制) ---
+        async function handlePendingRequests(data) {
+            isProcessingPending = true; // 上鎖，避免重複觸發
+            const req = data.pendingRequests[0]; // 永遠先處理第一筆
+            
+            // 延遲一點讓瀏覽器有空檔渲染畫面
+            setTimeout(async () => {
+                // 彈出確認視窗供總部人員核准
+                const isApproved = confirm(`🚨 收到前線關卡的成績回報！\n\n小隊：${req.team}\n項目：${req.reason}\n分數：+${req.score}\n\n請問是否「核准」將此分數加入總計分板？`);
+                
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        const sfDoc = await transaction.get(docRef);
+                        if (!sfDoc.exists()) return;
+                        
+                        const currentData = sfDoc.data();
+                        let currentScores = currentData.scores || [0, 0, 0, 0, 0, 0];
+                        let currentLogs = currentData.logs || [];
+                        let currentTeamNames = currentData.teamNames || teamNames;
+                        
+                        // 不管有沒有核准，這筆資料處理完都要從陣列中刪除
+                        let updatedPending = (currentData.pendingRequests || []).filter(r => r.id !== req.id);
+
+                        if (isApproved) {
+                            const targetIndex = currentTeamNames.indexOf(req.team);
+                            
+                            // 隊伍名稱配對成功才能加分
+                            if (targetIndex !== -1) {
+                                currentScores[targetIndex] += req.score;
+                                currentLogs.push({
+                                    team: req.team,
+                                    change: req.score,
+                                    reason: req.reason + " (總部已核准)",
+                                    time: req.time || new Date().toLocaleTimeString()
+                                });
+                                // 限制日誌長度
+                                if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
+                            } else {
+                                alert(`❌ 找不到小隊名稱「${req.team}」，無法加分，但該筆請求已清除。`);
+                            }
+                        }
+
+                        // 更新回 Firebase 資料庫
+                        transaction.update(docRef, {
+                            scores: currentScores,
+                            logs: currentLogs,
+                            pendingRequests: updatedPending
+                        });
+                    });
+
+                    // 處理完成後的提示
+                    if (isApproved) {
+                        alert(`✅ 已成功核准並將 +${req.score} 分加入 ${req.team}！`);
+                    } else {
+                        alert(`❌ 已退回 ${req.team} 的成績！`);
+                    }
+
+                } catch (e) {
+                    console.error("審核作業失敗: ", e);
+                    alert('❌ 審核過程發生錯誤，請檢查網路連線。');
+                } finally {
+                    isProcessingPending = false; // 解鎖，處理下一筆
+                }
+            }, 100);
+        }
+
+        // --- 🟡 STREAMING_CHUNK: 畫面渲染與 UI 操作 ---
         function render() {
             const mainGrid = document.getElementById('mainGrid');
             const adminGrid = document.getElementById('adminGrid');
@@ -391,6 +355,7 @@
             mainLogs.innerHTML = '';
 
             for (let i = 0; i < 6; i++) {
+                // 前台卡片
                 mainGrid.innerHTML += `
                     <div class="team-card rounded-2xl p-6 md:p-8 shadow-lg flex flex-col items-center justify-center relative min-h-[160px]" id="team-card-${i}" onclick="showFocus(${i})">
                         <button onclick="event.stopPropagation(); openHistory(${i})" class="absolute top-3 right-3 text-2xl hover:scale-125 transition drop-shadow-md z-10" title="查看紀錄">📜</button>
@@ -398,6 +363,7 @@
                         <div class="text-6xl md:text-7xl font-black conan-red my-2 drop-shadow-sm">${scores[i]}</div>
                     </div>`;
                 
+                // 後台卡片
                 adminGrid.innerHTML += `
                     <div class="team-card rounded-2xl p-6 shadow-lg flex flex-col justify-between relative min-h-[180px]">
                         <div class="flex justify-between items-center mb-2">
@@ -411,6 +377,7 @@
                     </div>`;
             }
 
+            // 渲染日誌 (最多顯示最新 10 筆)
             const recentLogs = [...logs].reverse().slice(0, 10);
             if (recentLogs.length === 0) {
                 mainLogs.innerHTML = '<div class="text-gray-400 italic text-center py-4">目前尚無搜查紀錄...</div>';
@@ -430,7 +397,6 @@
             }
         }
 
-        // --- 🟡 STREAMING_CHUNK: User Interactions ---
         function toggleView() {
             const mainView = document.getElementById('main-view');
             const adminView = document.getElementById('admin-view');
@@ -513,6 +479,7 @@
             pendingUpdateIndex = null;
         }
 
+        // --- 🟡 STREAMING_CHUNK: 手動修改分數邏輯 ---
         async function submitScore(isPlus) {
             if (pendingUpdateIndex === null) return;
             
@@ -605,7 +572,6 @@
             }
         }
 
-        // 🌟 每次打開歸零畫面，都把密碼框清空！
         function openResetModal() { 
             document.getElementById('reset-password').value = '';
             document.getElementById('reset-modal').classList.remove('hidden-view'); 
@@ -615,23 +581,22 @@
             document.getElementById('reset-modal').classList.add('hidden-view'); 
         }
 
-        // 🔒 終極密碼防護邏輯在這裡！
         async function confirmReset() {
             const pwd = document.getElementById('reset-password').value;
             
-            // 檢查密碼是不是 1150918
+            // 檢查最高權限密碼
             if (pwd !== '1150918') {
                 alert('🛑 密碼錯誤！無法執行歸零程序！');
-                return; // 密碼錯了就直接中斷，不准清空資料！
+                return;
             }
 
-            // 密碼正確，關閉視窗並開始清空
             closeResetModal();
             try {
                 await setDoc(docRef, {
                     scores: [0, 0, 0, 0, 0, 0],
                     teamNames: teamNames, 
-                    logs: [] 
+                    logs: [],
+                    pendingRequests: [] // 歸零時也把待審核區清空
                 });
                 alert('✅ 驗證成功！所有分數與紀錄已重新歸零！');
             } catch (e) {
@@ -639,6 +604,7 @@
             }
         }
 
+        // 綁定到 window 使其能被 HTML 中的 onclick 調用
         window.toggleView = toggleView;
         window.showFocus = showFocus;
         window.hideFocus = hideFocus;
@@ -654,9 +620,8 @@
         window.closeResetModal = closeResetModal;
         window.confirmReset = confirmReset;
 
-        // 🚀 啟動應用程式與觸發分數匯入
+        // 啟動應用程式
         initApp();
-        importScoresIfNeeded();
     </script>
 </body>
 </html>
