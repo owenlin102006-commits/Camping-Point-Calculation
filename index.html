@@ -208,7 +208,7 @@
         </div>
     </div>
 
-    <!-- ================= JavaScript 魔法區 ================= -->
+    <!-- ================= 🟡 STREAMING_CHUNK: JavaScript 魔法區 ================= -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -236,6 +236,85 @@
         let currentFocusIndex = null; 
         let isFirstLoad = true; 
 
+        // 🌟 新增：攔截並自動匯入戰情室傳送過來的分數
+        async function importScoresIfNeeded() {
+            const urlParams = new URLSearchParams(window.location.search);
+            let incomingScores = [];
+            let hasIncomingData = false;
+
+            // 檢查有沒有 team1 ~ team6 的參數
+            for (let i = 1; i <= 6; i++) {
+                const val = urlParams.get(`team${i}`);
+                if (val !== null) {
+                    incomingScores.push(parseInt(val, 10) || 0);
+                    hasIncomingData = true;
+                } else {
+                    incomingScores.push(0);
+                }
+            }
+
+            if (!hasIncomingData) return; // 如果網址沒有帶參數，就不做任何事
+
+            // ⚠️ 立即清除網址參數，防止重新整理時重複加分！
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(docRef);
+                    
+                    let currentScores = [0, 0, 0, 0, 0, 0];
+                    let currentLogs = [];
+                    let currentTeamNames = teamNames;
+
+                    if (sfDoc.exists()) {
+                        const data = sfDoc.data();
+                        currentScores = data.scores || [0, 0, 0, 0, 0, 0];
+                        currentLogs = data.logs || [];
+                        currentTeamNames = data.teamNames || teamNames;
+                    } else {
+                        // 如果資料庫是空的，就先初始化
+                        transaction.set(docRef, { scores: currentScores, teamNames: currentTeamNames, logs: currentLogs });
+                    }
+
+                    let isUpdated = false;
+                    const now = new Date();
+                    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+
+                    // 將傳進來的分數加到當前分數中
+                    for (let i = 0; i < 6; i++) {
+                        if (incomingScores[i] > 0) {
+                            currentScores[i] += incomingScores[i];
+                            currentLogs.push({
+                                team: currentTeamNames[i],
+                                change: incomingScores[i],
+                                reason: "據點攻防戰資金匯入 🚩",
+                                time: timeStr
+                            });
+                            isUpdated = true;
+                        }
+                    }
+
+                    if (isUpdated) {
+                        if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
+                        transaction.update(docRef, {
+                            scores: currentScores,
+                            logs: currentLogs
+                        });
+                    }
+                });
+                
+                // 延遲一點點跳提示，確保畫面已經載入
+                setTimeout(() => {
+                    alert('✅ 戰情室連線成功！各小隊據點資金已自動匯入總計分板！');
+                }, 500);
+
+            } catch (e) {
+                console.error("匯入分數失敗:", e);
+                alert('❌ 匯入分數失敗，請檢查網路連線。');
+            }
+        }
+
+        // --- 🟡 STREAMING_CHUNK: App Initialization ---
         function initApp() {
             onSnapshot(docRef, (snap) => {
                 if (snap.exists()) {
@@ -319,6 +398,7 @@
             }
         }
 
+        // --- 🟡 STREAMING_CHUNK: User Interactions ---
         function toggleView() {
             const mainView = document.getElementById('main-view');
             const adminView = document.getElementById('admin-view');
@@ -388,7 +468,7 @@
             document.getElementById('score-modal-title').innerText = `調整 ${teamNames[index]} 分數`;
             document.getElementById('score-modal-desc').innerText = `目前分數: ${scores[index]}`;
             
-            document.getElementById('score-input').value = '10';
+            document.getElementById('score-input').value = '100';
             const reasonInput = document.getElementById('reason-input');
             reasonInput.value = '關卡報酬';
             
@@ -542,7 +622,9 @@
         window.closeResetModal = closeResetModal;
         window.confirmReset = confirmReset;
 
+        // 🚀 啟動應用程式與觸發分數匯入
         initApp();
+        importScoresIfNeeded();
     </script>
 </body>
 </html>
