@@ -114,7 +114,6 @@
     <!-- 頂部導覽列 -->
     <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <h1 class="text-3xl md:text-4xl font-bold tracking-wider text-yellow-400 drop-shadow-md">🔍 搜查本部戰況</h1>
-        <!-- 💡 修復點 1：文字與標籤分離，避免誤刪紅點 -->
         <button id="viewBtn" onclick="toggleView()" class="conan-bg-red text-white px-6 py-2 rounded-full font-bold shadow-lg transition-transform hover:scale-105 relative">
             <span id="viewBtn-text">切換到後台 ⚙️</span>
             <span id="btn-pending-badge" class="absolute -top-2 -right-3 bg-yellow-400 text-red-800 text-xs font-black px-2 py-1 rounded-full animate-bounce hidden shadow-md border border-red-500">新戰報!</span>
@@ -263,7 +262,7 @@
         let scores = [0, 0, 0, 0, 0, 0];
         let teamNames = ["第一小隊", "第二小隊", "第三小隊", "第四小隊", "第五小隊", "第六小隊"];
         let logs = []; 
-        let pendingRequests = []; // 儲存等待審核的清單
+        let pendingRequests = []; 
 
         let pendingUpdateIndex = null; 
         let pendingRenameIndex = null; 
@@ -281,9 +280,9 @@
                     logs = data.logs || [];
                     pendingRequests = data.pendingRequests || [];
                     
-                    render(); // 更新前台/後台卡片
-                    renderPendingList(); // 更新後台審核區
-                    updateBadges(); // 更新紅點通知
+                    render(); 
+                    renderPendingList(); 
+                    updateBadges(); 
                     
                     if (currentFocusIndex !== null) {
                         document.getElementById('focus-score').innerText = scores[currentFocusIndex];
@@ -302,8 +301,6 @@
                             loader.classList.add('fade-out');
                             setTimeout(() => loader.remove(), 800); 
                         }
-                        
-                        // 動畫跑完後，執行外部參數掃描！
                         checkExternalScores();
                     }, 800);
                 }
@@ -312,7 +309,7 @@
             });
         }
 
-        // --- 📡 衛星接收站：處理來自外部網址傳入的分數 ---
+        // --- 📡 衛星接收站 ---
         function checkExternalScores() {
             const params = new URLSearchParams(window.location.search);
             pendingImportScores = [];
@@ -377,7 +374,7 @@
             pendingImportScores = []; 
         };
 
-        // --- 💡 修復點 2：加入安全防護網的紅點更新功能 ---
+        // --- 處理審核佇列面板與通知 ---
         function updateBadges() {
             const count = pendingRequests.length;
             const btnBadge = document.getElementById('btn-pending-badge');
@@ -408,8 +405,9 @@
 
             const reversedPending = [...pendingRequests].reverse();
 
+            // 💡 魔法點 1：幫每一張卡片跟按鈕都加上專屬的 ID (req-card-xxx, btn-approve-xxx)
             list.innerHTML = reversedPending.map(req => `
-                <div class="bg-slate-100 p-4 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4 border-l-4 border-yellow-500 shadow-md transform transition hover:-translate-y-1">
+                <div id="req-card-${req.id}" class="bg-slate-100 p-4 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4 border-l-4 border-yellow-500 shadow-md transform transition duration-300 hover:-translate-y-1">
                     <div class="flex-1 text-left w-full">
                         <div class="text-xs text-gray-500 font-bold mb-1"><span class="bg-gray-200 px-2 py-0.5 rounded mr-2">時間：${req.time}</span></div>
                         <div class="text-lg text-slate-800 font-black mb-1">小隊：<span class="text-blue-700">${req.team}</span></div>
@@ -419,15 +417,32 @@
                         </div>
                     </div>
                     <div class="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
-                        <button onclick="rejectRequest('${req.id}')" class="flex-1 md:flex-none bg-red-100 hover:bg-red-200 text-red-600 border border-red-300 px-4 py-3 rounded-lg font-bold transition">❌ 退回</button>
-                        <button onclick="approveRequest('${req.id}')" class="flex-1 md:flex-none bg-green-500 hover:bg-green-600 text-white shadow-md px-6 py-3 rounded-lg font-bold transition">✅ 核准加分</button>
+                        <button id="btn-reject-${req.id}" onclick="rejectRequest('${req.id}')" class="flex-1 md:flex-none bg-red-100 hover:bg-red-200 text-red-600 border border-red-300 px-4 py-3 rounded-lg font-bold transition">❌ 退回</button>
+                        <button id="btn-approve-${req.id}" onclick="approveRequest('${req.id}')" class="flex-1 md:flex-none bg-green-500 hover:bg-green-600 text-white shadow-md px-6 py-3 rounded-lg font-bold transition">✅ 核准加分</button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // 核准加分
+        // 💡 魔法點 2：加入 Optimistic UI 即時回饋機制！
         async function approveRequest(reqId) {
+            // 先讓畫面瞬間變色並顯示「處理中」，給操作者極致流暢的爽感！
+            const card = document.getElementById(`req-card-${reqId}`);
+            const btnApprove = document.getElementById(`btn-approve-${reqId}`);
+            const btnReject = document.getElementById(`btn-reject-${reqId}`);
+            
+            if (btnApprove && btnReject && card) {
+                btnApprove.innerHTML = "⏳ 處理中...";
+                btnApprove.disabled = true;
+                btnApprove.classList.replace('bg-green-500', 'bg-gray-400');
+                btnApprove.classList.replace('hover:bg-green-600', 'cursor-not-allowed');
+                
+                btnReject.disabled = true;
+                btnReject.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                card.classList.add('opacity-50', 'scale-95'); // 讓整張卡片變暗微縮
+            }
+
             try {
                 await runTransaction(db, async (transaction) => {
                     const sfDoc = await transaction.get(docRef);
@@ -475,6 +490,24 @@
         async function rejectRequest(reqId) {
             const confirmReject = confirm("確定要退回這筆成績嗎？退回後將不會加分！");
             if (!confirmReject) return;
+
+            // 即時視覺回饋：顯示刪除中
+            const card = document.getElementById(`req-card-${reqId}`);
+            const btnApprove = document.getElementById(`btn-approve-${reqId}`);
+            const btnReject = document.getElementById(`btn-reject-${reqId}`);
+            
+            if (btnApprove && btnReject && card) {
+                btnReject.innerHTML = "🗑️ 刪除中...";
+                btnReject.disabled = true;
+                btnReject.classList.replace('text-red-600', 'text-gray-500');
+                btnReject.classList.replace('bg-red-100', 'bg-gray-200');
+                btnReject.classList.add('cursor-not-allowed');
+                
+                btnApprove.disabled = true;
+                btnApprove.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                card.classList.add('opacity-50', 'scale-95'); 
+            }
 
             try {
                 await runTransaction(db, async (transaction) => {
@@ -546,22 +579,21 @@
             }
         }
 
-        // 💡 修復點 3：切換時只改文字，保護紅點不死！
         function toggleView() {
             const mainView = document.getElementById('main-view');
             const adminView = document.getElementById('admin-view');
             const btn = document.getElementById('viewBtn');
-            const btnText = document.getElementById('viewBtn-text'); // 單抓文字區域
+            const btnText = document.getElementById('viewBtn-text'); 
 
             if (mainView.classList.contains('hidden-view')) {
                 mainView.classList.remove('hidden-view');
                 adminView.classList.add('hidden-view');
-                btnText.innerHTML = "切換到後台 ⚙️"; // 只改字！
+                btnText.innerHTML = "切換到後台 ⚙️"; 
                 btn.classList.replace('bg-slate-700', 'conan-bg-red');
             } else {
                 mainView.classList.add('hidden-view');
                 adminView.classList.remove('hidden-view');
-                btnText.innerHTML = "切換回搜查本部 🌟"; // 只改字！
+                btnText.innerHTML = "切換回搜查本部 🌟"; 
                 btn.classList.replace('conan-bg-red', 'bg-slate-700');
             }
             updateBadges(); 
