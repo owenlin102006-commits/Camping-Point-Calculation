@@ -107,7 +107,6 @@
 
     <!-- 🚀 啟動連線畫面 -->
     <div id="loadingScreen">
-        <!-- ⚠️ 確認檔名已經改成你 GitHub 上的 IMG_1716.jpg 囉！ -->
         <img src="IMG_1716.jpg" alt="115 新生宿營 Logo" class="loading-logo" onerror="this.src='https://placehold.co/200x200/1e3a8a/ffffff?text=連線中';">
         <div class="loading-text">連線中...</div>
     </div>
@@ -224,6 +223,23 @@
         </div>
     </div>
 
+    <!-- 📡 衛星接收站：偵測到據點戰分數時跳出的專屬視窗 -->
+    <div id="import-modal" class="fixed inset-0 bg-black/90 z-50 hidden-view flex justify-center items-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-gray-800 text-center relative overflow-hidden">
+            <div class="bg-blue-600 text-white py-1.5 absolute top-0 left-0 w-full font-bold tracking-widest text-xs">🌐 系統連線偵測</div>
+            <div class="text-5xl mb-2 mt-6">📡</div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">接收到外部戰報！</h3>
+            <p class="text-slate-600 mb-4 text-sm">來自【東勢林場據點戰】的結算分數已送達，是否立即匯入？</p>
+            <div id="import-details" class="bg-slate-50 border border-slate-200 rounded p-3 text-left mb-6 max-h-32 overflow-y-auto text-sm font-bold text-slate-700 space-y-1">
+                <!-- 預覽分數會動態塞在這裡 -->
+            </div>
+            <div class="flex gap-4">
+                <button onclick="cancelImport()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition">放棄</button>
+                <button onclick="confirmImport()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-md">✅ 匯入分數</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ================= 🟡 STREAMING_CHUNK: JavaScript Firebase 邏輯區 ================= -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -253,6 +269,7 @@
         let pendingRenameIndex = null; 
         let currentFocusIndex = null; 
         let isFirstLoad = true; 
+        let pendingImportScores = []; // 暫存接收到的外部據點戰分數
 
         // 🌟 初始化與即時監聽資料庫
         function initApp() {
@@ -276,7 +293,7 @@
                     setDoc(docRef, { scores, teamNames, logs, pendingRequests: [] });
                 }
 
-                // 解除開頭的載入動畫
+                // 解除開頭的載入動畫，並檢查網址有沒有分數參數
                 if (isFirstLoad) {
                     isFirstLoad = false;
                     setTimeout(() => {
@@ -285,6 +302,9 @@
                             loader.classList.add('fade-out');
                             setTimeout(() => loader.remove(), 800); 
                         }
+                        
+                        // 動畫跑完後，執行外部參數掃描！
+                        checkExternalScores();
                     }, 800);
                 }
             }, (error) => {
@@ -292,7 +312,81 @@
             });
         }
 
-        // --- 🟡 STREAMING_CHUNK: 處理審核佇列面板與通知 ---
+        // --- 📡 衛星接收站：處理來自外部網址傳入的分數 ---
+        function checkExternalScores() {
+            const params = new URLSearchParams(window.location.search);
+            pendingImportScores = [];
+            
+            // 抓取網址內的 ?team1=300&team2=150...
+            for (let i = 1; i <= 6; i++) {
+                const val = params.get(`team${i}`);
+                if (val && parseInt(val) > 0) {
+                    pendingImportScores.push({ index: i - 1, score: parseInt(val) });
+                }
+            }
+
+            if (pendingImportScores.length > 0) {
+                // 將網址清空，防止使用者按 F5 重新整理時重複觸發加分
+                window.history.replaceState(null, '', window.location.pathname);
+                
+                // 把抓到的分數寫入預覽清單
+                const detailsDiv = document.getElementById('import-details');
+                detailsDiv.innerHTML = pendingImportScores.map(s => 
+                    `<div class="flex justify-between border-b border-slate-200 last:border-0 pb-1 pt-1">
+                        <span class="text-slate-600">${teamNames[s.index]}</span>
+                        <span class="text-green-600 font-black">+${s.score}</span>
+                     </div>`
+                ).join('');
+                
+                // 彈出視窗
+                document.getElementById('import-modal').classList.remove('hidden-view');
+            }
+        }
+
+        window.cancelImport = () => {
+            document.getElementById('import-modal').classList.add('hidden-view');
+            pendingImportScores = [];
+        };
+
+        window.confirmImport = async () => {
+            if (pendingImportScores.length === 0) return;
+            document.getElementById('import-modal').classList.add('hidden-view');
+            
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(docRef);
+                    if (!sfDoc.exists()) return;
+                    
+                    const data = sfDoc.data();
+                    let currentScores = data.scores || [0, 0, 0, 0, 0, 0];
+                    let currentLogs = data.logs || [];
+                    let currentTeamNames = data.teamNames || teamNames;
+                    
+                    // 一次性把 6 個小隊的分數灌進去
+                    pendingImportScores.forEach(item => {
+                        currentScores[item.index] += item.score;
+                        currentLogs.push({
+                            team: currentTeamNames[item.index],
+                            change: item.score,
+                            reason: "東勢林場據點戰結算匯入",
+                            time: new Date().toLocaleTimeString()
+                        });
+                    });
+                    
+                    if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
+                    
+                    transaction.update(docRef, { scores: currentScores, logs: currentLogs });
+                });
+                alert("✅ 據點戰分數匯入成功！所有資料已同步。");
+            } catch(e) {
+                console.error("匯入失敗: ", e);
+                alert("匯入失敗，請檢查網路連線。");
+            }
+            pendingImportScores = []; // 清空緩存
+        };
+        // ----------------------------------------------------
+
+        // --- 處理審核佇列面板與通知 ---
         function updateBadges() {
             const count = pendingRequests.length;
             const btnBadge = document.getElementById('btn-pending-badge');
@@ -411,7 +505,7 @@
         }
 
 
-        // --- 🟡 STREAMING_CHUNK: 畫面渲染與 UI 操作 ---
+        // --- 畫面渲染與 UI 操作 ---
         function render() {
             const mainGrid = document.getElementById('mainGrid');
             const adminGrid = document.getElementById('adminGrid');
@@ -547,7 +641,7 @@
             pendingUpdateIndex = null;
         }
 
-        // --- 🟡 STREAMING_CHUNK: 手動修改分數邏輯 ---
+        // --- 手動修改分數邏輯 ---
         async function submitScore(isPlus) {
             if (pendingUpdateIndex === null) return;
             
@@ -689,6 +783,8 @@
         window.confirmReset = confirmReset;
         window.approveRequest = approveRequest;
         window.rejectRequest = rejectRequest;
+        window.cancelImport = cancelImport;
+        window.confirmImport = confirmImport;
 
         // 啟動應用程式
         initApp();
