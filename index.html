@@ -37,7 +37,6 @@
             --glass-btn-text: #0f172a;
             --glass-btn-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.1), inset 0 1px 1px 0 rgba(255, 255, 255, 0.8);
 
-            /* 名次邊框與發光色（日間） */
             --tier-1-border: #f59e0b;
             --tier-2-border: #6366f1;
             --tier-3-border: #ea580c;
@@ -64,7 +63,6 @@
             --glass-btn-text: #f8fafc;
             --glass-btn-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.45), inset 0 1px 1px 0 rgba(255, 255, 255, 0.35);
 
-            /* 名次邊框與發光色（夜間） */
             --tier-1-border: #fbbf24;
             --tier-2-border: #818cf8;
             --tier-3-border: #ff6b2b;
@@ -78,11 +76,27 @@
             font-family: 'Noto Sans TC', sans-serif; 
             background-color: var(--bg-body); 
             color: var(--text-main);
+            min-height: 100vh;
+            position: relative;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* 🌟 核心突破：iPhone 專用「物理釘死固定背景層」，保證滑動時 100% 絕對不動！ */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            width: 100vw;
+            height: 100vh;
             background-image: radial-gradient(var(--bg-grid-dot) 1.5px, transparent 1.5px);
             background-size: 24px 24px;
-            background-attachment: fixed;
-            min-height: 100vh;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            z-index: -1;
+            pointer-events: none;
+            transform: translate3d(0, 0, 0);
+            -webkit-transform: translate3d(0, 0, 0);
         }
 
         .timer-font { font-family: 'Space Mono', monospace; font-variant-numeric: tabular-nums; }
@@ -121,19 +135,31 @@
             clip-path: polygon(0 0, 85% 0, 100% 100%, 0% 100%);
         }
 
-        /* 卡片容器：毛玻璃與柔和陰影 */
+        /* 🌟 做法 1：經典 Q 彈果凍回彈卡片核心樣式 */
         .card-shadow { 
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             background-color: var(--bg-card);
             border: 1.5px solid var(--card-border);
-            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
-            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background-color 0.3s ease;
+            box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.18s ease, filter 0.15s ease, background-color 0.3s ease;
         }
 
-        /* =========================================================
-           🍏 終極 iOS 液態毛玻璃按鍵核心 CSS 樣式庫 (Glassmorphism)
-           ========================================================= */
+        .card-shadow:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 16px 32px -6px rgba(56, 189, 248, 0.35), inset 0 1px 0 0 rgba(255, 255, 255, 0.4);
+        }
+
+        .card-shadow:active {
+            transform: translateY(3px) scale(0.95);
+            box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.3), inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+            filter: brightness(0.94);
+        }
+
+        /* 🍏 終極 iOS 液態毛玻璃按鍵樣式 */
         .ios-glass-btn {
             position: relative;
             background: var(--glass-btn-bg) !important;
@@ -143,8 +169,7 @@
             box-shadow: var(--glass-btn-shadow) !important;
             color: var(--glass-btn-text) !important;
             font-weight: 800;
-            overflow: hidden;
-            transition: all 0.22s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
@@ -162,18 +187,18 @@
         }
 
         .ios-glass-btn:hover {
-            transform: translateY(-2px);
+            transform: translateY(-2px) scale(1.02);
             filter: brightness(1.08);
             box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.25), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6) !important;
         }
 
         .ios-glass-btn:active {
-            transform: scale(0.95);
+            transform: translateY(2px) scale(0.94);
             filter: brightness(0.92);
             box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2) !important;
         }
 
-        /* 🔵 iOS 玻璃主色調（深藍/天藍調） */
+        /* 🔵 iOS 玻璃主色調 */
         .ios-glass-primary {
             background: linear-gradient(135deg, rgba(30, 58, 138, 0.85), rgba(14, 116, 144, 0.75)) !important;
             color: #ffffff !important;
@@ -181,7 +206,7 @@
             box-shadow: 0 10px 24px -4px rgba(14, 116, 144, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6) !important;
         }
 
-        /* 🟢 iOS 玻璃綠色（加分/確認） */
+        /* 🟢 iOS 玻璃綠色 */
         .ios-glass-success {
             background: linear-gradient(135deg, rgba(22, 163, 74, 0.85), rgba(13, 148, 136, 0.75)) !important;
             color: #ffffff !important;
@@ -189,7 +214,7 @@
             box-shadow: 0 10px 24px -4px rgba(22, 163, 74, 0.35), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6) !important;
         }
 
-        /* 🔴 iOS 玻璃紅色（扣分/危險/廣播） */
+        /* 🔴 iOS 玻璃紅色 */
         .ios-glass-danger {
             background: linear-gradient(135deg, rgba(220, 38, 38, 0.85), rgba(185, 28, 28, 0.75)) !important;
             color: #ffffff !important;
@@ -197,7 +222,7 @@
             box-shadow: 0 10px 24px -4px rgba(220, 38, 38, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6) !important;
         }
 
-        /* 🟡 iOS 玻璃耀眼黃金（第一名 🥇） */
+        /* 🟡 第一名 🥇 耀眼金黃 */
         .ios-glass-gold {
             background: linear-gradient(135deg, rgba(234, 179, 8, 0.9), rgba(202, 138, 4, 0.85)) !important;
             color: #ffffff !important;
@@ -205,7 +230,7 @@
             box-shadow: 0 10px 24px -4px rgba(234, 179, 8, 0.55), inset 0 1px 1px 0 rgba(255, 255, 255, 0.9) !important;
         }
 
-        /* 🟠 iOS 玻璃亮橘青銅（第三名 🥉 - 與第一名有極明顯區分） */
+        /* 🟠 第三名 🥉 鮮明亮橘紅銅 */
         .ios-glass-bronze {
             background: linear-gradient(135deg, rgba(234, 88, 12, 0.9), rgba(194, 65, 12, 0.85)) !important;
             color: #ffffff !important;
@@ -221,7 +246,7 @@
             box-shadow: 0 10px 24px -4px rgba(245, 158, 11, 0.35), inset 0 1px 1px 0 rgba(255, 255, 255, 0.7) !important;
         }
 
-        /* 📱 快捷晶片按鈕 (iOS Widget 玻璃標籤風格) */
+        /* 📱 快捷晶片按鈕 (Q 彈果凍晶片) */
         .tactical-chip {
             background: var(--glass-btn-bg) !important;
             backdrop-filter: blur(18px) saturate(180%);
@@ -232,19 +257,20 @@
             font-family: 'Space Mono', monospace;
             font-weight: 900;
             font-size: 14px;
-            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, box-shadow 0.15s ease;
+            -webkit-tap-highlight-color: transparent;
         }
         .tactical-chip:hover {
             background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.85)) !important;
             color: #ffffff !important;
             border-color: rgba(253, 224, 71, 0.8) !important;
-            transform: translateY(-2px) scale(1.03);
+            transform: translateY(-2px) scale(1.05);
         }
         .tactical-chip:active {
-            transform: scale(0.92);
+            transform: translateY(2px) scale(0.92);
         }
 
-        /* 🌟 手機專用：超強烈彈跳高光動畫 */
+        /* 🌟 分數更新時的全場卡片跳動脈衝 */
         @keyframes mobileCardJump {
             0% { transform: scale(1); }
             20% { transform: scale(1.08) translateY(-14px); box-shadow: 0 0 35px rgba(56, 189, 248, 1) !important; border-color: #38bdf8 !important; }
@@ -275,7 +301,7 @@
             border-color: #38bdf8 !important;
         }
 
-        /* 🥇 金、銀、銅戰隊分級光暈（強化 1 與 3 的色彩對比） */
+        /* 🥇 金、銀、銅戰隊分級光暈 */
         .rank-tier-1 {
             border-color: var(--tier-1-border) !important;
             box-shadow: 0 14px 35px rgba(245, 158, 11, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.6);
@@ -435,7 +461,7 @@
         ::-webkit-scrollbar-thumb { background: #64748b; border-radius: 3px; }
     </style>
 </head>
-<body class="p-3 sm:p-4 md:p-6 relative">
+<body class="p-3 sm:p-4 md:p-6">
 
     <div id="loadingScreen">
         <img src="IMG_1716.jpg" alt="115 新生宿營 Logo" class="loading-logo" onerror="this.src='https://placehold.co/200x200/1e3a8a/ffffff?text=連線中';">
@@ -521,7 +547,7 @@
             </div>
             <div>
                 <h1 class="text-xl sm:text-2xl md:text-3xl font-black tracking-wider text-[#1e3a8a] dark:text-sky-400 flex items-center gap-1.5">
-                    宿營計分系統
+                    新生宿營計分系統
                 </h1>
                 <p class="text-[10px] sm:text-xs text-[#64748b] dark:text-slate-400 font-bold tracking-widest timer-font mt-0.5">
                     Camping Point Calculation System
@@ -529,9 +555,9 @@
             </div>
         </div>
 
-        <div class="ios-glass-btn flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 timer-font px-3.5 py-1.5 rounded-full">
-            <span id="header-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
-            <span id="header-status-text">ONLINE</span>
+        <div class="ios-glass-btn flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 timer-font px-3.5 py-1.5 rounded-full shrink-0">
+            <span id="header-status-dot" class="inline-block w-2.5 h-2.5 min-w-[10px] min-h-[10px] rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.9)] shrink-0"></span>
+            <span id="header-status-text" class="tracking-wider">ONLINE</span>
         </div>
     </header>
 
@@ -651,7 +677,7 @@
 
             <div class="mb-5">
                 <label class="block text-[11px] font-bold text-[#64748b] dark:text-slate-400 mb-1">任務名稱 / 加分事由：</label>
-                <input type="text" id="reasonInput" class="tactical-input w-full text-xs sm:text-sm font-bold p-3 rounded-2xl" value="關卡結算報酬">
+                <input type="text" id="reasonInput" class="tactical-input w-full text-xs sm:text-sm font-bold p-3 rounded-2xl" value="據點攻防作戰獲勝">
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -880,7 +906,9 @@
                 title.innerText = "🚨 網路連線已中斷";
                 desc.innerText = "目前處於離線狀態，已鎖定寫入防護！";
                 
-                if (statusDot) statusDot.className = "w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]";
+                if (statusDot) {
+                    statusDot.className = "inline-block w-2.5 h-2.5 min-w-[10px] min-h-[10px] rounded-full bg-red-500 animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.9)] shrink-0";
+                }
                 if (statusText) statusText.innerText = "OFFLINE";
             } else if (type === 'online') {
                 triggerHaptic('light');
@@ -890,7 +918,9 @@
                 title.innerText = "✅ 網路已重新連線";
                 desc.innerText = "戰情終端連線恢復，資料庫同步中...";
                 
-                if (statusDot) statusDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]";
+                if (statusDot) {
+                    statusDot.className = "inline-block w-2.5 h-2.5 min-w-[10px] min-h-[10px] rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.9)] shrink-0";
+                }
                 if (statusText) statusText.innerText = "ONLINE";
 
                 toastTimeout = setTimeout(() => { dismissNetworkToast(); }, 3500);
@@ -1108,7 +1138,7 @@
             requestAnimationFrame(step);
         }
 
-        // 🌟 畫面渲染（固定 1~6 隊排序 + 1與3名強烈區分顏色）
+        // 🌟 畫面渲染（固定 1~6 隊排序 + Q 彈果凍卡片 + 1與3名強烈區分顏色）
         function render(prevList = [], currentList = []) {
             const squadGrid = document.getElementById('squadGrid');
             const adminGrid = document.getElementById('adminGrid');
@@ -1138,13 +1168,13 @@
                     rankClass = 'rank-tier-2';
                     rankBadge = `<span class="ios-glass-btn ios-glass-primary text-[11px] font-black px-2.5 py-0.5 rounded-full shadow timer-font"><i class="fa-solid fa-medal mr-1"></i>TOP 2</span>`;
                 } else if (rank === 3) {
-                    // 🥉 第三名：鮮明亮橘紅銅色 (與第一名完全區隔！)
+                    // 🥉 第三名：鮮明亮橘紅銅色
                     rankClass = 'rank-tier-3';
                     rankBadge = `<span class="ios-glass-btn ios-glass-bronze text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-lg timer-font"><i class="fa-solid fa-award mr-1"></i>TOP 3</span>`;
                 }
 
                 return `
-                    <div class="card-shadow rounded-3xl p-4 sm:p-5 flex flex-col justify-between relative cursor-pointer group hover:-translate-y-1 active:scale-[0.99] ${rankClass}" id="card-${idx}" onclick="showFocus(${idx})">
+                    <div class="card-shadow rounded-3xl p-4 sm:p-5 flex flex-col justify-between relative ${rankClass}" id="card-${idx}" onclick="showFocus(${idx})">
                         <div class="absolute -top-[2px] -left-[2px] bg-slate-900/90 text-sky-400 text-[9px] sm:text-[10px] font-bold px-3 py-0.5 folder-tab z-10 border-b border-r border-sky-500/30">
                             FILE: SQUAD-0${idx + 1}
                         </div>
@@ -1159,9 +1189,9 @@
                             <div>${rankBadge}</div>
                         </div>
 
-                        <div class="rounded-2xl p-3 sm:p-4 my-1 text-center border border-slate-300/40 dark:border-slate-700/50 group-hover:border-[#1e3a8a] transition" style="background-color: var(--bg-inner);">
+                        <div class="rounded-2xl p-3 sm:p-4 my-1 text-center border border-slate-300/40 dark:border-slate-700/50 transition" style="background-color: var(--bg-inner);">
                             <div class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 flex items-center justify-center gap-1">
-                                TOTAL TACTICAL SCORE <i class="fa-solid fa-up-right-and-down-left-from-center text-[8px] opacity-0 group-hover:opacity-100 transition"></i>
+                                TOTAL TACTICAL SCORE <i class="fa-solid fa-up-right-and-down-left-from-center text-[8px] opacity-60"></i>
                             </div>
                             <div class="text-4xl sm:text-5xl font-black text-[#1e3a8a] dark:text-amber-400 timer-font drop-shadow truncate" id="score-text-${idx}">
                                 ${(prevList[idx] ?? score).toLocaleString()}
@@ -1215,7 +1245,7 @@
             if (!list) return;
 
             if (pendingRequests.length === 0) {
-                list.innerHTML = '<div class="text-slate-400 italic text-center py-5 rounded-2xl border border-slate-300 dark:border-slate-800 text-xs sm:text-sm" style="background-color: var(--bg-inner);">✅ 目前無待審核的戰況回報</div>';
+                list.innerHTML = '<div class="text-slate-400 italic text-center py-5 rounded-xl border border-slate-300 dark:border-slate-800 text-xs sm:text-sm" style="background-color: var(--bg-inner);">✅ 目前無待審核的戰況回報</div>';
                 return;
             }
 
@@ -1649,4 +1679,4 @@
         initApp();
     </script>
 </body>
-</html>ㄋ
+</html>
