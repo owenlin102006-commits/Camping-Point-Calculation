@@ -5,8 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🌐 東勢林場終端戰情室 | 宿營戰隊計分系統</title>
     
-    <!-- Tailwind CSS -->
+    <!-- 引入 Tailwind CSS 工具庫 -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // 🌟 關鍵修復：強制 Tailwind 深色模式由 class 控制，杜絕系統外觀干擾
+        tailwind.config = {
+            darkMode: 'class'
+        }
+    </script>
     
     <!-- Google Fonts & FontAwesome -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
@@ -37,7 +43,7 @@
             --tier-3-border: #f97316;
         }
 
-        /* 🌙 深夜深藍戰情模式 */
+        /* 🌙 預設深藍戰情模式 (東勢林場專屬配色，完全無白邊) */
         body.dark-mode {
             --bg-body: #0b1120;
             --bg-grid-dot: #1e293b;
@@ -52,7 +58,6 @@
             --input-border: #38bdf8;
             --input-text: #fde68a;
 
-            /* 🌟 夜間快捷晶片專屬高對比：深藍底 + 營火金字 + 戰術邊框 */
             --chip-bg: #1e293b;
             --chip-text: #f59e0b;
             --chip-border: #38bdf8;
@@ -93,9 +98,9 @@
             clip-path: polygon(0 0, 85% 0, 100% 100%, 0% 100%);
         }
 
-        /* 擬物風立體硬陰影卡片 */
+        /* 擬物風立體硬陰影卡片 (徹底去除突兀白邊) */
         .card-shadow { 
-            box-shadow: 4px 4px 0px rgba(0,0,0,0.22); 
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.25); 
             border: 2px solid var(--card-border); 
             background-color: var(--bg-card);
             transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.3s ease;
@@ -122,7 +127,7 @@
             border-color: #38bdf8 !important;
         }
 
-        /* 🌟 快捷晶片按鈕專屬樣式 (徹底解決字體消失問題) */
+        /* 🌟 高對比快捷晶片按鈕 (深底 + 營火金字) */
         .tactical-chip {
             background-color: var(--chip-bg) !important;
             color: var(--chip-text) !important;
@@ -158,14 +163,14 @@
         /* 分數變動閃爍動畫 */
         @keyframes scorePulse {
             0% { transform: scale(1); filter: brightness(1); }
-            50% { transform: scale(1.1); filter: brightness(1.4); color: #38bdf8; }
+            50% { transform: scale(1.08); filter: brightness(1.35); color: #38bdf8; }
             100% { transform: scale(1); filter: brightness(1); }
         }
         .score-pulse {
             animation: scorePulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        /* 實色深藍全螢幕投影 */
+        /* 🌟 實色深藍全螢幕投影 (無模糊、純實色沉浸) */
         #focus-overlay {
             position: fixed;
             inset: 0;
@@ -258,7 +263,8 @@
         ::-webkit-scrollbar-thumb { background: #64748b; border-radius: 3px; }
     </style>
 </head>
-<body class="p-3 sm:p-4 md:p-6 relative">
+<!-- 🌟 預設直接套用 dark-mode 類別 -->
+<body class="dark-mode p-3 sm:p-4 md:p-6 relative">
 
     <!-- 🚀 啟動連線畫面 -->
     <div id="loadingScreen">
@@ -390,7 +396,7 @@
     <!-- ==================== 📱 側邊懸浮動作中樞 ==================== -->
     <div class="side-floating-dock" id="sideFloatingDock">
         <button onclick="toggleTheme()" id="themeBtn" class="w-12 h-12 sm:w-14 sm:h-14 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-2xl btn-shadow flex items-center justify-center border-2 border-slate-600 active:scale-95 shadow-xl transition" title="切換日/夜間模式">
-            <i class="fa-solid fa-moon text-lg sm:text-xl"></i>
+            <i class="fa-solid fa-sun text-yellow-400 text-lg sm:text-xl"></i>
         </button>
         <button onclick="toggleAdminView()" id="viewBtn" class="w-12 h-12 sm:w-14 sm:h-14 bg-red-600 hover:bg-red-700 text-white rounded-2xl btn-shadow flex items-center justify-center border-2 border-red-500 relative active:scale-95 shadow-xl transition" title="切換值勤後台">
             <i class="fa-solid fa-user-shield text-lg sm:text-xl"></i>
@@ -418,7 +424,7 @@
         </div>
     </div>
 
-    <!-- ==================== 彈出視窗群 (修正晶片按鈕文字清晰度) ==================== -->
+    <!-- ==================== 彈出視窗群 ==================== -->
 
     <!-- 調整分數彈窗 -->
     <div id="scoreModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-3 sm:p-4">
@@ -431,7 +437,7 @@
                 <input type="number" id="scoreInput" class="tactical-input w-full text-center text-2xl sm:text-3xl font-black p-3 rounded-xl border-2 timer-font" value="100">
             </div>
 
-            <!-- 🌟 高對比戰術快捷晶片按鈕 (文字 100% 清晰) -->
+            <!-- 🌟 高對比戰術快捷晶片按鈕 -->
             <div class="grid grid-cols-4 gap-2 mb-3.5">
                 <button type="button" onclick="setChip(10)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+10</button>
                 <button type="button" onclick="setChip(50)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+50</button>
@@ -529,7 +535,7 @@
         let pendingRequests = []; 
         let alertMsg = "";
 
-        let previousScores = [0, 0, 0, 0, 0, 0]; // 🌟 專門記錄上一刻的分數狀態，用於觸發滾動動畫
+        let previousScores = [0, 0, 0, 0, 0, 0]; 
         let pendingUpdateIndex = null; 
         let pendingRenameIndex = null; 
         let isFirstLoad = true; 
@@ -553,9 +559,8 @@
                         banner.classList.add('hidden');
                     }
 
-                    // 渲染並執行舊值到新值的滾動動畫
                     render(previousScores, newScores); 
-                    previousScores = [...newScores]; // 更新舊值記憶
+                    previousScores = [...newScores]; 
                     scores = [...newScores];
 
                     renderPendingList(); 
@@ -580,7 +585,7 @@
             });
         }
 
-        // 🌟 數字滾動平滑演算法 (老虎機滾動效果)
+        // 🌟 數字滾動平滑演算法
         function animateScore(el, start, end, duration = 650) {
             if (!el || start === end) {
                 if (el) el.innerText = end.toLocaleString();
@@ -590,7 +595,7 @@
             const step = (ts) => {
                 if (!startTs) startTs = ts;
                 const progress = Math.min((ts - startTs) / duration, 1);
-                const ease = 1 - Math.pow(1 - progress, 3); // Ease-Out
+                const ease = 1 - Math.pow(1 - progress, 3);
                 const val = Math.floor(start + (end - start) * ease);
                 el.innerText = val.toLocaleString();
                 if (progress < 1) {
@@ -602,7 +607,7 @@
             requestAnimationFrame(step);
         }
 
-        // 🌟 渲染函式 (前台與後台同步觸發數字滾動)
+        // 🌟 渲染函式 (徹底綁定色彩變數)
         function render(prevList = [], currentList = []) {
             const squadGrid = document.getElementById('squadGrid');
             const adminGrid = document.getElementById('adminGrid');
@@ -645,7 +650,8 @@
                             <div>${rankBadge}</div>
                         </div>
 
-                        <div class="bg-slate-100 dark:bg-slate-900/80 rounded-xl p-3 sm:p-4 my-1 text-center border border-slate-300 dark:border-slate-700 group-hover:border-[#1e3a8a] transition">
+                        <!-- 🌟 修正：徹底採用 var(--bg-inner) 變數，告別半黑半白 -->
+                        <div class="rounded-xl p-3 sm:p-4 my-1 text-center border border-slate-300 dark:border-slate-700 group-hover:border-[#1e3a8a] transition" style="background-color: var(--bg-inner);">
                             <div class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 flex items-center justify-center gap-1">
                                 TOTAL TACTICAL SCORE <i class="fa-solid fa-up-right-and-down-left-from-center text-[8px] opacity-0 group-hover:opacity-100 transition"></i>
                             </div>
@@ -672,7 +678,6 @@
                 </div>
             `).join('');
 
-            // 🌟 執行前台與後台的雙向數字滾動動畫
             renderScores.forEach((score, idx) => {
                 const prev = prevList[idx];
                 if (prev !== undefined && prev !== score) {
@@ -702,19 +707,19 @@
             if (!list) return;
 
             if (pendingRequests.length === 0) {
-                list.innerHTML = '<div class="text-slate-400 italic text-center py-5 bg-slate-100 dark:bg-slate-900/60 rounded-xl border border-slate-300 dark:border-slate-800 text-xs sm:text-sm">✅ 目前無待審核的戰況回報</div>';
+                list.innerHTML = '<div class="text-slate-400 italic text-center py-5 rounded-xl border border-slate-300 dark:border-slate-800 text-xs sm:text-sm" style="background-color: var(--bg-inner);">✅ 目前無待審核的戰況回報</div>';
                 return;
             }
 
             const reversed = [...pendingRequests].reverse();
             list.innerHTML = reversed.map(req => `
-                <div id="req-card-${req.id}" class="bg-slate-100 dark:bg-slate-900 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-l-4 border-amber-500 shadow border border-slate-300 dark:border-slate-800 transition duration-200">
+                <div id="req-card-${req.id}" class="p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-l-4 border-amber-500 shadow border border-slate-300 dark:border-slate-800 transition duration-200" style="background-color: var(--bg-inner);">
                     <div class="flex-1 text-left w-full">
-                        <div class="text-[10px] sm:text-xs text-slate-400 font-bold mb-0.5"><span class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded mr-1.5">時間：${req.time}</span></div>
+                        <div class="text-[10px] sm:text-xs text-slate-400 font-bold mb-0.5"><span class="px-1.5 py-0.5 rounded mr-1.5" style="background-color: var(--bg-card);">時間：${req.time}</span></div>
                         <div class="text-sm sm:text-base font-black mb-0.5">小隊：<span class="text-[#1e3a8a] dark:text-sky-400">${req.team}</span></div>
                         <div class="text-xs text-slate-600 dark:text-slate-300 font-bold flex items-center">
                             項目：${req.reason} 
-                            <span class="text-green-600 dark:text-green-400 text-sm sm:text-base font-black ml-2 bg-green-100 dark:bg-green-950/80 px-2 py-0.5 rounded border border-green-500/30">+${req.score} 分</span>
+                            <span class="text-green-600 dark:text-green-400 text-sm sm:text-base font-black ml-2 px-2 py-0.5 rounded border border-green-500/30" style="background-color: var(--bg-card);">+${req.score} 分</span>
                         </div>
                     </div>
                     <div class="flex gap-2 w-full md:w-auto shrink-0 mt-1 md:mt-0">
@@ -918,13 +923,11 @@
             document.getElementById('scoreModal').classList.remove('hidden');
         };
 
-        // 🌟 快捷點擊函式
         window.setChip = (val) => { 
             const input = document.getElementById('scoreInput');
             if (input) input.value = val; 
         };
 
-        // 🌟 人工調整分數送出 (支援即時數值滾動與光暈脈動)
         window.submitScore = async (isPlus) => {
             if (pendingUpdateIndex === null) return;
             const val = parseInt(document.getElementById('scoreInput').value);
@@ -972,7 +975,7 @@
                 return;
             }
             mainLogs.innerHTML = logs.slice(-8).reverse().map(l => `
-                <div class="p-2 sm:p-2.5 bg-slate-100 dark:bg-slate-900/60 rounded-lg flex justify-between items-center text-xs border border-slate-300 dark:border-slate-800">
+                <div class="p-2 sm:p-2.5 rounded-lg flex justify-between items-center text-xs border border-slate-300 dark:border-slate-800" style="background-color: var(--bg-inner);">
                     <div class="truncate mr-2">
                         <span class="text-slate-400 timer-font mr-1.5">[${l.time}]</span>
                         <span class="font-black text-[#1e3a8a] dark:text-sky-400 mr-1.5">${l.team}</span>
@@ -994,7 +997,7 @@
                 container.innerHTML = '<div class="text-center text-slate-400 py-6 text-xs italic">此小隊尚無任何加扣分紀錄。</div>';
             } else {
                 container.innerHTML = sqLogs.map(l => `
-                    <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-800 rounded-xl border-l-4 ${l.change > 0 ? 'border-green-500' : 'border-red-500'} flex justify-between items-center shadow-sm">
+                    <div class="p-2.5 sm:p-3 rounded-xl border-l-4 ${l.change > 0 ? 'border-green-500' : 'border-red-500'} flex justify-between items-center shadow-sm" style="background-color: var(--bg-card);">
                         <div>
                             <div class="text-[10px] text-slate-400 timer-font">${l.time}</div>
                             <div class="font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200">${l.reason}</div>
@@ -1085,7 +1088,13 @@
             }
         };
 
-        if (localStorage.getItem('g5_theme') === 'dark') {
+        // 🌟 預設若無紀錄直接設定為深藍模式
+        const savedTheme = localStorage.getItem('g5_theme');
+        if (savedTheme === 'light') {
+            document.body.classList.remove('dark-mode');
+            const btn = document.getElementById('themeBtn');
+            if (btn) btn.innerHTML = `<i class="fa-solid fa-moon text-lg sm:text-xl"></i>`;
+        } else {
             document.body.classList.add('dark-mode');
             const btn = document.getElementById('themeBtn');
             if (btn) btn.innerHTML = `<i class="fa-solid fa-sun text-yellow-400 text-lg sm:text-xl"></i>`;
