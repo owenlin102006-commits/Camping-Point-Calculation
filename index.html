@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>🌐 東勢林場終端戰情室 | 宿營戰隊計分系統</title>
     
-    <!-- 引入 Tailwind CSS 工具庫 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -13,7 +12,6 @@
         }
     </script>
     
-    <!-- Google Fonts & FontAwesome -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -91,7 +89,7 @@
 
         .timer-font { font-family: 'Space Mono', monospace; font-variant-numeric: tabular-nums; }
         
-        /* 🚧 警視廳黃黑警戒封鎖線 (動態無縫輸送滑動) */
+        /* 🚧 警視廳黃黑警戒封鎖線 */
         @keyframes crimeTapeConveyor {
             0% { background-position: 0 0; }
             100% { background-position: 39.6px 0; }
@@ -141,27 +139,17 @@
             transform: translate(2px, 2px); 
         }
 
-        /* 🌟 極致震撼：iPhone 專屬立體彈跳脈衝高光動畫 */
-        @keyframes intenseCardJump {
-            0% { transform: scale(1) translateY(0); }
-            20% { 
-                transform: scale(1.08) translateY(-16px); 
-                outline: 4px solid #38bdf8 !important; 
-                box-shadow: 0 0 45px rgba(56, 189, 248, 0.95), 0 16px 30px rgba(0,0,0,0.6) !important;
-                filter: brightness(1.25);
-            }
-            40% { transform: scale(0.95) translateY(4px); }
-            60% { 
-                transform: scale(1.05) translateY(-8px); 
-                outline: 4px solid #f59e0b !important; 
-                box-shadow: 0 0 35px rgba(245, 158, 11, 0.85) !important;
-                filter: brightness(1.15);
-            }
-            80% { transform: scale(0.98) translateY(2px); }
-            100% { transform: scale(1) translateY(0); }
+        /* 🌟 手機專用：超強烈彈跳高光動畫 */
+        @keyframes mobileCardJump {
+            0% { transform: scale(1); }
+            20% { transform: scale(1.08) translateY(-14px); box-shadow: 0 0 35px rgba(56, 189, 248, 1) !important; border-color: #38bdf8 !important; }
+            40% { transform: scale(0.96) translateY(3px); }
+            60% { transform: scale(1.04) translateY(-6px); box-shadow: 0 0 25px rgba(245, 158, 11, 0.9) !important; border-color: #f59e0b !important; }
+            80% { transform: scale(0.98) translateY(1px); }
+            100% { transform: scale(1); }
         }
         .card-jump-pulse {
-            animation: intenseCardJump 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+            animation: mobileCardJump 1.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
             z-index: 50 !important;
             position: relative;
         }
@@ -384,13 +372,11 @@
 </head>
 <body class="p-3 sm:p-4 md:p-6 relative">
 
-    <!-- 🚀 啟動連線畫面 -->
     <div id="loadingScreen">
         <img src="IMG_1716.jpg" alt="115 新生宿營 Logo" class="loading-logo" onerror="this.src='https://placehold.co/200x200/1e3a8a/ffffff?text=連線中';">
         <div class="loading-text">🌲 戰情終端連線中...</div>
     </div>
 
-    <!-- 🚨 頂部手勢滑動懸浮網路狀態 Toast -->
     <div id="network-toast" class="card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-xl border-2 cursor-grab active:cursor-grabbing">
         <div class="flex items-center gap-2.5">
             <div id="toast-icon-box" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0">
@@ -409,7 +395,6 @@
         </div>
     </div>
 
-    <!-- 🌟 全域緊急作戰通報 HUD 實體彈窗 -->
     <div id="broadcast-popup-modal" class="card-shadow rounded-2xl overflow-hidden border-2 border-amber-500 shadow-2xl bg-slate-900 text-white">
         <div class="crime-tape h-3 w-full"></div>
         <div class="p-4 flex items-start gap-3.5 bg-gradient-to-r from-amber-950/80 via-slate-900 to-slate-900">
@@ -436,7 +421,6 @@
         <div class="crime-tape h-2 w-full"></div>
     </div>
 
-    <!-- 🚧 全域作戰廣播條 -->
     <div id="announcement-banner" class="hidden max-w-[1400px] mx-auto mb-3 sm:mb-4 card-shadow rounded-xl flex flex-col overflow-hidden border-2 border-amber-500/60">
         <div class="crime-tape h-3.5 w-full"></div>
         <div class="p-3 sm:p-3.5 flex items-center justify-between gap-3 relative bg-amber-50 dark:bg-amber-950/50 overflow-hidden">
@@ -460,7 +444,6 @@
         <div class="crime-tape h-3 w-full"></div>
     </div>
 
-    <!-- 📡 頂部指揮中樞 Header -->
     <header class="max-w-[1400px] mx-auto flex justify-between items-center mb-4 sm:mb-6 pb-3 border-b-4 border-[#1e3a8a] dark:border-sky-500">
         <div class="flex items-center gap-3">
             <div class="bg-[#1e3a8a] dark:bg-sky-600 text-white p-3 rounded-2xl btn-shadow relative shrink-0">
@@ -486,7 +469,6 @@
     </header>
 
     <main class="max-w-[1400px] mx-auto">
-        <!-- 🌟 前台：搜查戰況大螢幕 -->
         <div id="main-view">
             <div class="flex items-center justify-between pl-1 mb-3">
                 <div class="flex items-center gap-2">
@@ -500,10 +482,8 @@
                 </span>
             </div>
 
-            <!-- 戰隊卡片 Grid -->
             <div id="squadGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5 md:gap-6 mb-6"></div>
 
-            <!-- 📜 即時作戰傳輸日誌 -->
             <div class="card-shadow rounded-2xl p-4 sm:p-5 mb-6">
                 <h3 class="font-black text-sm sm:text-base md:text-lg mb-3 flex items-center gap-2 text-[#1e3a8a] dark:text-sky-400">
                     <i class="fa-solid fa-file-waveform"></i> 最新搜查記錄日誌 (TACTICAL LOGS)
@@ -512,10 +492,8 @@
             </div>
         </div>
 
-        <!-- ⚙️ 後台：指揮官終端控制中心 -->
         <div id="admin-view" class="hidden">
             
-            <!-- 📢 後台廣播系統中樞 -->
             <div class="card-shadow rounded-2xl p-4 sm:p-5 mb-5 border-2 border-blue-600/40">
                 <h3 class="text-sm sm:text-base font-black text-[#1e3a8a] dark:text-sky-400 mb-1 flex items-center gap-2">
                     <i class="fa-solid fa-bullhorn"></i> 警視廳廣播系統中樞
@@ -534,7 +512,6 @@
                 </div>
             </div>
 
-            <!-- 🚨 待審核戰報區塊 -->
             <div class="card-shadow rounded-2xl p-4 sm:p-5 mb-5 border-2 border-amber-500/50">
                 <h2 class="text-base sm:text-lg font-black text-amber-500 dark:text-amber-400 mb-3 flex items-center">
                     <i class="fa-solid fa-siren-on mr-2 animate-pulse"></i>
@@ -544,7 +521,6 @@
                 <div id="pending-list" class="space-y-2.5 max-h-72 overflow-y-auto pr-1"></div>
             </div>
 
-            <!-- 後台小隊管理卡片 -->
             <div class="card-shadow rounded-2xl p-4 sm:p-5 mb-6 border-2 border-slate-300 dark:border-slate-700">
                 <h2 class="text-base sm:text-lg font-black text-[#1e3a8a] dark:text-sky-400 mb-4 flex items-center gap-2">
                     <i class="fa-solid fa-sliders"></i> 各小隊戰力值人工調配
@@ -560,7 +536,6 @@
         </div>
     </main>
 
-    <!-- ==================== 📱 側邊戰術毛玻璃懸浮動作中樞 ==================== -->
     <div class="side-floating-dock" id="sideFloatingDock">
         <button onclick="toggleTheme()" id="themeBtn" class="glass-btn-theme w-12 h-12 sm:w-14 sm:h-14 text-amber-400 rounded-2xl flex items-center justify-center cursor-pointer" title="切換日/夜間模式">
             <i class="fa-solid fa-sun text-yellow-400 text-lg sm:text-xl"></i>
@@ -571,7 +546,6 @@
         </button>
     </div>
 
-    <!-- ==================== 🌟 實色深藍全螢幕放大投影 ==================== -->
     <div id="focus-overlay" class="hidden flex flex-col justify-center items-center cursor-pointer p-4 select-none" onclick="hideFocus()">
         <div class="text-center zoom-animation w-full max-w-[95vw] sm:max-w-3xl flex flex-col items-center justify-center">
             <div class="text-[11px] sm:text-xs font-mono tracking-widest text-amber-400 mb-3 uppercase border border-amber-400/50 px-3.5 py-1 rounded-full inline-block bg-amber-950/60">
@@ -591,9 +565,6 @@
         </div>
     </div>
 
-    <!-- ==================== 彈出視窗群 ==================== -->
-
-    <!-- 調整分數彈窗 -->
     <div id="scoreModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-3 sm:p-4">
         <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-sm max-h-[90vh] overflow-y-auto p-5 sm:p-6 relative">
             <h3 class="text-lg sm:text-xl font-black text-center mb-0.5 text-[#1e3a8a] dark:text-sky-400" id="scoreModalTitle">調整分數</h3>
@@ -604,7 +575,6 @@
                 <input type="number" id="scoreInput" class="tactical-input w-full text-center text-2xl sm:text-3xl font-black p-3 rounded-xl border-2 timer-font" value="100">
             </div>
 
-            <!-- 快捷晶片按鈕 -->
             <div class="grid grid-cols-4 gap-2 mb-3.5">
                 <button type="button" onclick="setChip(10)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+10</button>
                 <button type="button" onclick="setChip(50)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+50</button>
@@ -625,7 +595,6 @@
         </div>
     </div>
 
-    <!-- 獨立歷史卷宗彈窗 -->
     <div id="historyModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-3 sm:p-4">
         <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-md max-h-[82vh] flex flex-col overflow-hidden relative">
             <div class="p-3.5 sm:p-4 bg-slate-800 text-white flex justify-between items-center border-b border-slate-700">
@@ -636,7 +605,6 @@
         </div>
     </div>
 
-    <!-- 改名彈窗 -->
     <div id="renameModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-3 sm:p-4">
         <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-sm p-5 sm:p-6">
             <h3 class="text-base sm:text-lg font-black text-center mb-3 text-[#1e3a8a] dark:text-sky-400">✏️ 修改戰隊名稱</h3>
@@ -648,7 +616,6 @@
         </div>
     </div>
 
-    <!-- 歸零確認彈窗 -->
     <div id="resetModal" class="fixed inset-0 bg-black/85 z-50 hidden flex items-center justify-center p-3 sm:p-4">
         <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-sm p-5 sm:p-6 text-center border-2 border-red-500">
             <div class="text-3xl text-red-500 mb-2 animate-bounce"><i class="fa-solid fa-triangle-exclamation"></i></div>
@@ -662,7 +629,6 @@
         </div>
     </div>
 
-    <!-- 外部戰報接收彈窗 -->
     <div id="import-modal" class="fixed inset-0 bg-black/85 z-50 hidden flex items-center justify-center p-3 sm:p-4">
         <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-sm p-5 text-center relative overflow-hidden border-2 border-amber-500">
             <div class="bg-amber-500 text-slate-900 py-1 absolute top-0 left-0 w-full font-black tracking-widest text-[10px]">🌐 系統戰術連線偵測</div>
@@ -677,7 +643,6 @@
         </div>
     </div>
 
-    <!-- ==================== JavaScript Firebase 邏輯區 ==================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, doc, setDoc, onSnapshot, runTransaction, updateDoc, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
@@ -822,7 +787,7 @@
             if ('vibrate' in navigator) {
                 try {
                     if (type === 'light') navigator.vibrate(15);
-                    else if (type === 'jump') navigator.vibrate([100, 60, 120]);
+                    else if (type === 'jump') navigator.vibrate([120, 80, 150]);
                     else if (type === 'warning') navigator.vibrate([60, 40, 80]);
                 } catch(e) {}
             }
@@ -971,7 +936,7 @@
             }, { passive: true });
         });
 
-        // ================= 🌟 iPhone 專用雙軌精準置中滾動與跳動觸發 =================
+        // ================= 🌟 終極修復：全平台 100% 絕對滾動與卡片跳動 =================
         function triggerTargetCardFocus(targetIdx) {
             const mainView = document.getElementById('main-view');
             
@@ -980,21 +945,10 @@
                 setTimeout(() => {
                     const targetCard = document.getElementById(`card-${targetIdx}`);
                     if (targetCard) {
-                        // 1. 雙軌滾動：先用座標 scrollTo，再輔以 scrollIntoView 保證任何瀏覽器都置中
-                        const rect = targetCard.getBoundingClientRect();
-                        const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
-                        const targetY = rect.top + scrollTop - (window.innerHeight / 2) + (rect.height / 2);
-                        
-                        window.scrollTo({
-                            top: Math.max(0, targetY),
-                            behavior: 'smooth'
-                        });
+                        // 1. 原生手機相容度最高的強制置中滾動
+                        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
 
-                        try {
-                            targetCard.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
-                        } catch(e) {}
-
-                        // 2. 移除並重新掛上強烈跳動與高光動畫
+                        // 2. 強制掛上高對比跳動光暈動畫
                         targetCard.classList.remove('card-jump-pulse');
                         void targetCard.offsetWidth; // 🪄 Reflow 強制重繪
                         targetCard.classList.add('card-jump-pulse');
@@ -1030,7 +984,7 @@
                         closeBroadcastPopup();
                     }
 
-                    // 🌟 100% 精準找出數值改變的小隊 index
+                    // 🌟 核心比對：比對前後陣列，找出變動的小隊 index
                     let changedIndex = -1;
                     if (previousScores !== null) {
                         for (let i = 0; i < newScores.length; i++) {
@@ -1043,7 +997,7 @@
 
                     const isFirstTime = (previousScores === null);
                     
-                    // 渲染大螢幕卡片
+                    // 先渲染畫面
                     render(previousScores || newScores, newScores); 
                     
                     previousScores = [...newScores]; 
@@ -1052,7 +1006,7 @@
                     renderPendingList(); 
                     updateBadges(); 
 
-                    // 🌟 非首次載入且有分數變動，強制觸發跳動與滾動！
+                    // 🌟 只要不是初次載入，且有隊伍分數變更，全場手機 100% 同步滾動跳動！
                     if (!isFirstTime && changedIndex !== -1) {
                         triggerTargetCardFocus(changedIndex);
                     }
@@ -1094,7 +1048,7 @@
             requestAnimationFrame(step);
         }
 
-        // 🌟 畫面渲染
+        // 🌟 畫面渲染 (精準綁定 card-${sq.id})
         function render(prevList = [], currentList = []) {
             const squadGrid = document.getElementById('squadGrid');
             const adminGrid = document.getElementById('adminGrid');
@@ -1105,7 +1059,10 @@
             const rankMap = {};
             scoreObjects.forEach((sq, idx) => { rankMap[sq.id] = idx + 1; });
 
-            squadGrid.innerHTML = renderScores.map((score, idx) => {
+            // 🌟 這裡使用 sq.id 確保每一隊的卡片 ID 永遠對應其原始索引！
+            squadGrid.innerHTML = scoreObjects.map((sq, sortIdx) => {
+                const idx = sq.id;
+                const score = sq.score;
                 const rank = rankMap[idx];
                 let rankClass = '';
                 let rankBadge = `<span class="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-black px-2 py-0.5 rounded border border-slate-400 dark:border-slate-700 timer-font">#0${rank}</span>`;
@@ -1593,9 +1550,9 @@
 
         window.toggleTheme = () => {
             triggerHaptic('light');
-            const willBeDark = !document.body.classList.contains('dark-mode');
-            applyThemeMode(willBeDark);
-            localStorage.setItem('g5_theme', willBeDark ? 'dark' : 'light');
+            const isDark = document.body.classList.contains('dark-mode');
+            applyThemeMode(!isDark);
+            localStorage.setItem('g5_theme', !isDark ? 'dark' : 'light');
         };
 
         window.toggleAdminView = () => {
