@@ -80,7 +80,6 @@
             color: var(--text-main);
             background-image: radial-gradient(var(--bg-grid-dot) 2px, transparent 2px);
             background-size: 20px 20px;
-            /* 🌟 核心升級：背景點點絕對鎖定，滑動時完全不動！ */
             background-attachment: fixed;
             min-height: 100vh;
             overflow-x: hidden;
@@ -140,16 +139,17 @@
             transform: translate(2px, 2px); 
         }
 
-        /* 🌟 分數調整後卡片跳動聚焦動畫 */
+        /* 🌟 分數調整後卡片跳動聚焦動畫 (極致強化震動與發光) */
         @keyframes cardJumpPulse {
-            0% { transform: scale(1); box-shadow: 4px 4px 0px rgba(0,0,0,0.25); }
-            25% { transform: scale(1.08) translateY(-12px); box-shadow: 0 0 40px rgba(56, 189, 248, 0.85); border-color: #38bdf8 !important; }
-            50% { transform: scale(0.96) translateY(3px); }
-            75% { transform: scale(1.03) translateY(-4px); box-shadow: 0 0 25px rgba(56, 189, 248, 0.5); border-color: #38bdf8 !important; }
-            100% { transform: scale(1); box-shadow: 4px 4px 0px rgba(0,0,0,0.25); }
+            0% { transform: scale(1); }
+            20% { transform: scale(1.08) translateY(-14px); box-shadow: 0 0 45px rgba(56, 189, 248, 0.95); border-color: #38bdf8 !important; }
+            40% { transform: scale(0.95) translateY(4px); }
+            60% { transform: scale(1.04) translateY(-6px); box-shadow: 0 0 30px rgba(56, 189, 248, 0.6); border-color: #38bdf8 !important; }
+            80% { transform: scale(0.98) translateY(1px); }
+            100% { transform: scale(1); }
         }
         .card-jump-pulse {
-            animation: cardJumpPulse 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+            animation: cardJumpPulse 1.1s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
             z-index: 30 !important;
         }
 
@@ -458,7 +458,7 @@
             </div>
             <div>
                 <h1 class="text-xl sm:text-2xl md:text-3xl font-black tracking-wider text-[#1e3a8a] dark:text-sky-400 flex items-center gap-1.5">
-                    新生宿營計分系統
+                    宿營計分系統
                 </h1>
                 <p class="text-[10px] sm:text-xs text-[#64748b] dark:text-slate-400 font-bold tracking-widest timer-font mt-0.5">
                     Camping Point Calculation System
@@ -693,12 +693,11 @@
         let pendingRequests = []; 
         let alertMsg = "";
 
-        let previousScores = [0, 0, 0, 0, 0, 0]; 
+        let previousScores = null; // 🌟 改為 null，精準識別首次載入與後續即時變動
         let pendingUpdateIndex = null; 
         let pendingRenameIndex = null; 
         let isFirstLoad = true; 
         let pendingImportScores = []; 
-        let lastProcessedUpdateTimestamp = 0; 
 
         // ================= 🌙 智慧日落自動感應主題系統 =================
         function applyThemeMode(isDark) {
@@ -959,29 +958,35 @@
             }, { passive: true });
         });
 
-        // 🌟 跨裝置絕對跳動與精準平滑滾動
+        // ================= 🌟 終極修復：跨裝置 100% 絕對滾動與卡片跳動 =================
         function triggerTargetCardFocus(targetIdx) {
             const mainView = document.getElementById('main-view');
             
+            // 只要目前該手機處於「前台首頁」
             if (mainView && !mainView.classList.contains('hidden')) {
-                setTimeout(() => {
-                    const targetCard = document.getElementById(`card-${targetIdx}`);
-                    if (targetCard) {
-                        const cardRect = targetCard.getBoundingClientRect();
-                        const cardCenter = cardRect.top + window.pageYOffset - (window.innerHeight / 2) + (cardRect.height / 2);
-                        
-                        window.scrollTo({
-                            top: Math.max(0, cardCenter),
-                            behavior: 'smooth'
-                        });
+                // 利用 double RAF + setTimeout 確保手機瀏覽器完成 DOM Reflow
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        const targetCard = document.getElementById(`card-${targetIdx}`);
+                        if (targetCard) {
+                            // 1. 精準計算手機置中垂直距離
+                            const cardRect = targetCard.getBoundingClientRect();
+                            const cardCenterY = cardRect.top + window.pageYOffset - (window.innerHeight / 2) + (cardRect.height / 2);
+                            
+                            window.scrollTo({
+                                top: Math.max(0, cardCenterY),
+                                behavior: 'smooth'
+                            });
 
-                        targetCard.classList.remove('card-jump-pulse');
-                        void targetCard.offsetWidth; 
-                        targetCard.classList.add('card-jump-pulse');
-                        
-                        triggerHaptic('light');
-                    }
-                }, 150);
+                            // 2. 觸發醒目跳動發光動畫
+                            targetCard.classList.remove('card-jump-pulse');
+                            void targetCard.offsetWidth; // 🪄 Reflow 強制重繪
+                            targetCard.classList.add('card-jump-pulse');
+                            
+                            triggerHaptic('light');
+                        }
+                    }, 120);
+                });
             }
         }
 
@@ -995,7 +1000,6 @@
                     logs = data.logs || [];
                     pendingRequests = data.pendingRequests || [];
                     alertMsg = data.alertMsg || "";
-                    const lastUpdatedTeam = data.lastUpdatedTeam || null; 
                     
                     const banner = document.getElementById('announcement-banner');
 
@@ -1011,26 +1015,37 @@
                         closeBroadcastPopup();
                     }
 
-                    render(previousScores, newScores); 
+                    // 🌟 核心關鍵修復：逐隊比對「到底哪一隊分數變更了」！
+                    let changedTeamIndex = -1;
+                    if (previousScores !== null) {
+                        for (let i = 0; i < newScores.length; i++) {
+                            if (newScores[i] !== previousScores[i]) {
+                                changedTeamIndex = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    // 先執行 DOM 渲染與老虎機數字滾動
+                    render(previousScores || newScores, newScores); 
+                    
+                    // 🌟 在 render 完成後，才把 previousScores 更新為最新值！
                     previousScores = [...newScores]; 
                     scores = [...newScores];
 
                     renderPendingList(); 
                     updateBadges(); 
 
-                    if (lastUpdatedTeam && lastUpdatedTeam.timestamp > lastProcessedUpdateTimestamp) {
-                        lastProcessedUpdateTimestamp = lastUpdatedTeam.timestamp;
-                        triggerTargetCardFocus(lastUpdatedTeam.index);
+                    // 🌟 只要不是第一次開網頁，且有分數變更，全場所有手機 100% 同步滾動跳動！
+                    if (!isFirstLoad && changedTeamIndex !== -1) {
+                        triggerTargetCardFocus(changedTeamIndex);
                     }
                 } else {
-                    setDoc(docRef, { scores, teamNames, logs, pendingRequests: [], alertMsg: "", lastUpdatedTeam: null });
+                    setDoc(docRef, { scores, teamNames, logs, pendingRequests: [], alertMsg: "" });
                 }
 
                 if (isFirstLoad) {
                     isFirstLoad = false;
-                    if (snap.exists() && snap.data().lastUpdatedTeam) {
-                        lastProcessedUpdateTimestamp = snap.data().lastUpdatedTeam.timestamp || 0;
-                    }
                     setTimeout(() => {
                         const loader = document.getElementById('loadingScreen');
                         if (loader) {
@@ -1235,8 +1250,7 @@
                     transaction.update(docRef, { 
                         scores: currentScores, 
                         logs: currentLogs, 
-                        pendingRequests: currentPending,
-                        lastUpdatedTeam: { index: targetIndex, timestamp: Date.now() }
+                        pendingRequests: currentPending
                     });
                 });
             } catch (e) {
@@ -1359,11 +1373,9 @@
                     
                     if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
                     
-                    const focusIdx = pendingImportScores.length > 0 ? pendingImportScores[0].index : 0;
                     transaction.update(docRef, { 
                         scores: currentScores, 
-                        logs: currentLogs,
-                        lastUpdatedTeam: { index: focusIdx, timestamp: Date.now() }
+                        logs: currentLogs
                     });
                 });
                 alert("✅ 據點戰分數已全數匯入！");
@@ -1452,8 +1464,7 @@
                     
                     transaction.update(docRef, { 
                         scores: currentScores, 
-                        logs: currentLogs,
-                        lastUpdatedTeam: { index: targetIdx, timestamp: Date.now() }
+                        logs: currentLogs
                     });
                 });
             } catch (e) {
@@ -1552,8 +1563,7 @@
                         teamNames: teamNames,
                         logs: [],
                         pendingRequests: [],
-                        alertMsg: "",
-                        lastUpdatedTeam: null
+                        alertMsg: ""
                     });
                     alert('✅ 戰力值已全數歸零！');
                 } catch(e) {
@@ -1606,4 +1616,4 @@
         initApp();
     </script>
 </body>
-</html>08.26.1
+</html>
