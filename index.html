@@ -300,7 +300,7 @@
             <div class="bg-[#1e3a8a] dark:bg-sky-600 text-white p-3 rounded-2xl btn-shadow relative shrink-0">
                 <i class="fa-solid fa-user-secret text-2xl sm:text-3xl text-amber-400"></i>
                 <div class="absolute -bottom-2 -right-2 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full border-2 border-slate-900">
-                    AP
+                    G5-1
                 </div>
             </div>
             <div>
@@ -447,7 +447,7 @@
 
             <div class="mb-5">
                 <label class="block text-[11px] font-bold text-[#64748b] dark:text-slate-400 mb-1">任務名稱 / 加分事由：</label>
-                <input type="text" id="reasonInput" class="tactical-input w-full text-xs sm:text-sm font-bold p-3 rounded-xl border-2" value="關卡結算報酬">
+                <input type="text" id="reasonInput" class="tactical-input w-full text-xs sm:text-sm font-bold p-3 rounded-xl border-2" value="據點攻防作戰獲勝">
             </div>
 
             <div class="grid grid-cols-2 gap-2.5">
@@ -513,7 +513,8 @@
     <!-- ==================== JavaScript Firebase 邏輯區 ==================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot, runTransaction, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        // 🌟 這裡把所有需要的 Firebase 功能一次匯入（包含快取套件與更新資料套件）
+        import { getFirestore, doc, setDoc, onSnapshot, runTransaction, updateDoc, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCDrPTk42gRD9kzjocMr3hNJd4BORRQ8mc",
@@ -526,7 +527,13 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        
+        // 🚀 啟動本地快取魔法！就算大家狂按 F5 重新整理，也不會浪費資料庫讀取次數！
+        const db = initializeFirestore(app, {
+            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+        });
+        
+        // 確保 docRef 只宣告一次！
         const docRef = doc(db, 'conanGame', 'scoreboard');
 
         let scores = [0, 0, 0, 0, 0, 0];
@@ -650,7 +657,6 @@
                             <div>${rankBadge}</div>
                         </div>
 
-                        <!-- 🌟 修正：徹底採用 var(--bg-inner) 變數，告別半黑半白 -->
                         <div class="rounded-xl p-3 sm:p-4 my-1 text-center border border-slate-300 dark:border-slate-700 group-hover:border-[#1e3a8a] transition" style="background-color: var(--bg-inner);">
                             <div class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 flex items-center justify-center gap-1">
                                 TOTAL TACTICAL SCORE <i class="fa-solid fa-up-right-and-down-left-from-center text-[8px] opacity-0 group-hover:opacity-100 transition"></i>
