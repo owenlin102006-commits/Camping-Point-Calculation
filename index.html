@@ -80,8 +80,11 @@
             color: var(--text-main);
             background-image: radial-gradient(var(--bg-grid-dot) 2px, transparent 2px);
             background-size: 20px 20px;
+            /* 🌟 核心升級：背景點點絕對鎖定，滑動時完全不動！ */
+            background-attachment: fixed;
             min-height: 100vh;
             overflow-x: hidden;
+            scroll-behavior: smooth;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
@@ -137,7 +140,7 @@
             transform: translate(2px, 2px); 
         }
 
-        /* 🌟 分數調整後卡片跳動聚焦動畫 (強化手機跳動效果) */
+        /* 🌟 分數調整後卡片跳動聚焦動畫 */
         @keyframes cardJumpPulse {
             0% { transform: scale(1); box-shadow: 4px 4px 0px rgba(0,0,0,0.25); }
             25% { transform: scale(1.08) translateY(-12px); box-shadow: 0 0 40px rgba(56, 189, 248, 0.85); border-color: #38bdf8 !important; }
@@ -455,7 +458,7 @@
             </div>
             <div>
                 <h1 class="text-xl sm:text-2xl md:text-3xl font-black tracking-wider text-[#1e3a8a] dark:text-sky-400 flex items-center gap-1.5">
-                    宿營計分系統
+                    新生宿營計分系統
                 </h1>
                 <p class="text-[10px] sm:text-xs text-[#64748b] dark:text-slate-400 font-bold tracking-widest timer-font mt-0.5">
                     Camping Point Calculation System
@@ -956,17 +959,14 @@
             }, { passive: true });
         });
 
-        // ================= 🌟 強化版：跨裝置絕對跳動與精準平滑滾動 =================
+        // 🌟 跨裝置絕對跳動與精準平滑滾動
         function triggerTargetCardFocus(targetIdx) {
             const mainView = document.getElementById('main-view');
             
-            // 只要目前手機處於前台首頁
             if (mainView && !mainView.classList.contains('hidden')) {
-                // 給予 150ms 確保 render() 的 DOM 節點完全上屏
                 setTimeout(() => {
                     const targetCard = document.getElementById(`card-${targetIdx}`);
                     if (targetCard) {
-                        // 1. 手機精確視窗中央滾動計算
                         const cardRect = targetCard.getBoundingClientRect();
                         const cardCenter = cardRect.top + window.pageYOffset - (window.innerHeight / 2) + (cardRect.height / 2);
                         
@@ -975,9 +975,8 @@
                             behavior: 'smooth'
                         });
 
-                        // 2. 觸發醒目跳動動畫
                         targetCard.classList.remove('card-jump-pulse');
-                        void targetCard.offsetWidth; // 🪄 Reflow 強制重繪
+                        void targetCard.offsetWidth; 
                         targetCard.classList.add('card-jump-pulse');
                         
                         triggerHaptic('light');
@@ -1019,7 +1018,6 @@
                     renderPendingList(); 
                     updateBadges(); 
 
-                    // 🌟 跨裝置同步判斷修復：接收到新變更即刻觸發滾動聚焦！
                     if (lastUpdatedTeam && lastUpdatedTeam.timestamp > lastProcessedUpdateTimestamp) {
                         lastProcessedUpdateTimestamp = lastUpdatedTeam.timestamp;
                         triggerTargetCardFocus(lastUpdatedTeam.index);
@@ -1234,7 +1232,6 @@
 
                     currentPending = currentPending.filter(r => r.id !== reqId);
                     
-                    // 🌟 廣播最新更新事件
                     transaction.update(docRef, { 
                         scores: currentScores, 
                         logs: currentLogs, 
@@ -1609,4 +1606,4 @@
         initApp();
     </script>
 </body>
-</html>
+</html>08.26.1
