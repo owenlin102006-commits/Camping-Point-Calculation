@@ -2,65 +2,226 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🔍 搜查本部戰況</title>
-    <!-- 引入 Tailwind CSS 魔法排版 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🌐 東勢林場終端戰情室 | 宿營戰隊計分系統</title>
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts & FontAwesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@500;700;900&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        /* 柯南風格專屬色系與動畫 */
-        body {
-            background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
-            color: #e2e8f0;
-            font-family: 'Arial', sans-serif;
+        :root {
+            /* ☀️ 日間戰術模式 */
+            --bg-body: #dbe4ee;
+            --bg-grid-dot: #94a3b8;
+            --bg-card: #ffffff;
+            --bg-inner: #f1f5f9;
+            --card-border: #334155;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --header-blue: #1e3a8a;
+            
+            --input-bg: #f8fafc;
+            --input-border: #94a3b8;
+            --input-text: #0f172a;
+            
+            --chip-bg: #e2e8f0;
+            --chip-text: #1e3a8a;
+            --chip-border: #94a3b8;
+
+            --tier-1-border: #eab308;
+            --tier-2-border: #6366f1;
+            --tier-3-border: #f97316;
+        }
+
+        /* 🌙 深夜深藍戰情模式 */
+        body.dark-mode {
+            --bg-body: #0b1120;
+            --bg-grid-dot: #1e293b;
+            --bg-card: #131d31;
+            --bg-inner: #070d18;
+            --card-border: #22324d;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --header-blue: #38bdf8;
+
+            --input-bg: #070d18;
+            --input-border: #38bdf8;
+            --input-text: #fde68a;
+
+            /* 🌟 夜間快捷晶片專屬高對比：深藍底 + 營火金字 + 戰術邊框 */
+            --chip-bg: #1e293b;
+            --chip-text: #f59e0b;
+            --chip-border: #38bdf8;
+
+            --tier-1-border: #facc15;
+            --tier-2-border: #818cf8;
+            --tier-3-border: #fb923c;
+        }
+
+        body { 
+            font-family: 'Noto Sans TC', sans-serif; 
+            background-color: var(--bg-body); 
+            color: var(--text-main);
+            background-image: radial-gradient(var(--bg-grid-dot) 2px, transparent 2px);
+            background-size: 20px 20px;
             min-height: 100vh;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
+
+        .timer-font { font-family: 'Space Mono', monospace; font-variant-numeric: tabular-nums; }
         
-        /* 案件卷宗卡片風格 */
-        .team-card {
-            background-color: #fdf6e3;
-            color: #1e293b;
-            position: relative;
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
+        /* 🚧 警視廳黃黑警戒封鎖線 */
+        .crime-tape {
+            background: repeating-linear-gradient(
+                45deg,
+                #facc15,
+                #facc15 14px,
+                #111827 14px,
+                #111827 28px
+            );
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
         }
-        .team-card::before {
-            content: '';
+
+        /* 🗂️ 檔案夾斜切標籤 */
+        .folder-tab {
+            clip-path: polygon(0 0, 85% 0, 100% 100%, 0% 100%);
+        }
+
+        /* 擬物風立體硬陰影卡片 */
+        .card-shadow { 
+            box-shadow: 4px 4px 0px rgba(0,0,0,0.22); 
+            border: 2px solid var(--card-border); 
+            background-color: var(--bg-card);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.3s ease;
+        }
+        .btn-shadow { 
+            box-shadow: 3px 3px 0px rgba(0,0,0,0.3); 
+            transition: all 0.15s ease;
+        }
+        .btn-shadow:active { 
+            box-shadow: 0px 0px 0px rgba(0,0,0,0.3); 
+            transform: translate(2px, 2px); 
+        }
+
+        /* 輸入框戰術樣式 */
+        .tactical-input {
+            background-color: var(--input-bg) !important;
+            border-color: var(--input-border) !important;
+            color: var(--input-text) !important;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+        .tactical-input:focus {
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+            border-color: #38bdf8 !important;
+        }
+
+        /* 🌟 快捷晶片按鈕專屬樣式 (徹底解決字體消失問題) */
+        .tactical-chip {
+            background-color: var(--chip-bg) !important;
+            color: var(--chip-text) !important;
+            border: 2px solid var(--chip-border) !important;
+            font-family: 'Space Mono', monospace;
+            font-weight: 900;
+            font-size: 14px;
+            transition: all 0.15s ease;
+        }
+        .tactical-chip:hover {
+            background-color: #f59e0b !important;
+            color: #0b1120 !important;
+            border-color: #f59e0b !important;
+        }
+        .tactical-chip:active {
+            transform: scale(0.95);
+        }
+
+        /* 🥇 金銀銅戰隊分級光暈 */
+        .rank-tier-1 {
+            border-color: var(--tier-1-border) !important;
+            box-shadow: 4px 4px 0px #ca8a04, 0 0 20px rgba(234, 179, 8, 0.35) !important;
+        }
+        .rank-tier-2 {
+            border-color: var(--tier-2-border) !important;
+            box-shadow: 4px 4px 0px #4f46e5, 0 0 16px rgba(99, 102, 241, 0.3) !important;
+        }
+        .rank-tier-3 {
+            border-color: var(--tier-3-border) !important;
+            box-shadow: 4px 4px 0px #ea580c, 0 0 16px rgba(249, 115, 22, 0.3) !important;
+        }
+
+        /* 分數變動閃爍動畫 */
+        @keyframes scorePulse {
+            0% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.1); filter: brightness(1.4); color: #38bdf8; }
+            100% { transform: scale(1); filter: brightness(1); }
+        }
+        .score-pulse {
+            animation: scorePulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* 實色深藍全螢幕投影 */
+        #focus-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: #0b1120; 
+            z-index: 1000;
+        }
+
+        .hud-fluid-score {
+            font-size: clamp(3.4rem, 14vw, 9.5rem);
+            line-height: 1.05;
+            word-break: break-all;
+            white-space: nowrap;
+        }
+
+        @keyframes zoomInCenter {
+            0% { opacity: 0; transform: scale(0.85); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .zoom-animation { 
+            animation: zoomInCenter 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
+        }
+
+        /* 浮空加分特效 */
+        @keyframes floatUp {
+            0% { opacity: 0; transform: translate(-50%, 10px) scale(0.8); }
+            30% { opacity: 1; transform: translate(-50%, -15px) scale(1.15); }
+            80% { opacity: 0.9; transform: translate(-50%, -35px) scale(1); }
+            100% { opacity: 0; transform: translate(-50%, -50px); }
+        }
+        .floating-score {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 6px;
-            background-color: #b45309; /* 徽章金 */
+            top: 45%;
+            left: 50%;
+            pointer-events: none;
+            z-index: 30;
+            font-family: 'Space Mono', monospace;
+            text-shadow: 0 0 12px rgba(0,0,0,0.8);
+            animation: floatUp 1.2s forwards cubic-bezier(0.2, 0.8, 0.2, 1);
         }
-        .team-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            cursor: pointer;
+
+        /* 📱 側邊懸浮動作中樞 */
+        .side-floating-dock {
+            position: fixed;
+            right: 14px;
+            bottom: 24px;
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
-        .conan-red { color: #dc2626; } /* 領結紅文字 */
-        .conan-bg-red { background-color: #dc2626; } /* 領結紅背景 */
-        .conan-bg-red:hover { background-color: #b91c1c; }
-
-        .hidden-view { display: none !important; }
-        
-        /* 加分時的閃爍特效 */
-        @keyframes flash {
-            0% { background-color: #fdf6e3; }
-            50% { background-color: #fef08a; transform: scale(1.05); }
-            100% { background-color: #fdf6e3; }
-        }
-        .flash-animation { animation: flash 0.8s ease-out; }
-
-        /* 捲軸美化 */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-
-        /* ================= 🚀 專屬營隊啟動連線畫面特效 ================= */
+        /* 啟動連線畫面 */
         #loadingScreen {
             position: fixed;
             inset: 0;
-            background: #0f172a; 
+            background: #0b1120; 
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -68,183 +229,286 @@
             z-index: 9999; 
             transition: opacity 0.8s ease-out, visibility 0.8s ease-out;
         }
-
         .loading-logo {
-            width: 200px;
-            height: 200px;
+            width: 170px;
+            height: 170px;
             border-radius: 50%; 
             object-fit: cover;
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.15);
-            animation: pulseLogo 1.5s infinite ease-in-out;
+            border: 3px solid #38bdf8;
+            box-shadow: 0 0 35px rgba(56, 189, 248, 0.35);
+            animation: pulseLogo 1.6s infinite ease-in-out;
         }
-
         .loading-text {
-            color: white;
-            font-size: 24px;
+            color: #f8fafc;
+            font-size: 19px;
             font-weight: bold;
-            margin-top: 24px;
+            margin-top: 20px;
             letter-spacing: 4px;
             animation: blinkText 1.5s infinite;
         }
-
         @keyframes pulseLogo {
-            0% { transform: scale(0.95); opacity: 0.9; }
-            50% { transform: scale(1.05); opacity: 1; }
-            100% { transform: scale(0.95); opacity: 0.9; }
+            0%, 100% { transform: scale(0.96); opacity: 0.9; }
+            50% { transform: scale(1.04); opacity: 1; box-shadow: 0 0 45px rgba(56, 189, 248, 0.5); }
         }
-        @keyframes blinkText {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+        @keyframes blinkText { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+        .fade-out { opacity: 0; visibility: hidden; }
 
-        .fade-out {
-            opacity: 0;
-            visibility: hidden;
-        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg-inner); }
+        ::-webkit-scrollbar-thumb { background: #64748b; border-radius: 3px; }
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-3 sm:p-4 md:p-6 relative">
 
     <!-- 🚀 啟動連線畫面 -->
     <div id="loadingScreen">
         <img src="IMG_1716.jpg" alt="115 新生宿營 Logo" class="loading-logo" onerror="this.src='https://placehold.co/200x200/1e3a8a/ffffff?text=連線中';">
-        <div class="loading-text">連線中...</div>
+        <div class="loading-text">🌲 戰情終端連線中...</div>
     </div>
 
-    <!-- 頂部導覽列 -->
-    <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <h1 class="text-3xl md:text-4xl font-bold tracking-wider text-yellow-400 drop-shadow-md">🔍 搜查本部戰況</h1>
-        <button id="viewBtn" onclick="toggleView()" class="conan-bg-red text-white px-6 py-2 rounded-full font-bold shadow-lg transition-transform hover:scale-105 relative">
-            <span id="viewBtn-text">切換到後台 ⚙️</span>
-            <span id="btn-pending-badge" class="absolute -top-2 -right-3 bg-yellow-400 text-red-800 text-xs font-black px-2 py-1 rounded-full animate-bounce hidden shadow-md border border-red-500">新戰報!</span>
+    <!-- 🚧 全域作戰廣播條 -->
+    <div id="announcement-banner" class="hidden max-w-[1400px] mx-auto mb-3 sm:mb-4 card-shadow rounded-xl flex flex-col overflow-hidden border-2 border-amber-500/60">
+        <div class="crime-tape h-3 w-full"></div>
+        <div class="p-3 sm:p-3.5 flex items-center justify-between gap-3 relative bg-amber-50 dark:bg-amber-950/50">
+            <div class="flex items-center gap-2.5 sm:gap-3">
+                <div class="bg-amber-100 dark:bg-amber-900 p-1.5 sm:p-2 rounded-full border-2 border-amber-500 shrink-0">
+                    <i class="fa-solid fa-tower-broadcast text-amber-600 dark:text-amber-300 animate-bounce text-sm sm:text-base"></i>
+                </div>
+                <div>
+                    <h3 class="text-[11px] sm:text-xs font-bold tracking-widest text-[#64748b] dark:text-amber-400">🚨 警視廳全域作戰廣播</h3>
+                    <p id="announcement-text" class="text-xs sm:text-sm md:text-base font-black tracking-wide leading-tight text-slate-800 dark:text-slate-100">
+                        作戰通報讀取中...
+                    </p>
+                </div>
+            </div>
+            <span class="bg-red-600 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full animate-pulse shrink-0 border border-red-700">
+                LIVE
+            </span>
+        </div>
+        <div class="crime-tape h-3 w-full"></div>
+    </div>
+
+    <!-- 📡 頂部指揮中樞 Header -->
+    <header class="max-w-[1400px] mx-auto flex justify-between items-center mb-4 sm:mb-6 pb-3 border-b-4 border-[#1e3a8a] dark:border-sky-500">
+        <div class="flex items-center gap-3">
+            <div class="bg-[#1e3a8a] dark:bg-sky-600 text-white p-3 rounded-2xl btn-shadow relative shrink-0">
+                <i class="fa-solid fa-user-secret text-2xl sm:text-3xl text-amber-400"></i>
+                <div class="absolute -bottom-2 -right-2 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full border-2 border-slate-900">
+                    G5-1
+                </div>
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-black tracking-wider text-[#1e3a8a] dark:text-sky-400 flex items-center gap-1.5">
+                    宿營計分系統
+                </h1>
+                <p class="text-[10px] sm:text-xs text-[#64748b] dark:text-slate-400 font-bold tracking-widest timer-font">
+                    Camping Point Calculation System
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 timer-font bg-slate-200 dark:bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> ONLINE
+        </div>
+    </header>
+
+    <main class="max-w-[1400px] mx-auto">
+        <!-- 🌟 前台：搜查戰況大螢幕 -->
+        <div id="main-view">
+            <div class="flex items-center justify-between pl-1 mb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-5 h-5 bg-red-600 rounded flex items-center justify-center text-white font-bold transform -rotate-6">
+                        <i class="fa-solid fa-crosshairs text-[10px]"></i>
+                    </div>
+                    <h2 class="font-black text-base sm:text-lg tracking-wider">小隊戰況監視檔案</h2>
+                </div>
+                <span class="text-[11px] text-[#64748b] dark:text-slate-400 font-bold hidden sm:inline">
+                    💡 提示：點擊任何小隊卡片可放大純淨投影
+                </span>
+            </div>
+
+            <!-- 戰隊卡片 Grid -->
+            <div id="squadGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5 md:gap-6 mb-6"></div>
+
+            <!-- 📜 即時作戰傳輸日誌 -->
+            <div class="card-shadow rounded-2xl p-4 sm:p-5 mb-6">
+                <h3 class="font-black text-sm sm:text-base md:text-lg mb-3 flex items-center gap-2 text-[#1e3a8a] dark:text-sky-400">
+                    <i class="fa-solid fa-file-waveform"></i> 最新搜查記錄日誌 (TACTICAL LOGS)
+                </h3>
+                <div id="mainLogs" class="space-y-2 max-h-52 overflow-y-auto pr-1"></div>
+            </div>
+        </div>
+
+        <!-- ⚙️ 後台：指揮官終端控制中心 -->
+        <div id="admin-view" class="hidden">
+            
+            <!-- 📢 後台廣播系統中樞 -->
+            <div class="card-shadow rounded-2xl p-4 sm:p-5 mb-5 border-2 border-blue-600/40">
+                <h3 class="text-sm sm:text-base font-black text-[#1e3a8a] dark:text-sky-400 mb-1 flex items-center gap-2">
+                    <i class="fa-solid fa-bullhorn"></i> 警視廳廣播系統中樞
+                </h3>
+                <p class="text-[11px] text-[#64748b] dark:text-slate-400 font-bold mb-3">發布全域緊急通報，將同步推播至大螢幕與全體裝置：</p>
+                <div class="flex flex-col sm:flex-row gap-2.5">
+                    <input type="text" id="adminBroadcastInput" class="tactical-input flex-1 p-3 rounded-xl border-2 font-bold text-xs sm:text-sm" placeholder="輸入作戰通報內容...">
+                    <div class="flex gap-2">
+                        <button onclick="pushBroadcast()" class="min-h-[46px] flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white font-black px-5 py-2.5 rounded-xl btn-shadow text-xs sm:text-sm shrink-0 active:scale-95">
+                            <i class="fa-solid fa-paper-plane mr-1"></i> 發布廣播
+                        </button>
+                        <button onclick="clearBroadcast()" class="min-h-[46px] bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-white font-bold px-4 py-2.5 rounded-xl btn-shadow text-xs sm:text-sm shrink-0 active:scale-95">
+                            清除
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🚨 待審核戰報區塊 -->
+            <div class="card-shadow rounded-2xl p-4 sm:p-5 mb-5 border-2 border-amber-500/50">
+                <h2 class="text-base sm:text-lg font-black text-amber-500 dark:text-amber-400 mb-3 flex items-center">
+                    <i class="fa-solid fa-siren-on mr-2 animate-pulse"></i>
+                    <span>待審核戰報回報</span>
+                    <span id="pending-count-badge" class="bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full ml-2.5 hidden shadow-inner">0</span>
+                </h2>
+                <div id="pending-list" class="space-y-2.5 max-h-72 overflow-y-auto pr-1"></div>
+            </div>
+
+            <!-- 後台小隊管理卡片 -->
+            <div class="card-shadow rounded-2xl p-4 sm:p-5 mb-6 border-2 border-slate-300 dark:border-slate-700">
+                <h2 class="text-base sm:text-lg font-black text-[#1e3a8a] dark:text-sky-400 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders"></i> 各小隊戰力值人工調配
+                </h2>
+                <div id="adminGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5"></div>
+
+                <div class="mt-8 pt-5 border-t-2 border-slate-200 dark:border-slate-800 text-center">
+                    <button onclick="openResetModal()" class="w-full sm:w-auto min-h-[48px] bg-slate-800 hover:bg-slate-900 text-red-400 font-black px-7 py-3 rounded-xl btn-shadow transition text-xs sm:text-sm border-2 border-red-500 active:scale-95">
+                        ⚠️ 全隊戰力重置歸零
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ==================== 📱 側邊懸浮動作中樞 ==================== -->
+    <div class="side-floating-dock" id="sideFloatingDock">
+        <button onclick="toggleTheme()" id="themeBtn" class="w-12 h-12 sm:w-14 sm:h-14 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-2xl btn-shadow flex items-center justify-center border-2 border-slate-600 active:scale-95 shadow-xl transition" title="切換日/夜間模式">
+            <i class="fa-solid fa-moon text-lg sm:text-xl"></i>
+        </button>
+        <button onclick="toggleAdminView()" id="viewBtn" class="w-12 h-12 sm:w-14 sm:h-14 bg-red-600 hover:bg-red-700 text-white rounded-2xl btn-shadow flex items-center justify-center border-2 border-red-500 relative active:scale-95 shadow-xl transition" title="切換值勤後台">
+            <i class="fa-solid fa-user-shield text-lg sm:text-xl"></i>
+            <span id="btn-pending-badge" class="absolute -top-1.5 -right-1 bg-amber-400 text-red-900 text-[9px] font-black px-1.5 py-0.2 rounded-full animate-bounce hidden shadow border border-red-600">!</span>
         </button>
     </div>
 
-    <!-- 🌟 前台：搜查本部大螢幕 -->
-    <div id="main-view" class="max-w-5xl mx-auto">
-        <div id="mainGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        <div class="mt-12 bg-white/10 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-white/20">
-            <h2 class="text-xl font-bold text-yellow-400 mb-4 flex items-center"><span class="text-2xl mr-2">📜</span> 最新搜查紀錄</h2>
-            <div id="mainLogs" class="space-y-3 h-48 overflow-y-auto pr-2 custom-scrollbar"></div>
-        </div>
-    </div>
-
-    <!-- ⚙️ 後台：控制中心 -->
-    <div id="admin-view" class="max-w-5xl mx-auto hidden-view">
-        
-        <!-- 🚨 待審核戰報區塊 -->
-        <div class="mb-10 bg-slate-800 rounded-2xl p-6 shadow-xl border border-slate-600">
-            <h2 class="text-2xl font-bold text-yellow-400 mb-4 flex items-center">
-                <span>🚨 待審核戰報</span>
-                <span id="pending-count-badge" class="bg-red-600 text-white text-sm font-black px-3 py-1 rounded-full ml-3 hidden shadow-inner">0</span>
-            </h2>
-            <div id="pending-list" class="space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-2">
-                <!-- 由 JS 動態產生待審核項目 -->
+    <!-- ==================== 🌟 實色深藍全螢幕放大投影 ==================== -->
+    <div id="focus-overlay" class="hidden flex flex-col justify-center items-center cursor-pointer p-4 select-none" onclick="hideFocus()">
+        <div class="text-center zoom-animation w-full max-w-[95vw] sm:max-w-3xl flex flex-col items-center justify-center">
+            <div class="text-[11px] sm:text-xs font-mono tracking-widest text-amber-400 mb-3 uppercase border border-amber-400/50 px-3.5 py-1 rounded-full inline-block bg-amber-950/60">
+                TACTICAL TARGET FOCUS
             </div>
-        </div>
-
-        <div class="h-1 w-full bg-slate-700 rounded-full mb-10"></div> <!-- 分隔線 -->
-
-        <h2 class="text-2xl md:text-3xl font-bold text-yellow-400 mb-6 text-center drop-shadow-md">⚙️ 控制面板</h2>
-        <div id="adminGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-        
-        <div class="mt-12 text-center">
-            <button onclick="openResetModal()" class="bg-slate-700 hover:bg-slate-600 text-white px-8 py-3 rounded-full font-bold shadow-lg transition border border-slate-500">
-                ⚠️ 全部分數歸零
-            </button>
-        </div>
-    </div>
-
-    <!-- ================= 彈出視窗區 ================= -->
-    <div id="focus-overlay" class="fixed inset-0 bg-black/90 z-40 hidden-view flex flex-col justify-center items-center cursor-pointer" onclick="hideFocus()">
-        <div class="text-yellow-400 text-4xl md:text-6xl font-bold mb-4 drop-shadow-lg" id="focus-name">隊伍名稱</div>
-        <div class="text-white text-8xl md:text-[12rem] font-black drop-shadow-2xl conan-red" id="focus-score">0</div>
-        <p class="text-gray-400 mt-8 text-lg">點擊畫面任意處關閉</p>
-    </div>
-
-    <div id="history-modal" class="fixed inset-0 bg-black/70 z-50 hidden-view flex justify-center items-center p-4">
-        <div class="bg-slate-100 rounded-xl shadow-2xl max-w-md w-full max-h-[80vh] flex flex-col overflow-hidden relative">
-            <div class="bg-slate-800 p-4 flex justify-between items-center">
-                <h3 class="text-xl font-bold text-white" id="history-modal-title">小隊紀錄</h3>
-                <button onclick="closeHistory()" class="text-gray-300 hover:text-white text-2xl font-bold">&times;</button>
+            <div class="text-white text-2xl sm:text-4xl md:text-5xl font-black mb-4 drop-shadow-md truncate max-w-full px-4" id="focus-name">
+                隊伍名稱
             </div>
-            <div class="p-4 overflow-y-auto flex-1 bg-[#fdf6e3] custom-scrollbar" id="history-modal-content"></div>
-        </div>
-    </div>
-
-    <div id="score-modal" class="fixed inset-0 bg-black/80 z-50 hidden-view flex justify-center items-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-gray-800 relative">
-            <h3 class="text-xl font-bold text-center mb-2" id="score-modal-title">調整分數</h3>
-            <p class="text-center text-gray-500 mb-6" id="score-modal-desc">目前分數: 0</p>
-            <div class="mb-4">
-                <label class="block text-sm font-bold text-gray-700 mb-2">調整數值 (請輸入數字)</label>
-                <input type="number" id="score-input" class="w-full text-center text-3xl font-bold p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" value="100">
-            </div>
-            <div class="mb-6">
-                <label class="block text-sm font-bold text-gray-700 mb-2">原因 / 關卡名稱</label>
-                <input type="text" id="reason-input" class="w-full text-lg p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500" value="關卡報酬">
-            </div>
-            <div class="grid grid-cols-2 gap-4">
-                <button onclick="submitScore(false)" class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-xl text-lg shadow-md transition">➖ 扣分</button>
-                <button onclick="submitScore(true)" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-lg shadow-md transition">➕ 加分</button>
-            </div>
-            <button onclick="closeAddScore()" class="mt-4 w-full text-gray-500 hover:text-gray-700 p-2 font-bold">取消</button>
-        </div>
-    </div>
-
-    <div id="rename-modal" class="fixed inset-0 bg-black/80 z-50 hidden-view flex justify-center items-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-gray-800">
-            <h3 class="text-xl font-bold mb-4 text-center">修改隊伍名稱</h3>
-            <input type="text" id="rename-input" class="w-full text-xl p-3 border-2 border-gray-300 rounded-lg mb-6 focus:outline-none focus:border-blue-500 text-center">
-            <div class="flex gap-4">
-                <button onclick="closeRenameModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition">取消</button>
-                <button onclick="saveName()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-md">儲存</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 🔒 密碼保護的歸零確認視窗 -->
-    <div id="reset-modal" class="fixed inset-0 bg-black/90 z-50 hidden-view flex justify-center items-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-gray-800 text-center">
-            <div class="text-5xl mb-4">⚠️</div>
-            <h3 class="text-2xl font-bold text-red-600 mb-2">警告：分數歸零</h3>
-            <p class="text-gray-600 mb-4">確定要將所有隊伍的分數與紀錄清空嗎？<br>此動作<span class="font-bold text-red-500">無法復原</span>喔！</p>
             
-            <div class="mb-6 text-left">
-                <label class="block text-sm font-bold text-gray-700 mb-2">請輸入最高權限密碼：</label>
-                <input type="password" id="reset-password" class="w-full text-center text-xl font-bold p-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-red-500 placeholder-gray-400" placeholder="輸入密碼解鎖">
+            <div class="text-amber-400 hud-fluid-score font-black timer-font drop-shadow-[0_0_35px_rgba(245,158,11,0.65)] my-2 max-w-full text-center" id="focus-score">
+                0
+            </div>
+            
+            <p class="text-slate-400 text-xs sm:text-sm mt-8 tracking-widest flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-hand-pointer animate-pulse"></i> 點擊螢幕任意處關閉純淨投影
+            </p>
+        </div>
+    </div>
+
+    <!-- ==================== 彈出視窗群 (修正晶片按鈕文字清晰度) ==================== -->
+
+    <!-- 調整分數彈窗 -->
+    <div id="scoreModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-sm max-h-[90vh] overflow-y-auto p-5 sm:p-6 relative">
+            <h3 class="text-lg sm:text-xl font-black text-center mb-0.5 text-[#1e3a8a] dark:text-sky-400" id="scoreModalTitle">調整分數</h3>
+            <p class="text-center text-[11px] font-bold text-slate-400 mb-4" id="scoreModalDesc">目前分數: 0</p>
+            
+            <div class="mb-3.5">
+                <label class="block text-[11px] font-bold text-[#64748b] dark:text-slate-400 mb-1">調整點數 (點擊快捷或輸入)：</label>
+                <input type="number" id="scoreInput" class="tactical-input w-full text-center text-2xl sm:text-3xl font-black p-3 rounded-xl border-2 timer-font" value="100">
             </div>
 
-            <div class="flex gap-4">
-                <button onclick="closeResetModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition">取消</button>
-                <button onclick="confirmReset()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition shadow-md">確定歸零</button>
+            <!-- 🌟 高對比戰術快捷晶片按鈕 (文字 100% 清晰) -->
+            <div class="grid grid-cols-4 gap-2 mb-3.5">
+                <button type="button" onclick="setChip(10)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+10</button>
+                <button type="button" onclick="setChip(50)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+50</button>
+                <button type="button" onclick="setChip(100)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+100</button>
+                <button type="button" onclick="setChip(300)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+300</button>
+            </div>
+
+            <div class="mb-5">
+                <label class="block text-[11px] font-bold text-[#64748b] dark:text-slate-400 mb-1">任務名稱 / 加分事由：</label>
+                <input type="text" id="reasonInput" class="tactical-input w-full text-xs sm:text-sm font-bold p-3 rounded-xl border-2" value="據點攻防作戰獲勝">
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+                <button type="button" onclick="submitScore(false)" class="min-h-[50px] bg-red-600 hover:bg-red-700 text-white font-black rounded-xl text-sm sm:text-base btn-shadow active:scale-95">➖ 扣分</button>
+                <button type="button" onclick="submitScore(true)" class="min-h-[50px] bg-green-600 hover:bg-green-700 text-white font-black rounded-xl text-sm sm:text-base btn-shadow active:scale-95">➕ 加分</button>
+            </div>
+            <button type="button" onclick="closeModal('scoreModal')" class="w-full mt-3 py-2 text-xs font-bold text-slate-400 hover:text-slate-200">取消返回</button>
+        </div>
+    </div>
+
+    <!-- 獨立歷史卷宗彈窗 -->
+    <div id="historyModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-md max-h-[82vh] flex flex-col overflow-hidden relative">
+            <div class="p-3.5 sm:p-4 bg-slate-800 text-white flex justify-between items-center border-b border-slate-700">
+                <h3 class="font-black text-sm sm:text-base flex items-center gap-2 text-amber-400" id="historyModalTitle">小隊戰績卷宗</h3>
+                <button onclick="closeModal('historyModal')" class="text-xl font-bold p-1">&times;</button>
+            </div>
+            <div class="p-3.5 sm:p-4 overflow-y-auto flex-1 space-y-2 bg-slate-100 dark:bg-slate-900" id="historyModalContent"></div>
+        </div>
+    </div>
+
+    <!-- 改名彈窗 -->
+    <div id="renameModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-sm p-5 sm:p-6">
+            <h3 class="text-base sm:text-lg font-black text-center mb-3 text-[#1e3a8a] dark:text-sky-400">✏️ 修改戰隊名稱</h3>
+            <input type="text" id="renameInput" class="tactical-input w-full text-center text-base sm:text-lg font-bold p-3 rounded-xl border-2 mb-4">
+            <div class="flex gap-2.5">
+                <button onclick="closeModal('renameModal')" class="min-h-[46px] flex-1 py-2.5 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-white font-bold text-xs sm:text-sm btn-shadow active:scale-95">取消</button>
+                <button onclick="saveRename()" class="min-h-[46px] flex-1 py-2.5 rounded-xl bg-[#1e3a8a] hover:bg-blue-900 text-white font-black text-xs sm:text-sm btn-shadow active:scale-95">儲存名稱</button>
             </div>
         </div>
     </div>
 
-    <!-- 📡 衛星接收站：偵測到據點戰分數時跳出的專屬視窗 -->
-    <div id="import-modal" class="fixed inset-0 bg-black/90 z-50 hidden-view flex justify-center items-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 text-gray-800 text-center relative overflow-hidden">
-            <div class="bg-blue-600 text-white py-1.5 absolute top-0 left-0 w-full font-bold tracking-widest text-xs">🌐 系統連線偵測</div>
-            <div class="text-5xl mb-2 mt-6">📡</div>
-            <h3 class="text-xl font-bold text-slate-800 mb-2">接收到外部戰報！</h3>
-            <p class="text-slate-600 mb-4 text-sm">來自【東勢林場據點戰】的結算分數已送達，是否立即匯入？</p>
-            <div id="import-details" class="bg-slate-50 border border-slate-200 rounded p-3 text-left mb-6 max-h-32 overflow-y-auto text-sm font-bold text-slate-700 space-y-1">
-                <!-- 預覽分數會動態塞在這裡 -->
-            </div>
-            <div class="flex gap-4">
-                <button onclick="cancelImport()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 rounded-xl transition">放棄</button>
-                <button onclick="confirmImport()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition shadow-md">✅ 匯入分數</button>
+    <!-- 歸零確認彈窗 -->
+    <div id="resetModal" class="fixed inset-0 bg-black/85 z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-sm p-5 sm:p-6 text-center border-2 border-red-500">
+            <div class="text-3xl text-red-500 mb-2 animate-bounce"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <h3 class="text-lg sm:text-xl font-black text-red-600 mb-1.5">最高權限授權認證</h3>
+            <p class="text-[11px] text-slate-400 mb-3.5">此動作將清空所有積分與日誌，請輸入管理密碼：</p>
+            <input type="password" id="resetPasswordInput" class="tactical-input w-full text-center text-lg sm:text-xl font-black tracking-widest p-3 rounded-xl border-2 border-red-500 mb-4 font-mono" placeholder="輸入密碼解鎖">
+            <div class="flex gap-2.5">
+                <button onclick="closeModal('resetModal')" class="min-h-[46px] flex-1 py-2.5 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-white font-bold text-xs sm:text-sm btn-shadow active:scale-95">取消</button>
+                <button onclick="confirmReset()" class="min-h-[46px] flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs sm:text-sm btn-shadow active:scale-95">確定歸零</button>
             </div>
         </div>
     </div>
 
-    <!-- ================= JavaScript Firebase 邏輯區 ================= -->
+    <!-- 外部戰報接收彈窗 -->
+    <div id="import-modal" class="fixed inset-0 bg-black/85 z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-sm p-5 text-center relative overflow-hidden border-2 border-amber-500">
+            <div class="bg-amber-500 text-slate-900 py-1 absolute top-0 left-0 w-full font-black tracking-widest text-[10px]">🌐 系統戰術連線偵測</div>
+            <div class="text-4xl mb-2 mt-4 animate-bounce">📡</div>
+            <h3 class="text-lg font-black text-[#1e3a8a] dark:text-sky-400 mb-1">接收到外部戰報！</h3>
+            <p class="text-[11px] font-bold text-slate-400 mb-3">來自【東勢林場據點戰】的結算分數已送達：</p>
+            <div id="import-details" class="bg-slate-100 dark:bg-slate-900 rounded-xl p-2.5 text-left mb-4 max-h-32 overflow-y-auto text-xs font-bold space-y-1 border border-slate-300 dark:border-slate-700"></div>
+            <div class="flex gap-2">
+                <button onclick="cancelImport()" class="min-h-[44px] flex-1 bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-white font-bold py-2 rounded-xl btn-shadow active:scale-95 text-xs">放棄</button>
+                <button onclick="confirmImport()" class="min-h-[44px] flex-1 bg-amber-500 hover:bg-amber-600 text-slate-900 font-black py-2 rounded-xl btn-shadow active:scale-95 text-xs">✅ 匯入總分</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==================== JavaScript Firebase 邏輯區 ==================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, doc, setDoc, onSnapshot, runTransaction } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, onSnapshot, runTransaction, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 串接至宿營總計分板資料庫
         const firebaseConfig = {
             apiKey: "AIzaSyCDrPTk42gRD9kzjocMr3hNJd4BORRQ8mc",
             authDomain: "camping-point-calculation1.firebaseapp.com",
@@ -260,39 +524,46 @@
         const docRef = doc(db, 'conanGame', 'scoreboard');
 
         let scores = [0, 0, 0, 0, 0, 0];
-        let teamNames = ["第一小隊", "第二小隊", "第三小隊", "第四小隊", "第五小隊", "第六小隊"];
+        let teamNames = ["第 1 小隊", "第 2 小隊", "第 3 小隊", "第 4 小隊", "第 5 小隊", "第 6 小隊"];
         let logs = []; 
         let pendingRequests = []; 
+        let alertMsg = "";
 
+        let previousScores = [0, 0, 0, 0, 0, 0]; // 🌟 專門記錄上一刻的分數狀態，用於觸發滾動動畫
         let pendingUpdateIndex = null; 
         let pendingRenameIndex = null; 
-        let currentFocusIndex = null; 
         let isFirstLoad = true; 
         let pendingImportScores = []; 
 
-        // 🌟 初始化與即時監聽資料庫
         function initApp() {
             onSnapshot(docRef, (snap) => {
                 if (snap.exists()) {
                     const data = snap.data();
-                    scores = data.scores || [0, 0, 0, 0, 0, 0];
-                    teamNames = data.teamNames || ["第一小隊", "第二小隊", "第三小隊", "第四小隊", "第五小隊", "第六小隊"];
+                    const newScores = data.scores || [0, 0, 0, 0, 0, 0];
+                    teamNames = data.teamNames || ["第 1 小隊", "第 2 小隊", "第 3 小隊", "第 4 小隊", "第 5 小隊", "第 6 小隊"];
                     logs = data.logs || [];
                     pendingRequests = data.pendingRequests || [];
+                    alertMsg = data.alertMsg || "";
                     
-                    render(); 
+                    const banner = document.getElementById('announcement-banner');
+                    if (alertMsg.trim() !== "") {
+                        document.getElementById('announcement-text').innerText = alertMsg;
+                        banner.classList.remove('hidden');
+                    } else {
+                        banner.classList.add('hidden');
+                    }
+
+                    // 渲染並執行舊值到新值的滾動動畫
+                    render(previousScores, newScores); 
+                    previousScores = [...newScores]; // 更新舊值記憶
+                    scores = [...newScores];
+
                     renderPendingList(); 
                     updateBadges(); 
-                    
-                    if (currentFocusIndex !== null) {
-                        document.getElementById('focus-score').innerText = scores[currentFocusIndex];
-                        document.getElementById('focus-name').innerText = teamNames[currentFocusIndex];
-                    }
                 } else {
-                    setDoc(docRef, { scores, teamNames, logs, pendingRequests: [] });
+                    setDoc(docRef, { scores, teamNames, logs, pendingRequests: [], alertMsg: "" });
                 }
 
-                // 解除開頭的載入動畫，並檢查網址有沒有分數參數
                 if (isFirstLoad) {
                     isFirstLoad = false;
                     setTimeout(() => {
@@ -309,11 +580,252 @@
             });
         }
 
-        // --- 📡 衛星接收站 ---
+        // 🌟 數字滾動平滑演算法 (老虎機滾動效果)
+        function animateScore(el, start, end, duration = 650) {
+            if (!el || start === end) {
+                if (el) el.innerText = end.toLocaleString();
+                return;
+            }
+            let startTs = null;
+            const step = (ts) => {
+                if (!startTs) startTs = ts;
+                const progress = Math.min((ts - startTs) / duration, 1);
+                const ease = 1 - Math.pow(1 - progress, 3); // Ease-Out
+                const val = Math.floor(start + (end - start) * ease);
+                el.innerText = val.toLocaleString();
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    el.innerText = end.toLocaleString();
+                }
+            };
+            requestAnimationFrame(step);
+        }
+
+        // 🌟 渲染函式 (前台與後台同步觸發數字滾動)
+        function render(prevList = [], currentList = []) {
+            const squadGrid = document.getElementById('squadGrid');
+            const adminGrid = document.getElementById('adminGrid');
+
+            const renderScores = currentList.length ? currentList : scores;
+            const scoreObjects = renderScores.map((s, idx) => ({ id: idx, score: s }));
+            scoreObjects.sort((a, b) => b.score - a.score);
+            const rankMap = {};
+            scoreObjects.forEach((sq, idx) => { rankMap[sq.id] = idx + 1; });
+
+            squadGrid.innerHTML = renderScores.map((score, idx) => {
+                const rank = rankMap[idx];
+                let rankClass = '';
+                let rankBadge = `<span class="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-black px-2 py-0.5 rounded border border-slate-400 dark:border-slate-700 timer-font">#0${rank}</span>`;
+
+                if (rank === 1) {
+                    rankClass = 'rank-tier-1';
+                    rankBadge = `<span class="bg-amber-100 text-amber-900 border border-amber-500 text-[11px] font-black px-2 py-0.5 rounded shadow-sm timer-font"><i class="fa-solid fa-crown text-amber-600 mr-1"></i>TOP 1</span>`;
+                } else if (rank === 2) {
+                    rankClass = 'rank-tier-2';
+                    rankBadge = `<span class="bg-indigo-100 text-indigo-900 border border-indigo-500 text-[11px] font-black px-2 py-0.5 rounded shadow-sm timer-font"><i class="fa-solid fa-medal text-indigo-600 mr-1"></i>TOP 2</span>`;
+                } else if (rank === 3) {
+                    rankClass = 'rank-tier-3';
+                    rankBadge = `<span class="bg-orange-100 text-orange-900 border border-orange-500 text-[11px] font-black px-2 py-0.5 rounded shadow-sm timer-font"><i class="fa-solid fa-award text-orange-600 mr-1"></i>TOP 3</span>`;
+                }
+
+                return `
+                    <div class="card-shadow rounded-2xl p-4 sm:p-5 flex flex-col justify-between relative cursor-pointer group hover:-translate-y-1 active:scale-[0.99] ${rankClass}" id="card-${idx}" onclick="showFocus(${idx})">
+                        <div class="absolute -top-[2px] -left-[2px] bg-slate-800 text-white text-[9px] sm:text-[10px] font-bold px-2.5 py-0.5 folder-tab z-10 border-b border-r border-slate-700">
+                            FILE: SQUAD-0${idx + 1}
+                        </div>
+
+                        <div class="flex justify-between items-center mt-2 mb-1.5">
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-lg sm:text-xl font-black tracking-wide">${teamNames[idx]}</h3>
+                                <button onclick="event.stopPropagation(); openHistoryModal(${idx})" class="text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-[#1e3a8a] dark:hover:text-sky-400 px-2 py-0.5 rounded-md border border-slate-300 dark:border-slate-700 transition" title="查看小隊紀錄">
+                                    <i class="fa-solid fa-clock-rotate-left"></i> 履歷
+                                </button>
+                            </div>
+                            <div>${rankBadge}</div>
+                        </div>
+
+                        <div class="bg-slate-100 dark:bg-slate-900/80 rounded-xl p-3 sm:p-4 my-1 text-center border border-slate-300 dark:border-slate-700 group-hover:border-[#1e3a8a] transition">
+                            <div class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 flex items-center justify-center gap-1">
+                                TOTAL TACTICAL SCORE <i class="fa-solid fa-up-right-and-down-left-from-center text-[8px] opacity-0 group-hover:opacity-100 transition"></i>
+                            </div>
+                            <div class="text-4xl sm:text-5xl font-black text-[#1e3a8a] dark:text-amber-400 timer-font drop-shadow-sm truncate" id="score-text-${idx}">
+                                ${(prevList[idx] ?? score).toLocaleString()}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            adminGrid.innerHTML = renderScores.map((score, idx) => `
+                <div class="card-shadow rounded-2xl p-4 flex flex-col justify-between" id="admin-card-${idx}">
+                    <div class="flex justify-between items-center mb-1.5">
+                        <span class="font-black text-base sm:text-lg">${teamNames[idx]}</span>
+                        <button onclick="openRenameModal(${idx})" class="text-slate-400 hover:text-blue-600 transition p-1 text-xs sm:text-sm"><i class="fa-solid fa-pen"></i></button>
+                    </div>
+                    <div class="text-3xl sm:text-4xl font-black text-center text-[#1e3a8a] dark:text-amber-400 timer-font my-1.5" id="admin-score-text-${idx}">
+                        ${(prevList[idx] ?? score).toLocaleString()}
+                    </div>
+                    <button onclick="openScoreModal(${idx})" class="min-h-[46px] w-full bg-[#1e3a8a] hover:bg-blue-900 text-white font-black rounded-xl btn-shadow transition mt-1.5 text-xs sm:text-sm active:scale-95">
+                        <i class="fa-solid fa-sliders mr-1"></i> 調整戰力值
+                    </button>
+                </div>
+            `).join('');
+
+            // 🌟 執行前台與後台的雙向數字滾動動畫
+            renderScores.forEach((score, idx) => {
+                const prev = prevList[idx];
+                if (prev !== undefined && prev !== score) {
+                    const frontEl = document.getElementById(`score-text-${idx}`);
+                    const adminEl = document.getElementById(`admin-score-text-${idx}`);
+                    
+                    if (frontEl) {
+                        animateScore(frontEl, prev, score);
+                        frontEl.classList.remove('score-pulse');
+                        void frontEl.offsetWidth;
+                        frontEl.classList.add('score-pulse');
+                    }
+                    if (adminEl) {
+                        animateScore(adminEl, prev, score);
+                        adminEl.classList.remove('score-pulse');
+                        void adminEl.offsetWidth;
+                        adminEl.classList.add('score-pulse');
+                    }
+                }
+            });
+
+            renderLogs();
+        }
+
+        function renderPendingList() {
+            const list = document.getElementById('pending-list');
+            if (!list) return;
+
+            if (pendingRequests.length === 0) {
+                list.innerHTML = '<div class="text-slate-400 italic text-center py-5 bg-slate-100 dark:bg-slate-900/60 rounded-xl border border-slate-300 dark:border-slate-800 text-xs sm:text-sm">✅ 目前無待審核的戰況回報</div>';
+                return;
+            }
+
+            const reversed = [...pendingRequests].reverse();
+            list.innerHTML = reversed.map(req => `
+                <div id="req-card-${req.id}" class="bg-slate-100 dark:bg-slate-900 p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-l-4 border-amber-500 shadow border border-slate-300 dark:border-slate-800 transition duration-200">
+                    <div class="flex-1 text-left w-full">
+                        <div class="text-[10px] sm:text-xs text-slate-400 font-bold mb-0.5"><span class="bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded mr-1.5">時間：${req.time}</span></div>
+                        <div class="text-sm sm:text-base font-black mb-0.5">小隊：<span class="text-[#1e3a8a] dark:text-sky-400">${req.team}</span></div>
+                        <div class="text-xs text-slate-600 dark:text-slate-300 font-bold flex items-center">
+                            項目：${req.reason} 
+                            <span class="text-green-600 dark:text-green-400 text-sm sm:text-base font-black ml-2 bg-green-100 dark:bg-green-950/80 px-2 py-0.5 rounded border border-green-500/30">+${req.score} 分</span>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 w-full md:w-auto shrink-0 mt-1 md:mt-0">
+                        <button id="btn-reject-${req.id}" onclick="rejectRequest('${req.id}')" class="min-h-[44px] flex-1 md:flex-none bg-red-100 dark:bg-red-950/60 hover:bg-red-200 text-red-600 dark:text-red-300 border border-red-300 dark:border-red-700 px-3.5 py-2 rounded-xl font-bold text-xs btn-shadow active:scale-95">❌ 退回</button>
+                        <button id="btn-approve-${req.id}" onclick="approveRequest('${req.id}')" class="min-h-[44px] flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-bold text-xs btn-shadow active:scale-95">✅ 核准加分</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function approveRequest(reqId) {
+            const card = document.getElementById(`req-card-${reqId}`);
+            const btnApprove = document.getElementById(`btn-approve-${reqId}`);
+            const btnReject = document.getElementById(`btn-reject-${reqId}`);
+            
+            if (btnApprove && btnReject && card) {
+                btnApprove.innerHTML = "⏳ 處理中...";
+                btnApprove.disabled = true;
+                btnReject.disabled = true;
+                card.classList.add('opacity-40', 'scale-95');
+            }
+
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(docRef);
+                    if (!sfDoc.exists()) return;
+                    
+                    const data = sfDoc.data();
+                    let currentScores = data.scores || [0, 0, 0, 0, 0, 0];
+                    let currentLogs = data.logs || [];
+                    let currentTeamNames = data.teamNames || teamNames;
+                    let currentPending = data.pendingRequests || [];
+
+                    const targetReq = currentPending.find(r => r.id === reqId);
+                    if (!targetReq) return;
+
+                    const targetIndex = currentTeamNames.indexOf(targetReq.team);
+                    if (targetIndex !== -1) {
+                        currentScores[targetIndex] += targetReq.score;
+                        currentLogs.push({
+                            team: targetReq.team,
+                            change: targetReq.score,
+                            reason: targetReq.reason + " (營本部已核准)",
+                            time: targetReq.time || new Date().toLocaleTimeString()
+                        });
+                        if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
+                        triggerScoreEffect(targetIndex, targetReq.score);
+                    }
+
+                    currentPending = currentPending.filter(r => r.id !== reqId);
+                    transaction.update(docRef, { scores: currentScores, logs: currentLogs, pendingRequests: currentPending });
+                });
+            } catch (e) {
+                console.error("核准失敗: ", e);
+                alert("核准失敗，請檢查網路。");
+            }
+        }
+
+        async function rejectRequest(reqId) {
+            if (!confirm("確定要退回這筆戰報嗎？")) return;
+            try {
+                await runTransaction(db, async (transaction) => {
+                    const sfDoc = await transaction.get(docRef);
+                    if (!sfDoc.exists()) return;
+                    const data = sfDoc.data();
+                    let currentPending = (data.pendingRequests || []).filter(r => r.id !== reqId);
+                    transaction.update(docRef, { pendingRequests: currentPending });
+                });
+            } catch (e) {
+                console.error("退回失敗: ", e);
+            }
+        }
+
+        function updateBadges() {
+            const count = pendingRequests.length;
+            const btnBadge = document.getElementById('btn-pending-badge');
+            const countBadge = document.getElementById('pending-count-badge');
+            if (count > 0) {
+                if (btnBadge) { btnBadge.innerText = `${count}`; btnBadge.classList.remove('hidden'); }
+                if (countBadge) { countBadge.innerText = count; countBadge.classList.remove('hidden'); }
+            } else {
+                if (btnBadge) btnBadge.classList.add('hidden');
+                if (countBadge) countBadge.classList.add('hidden');
+            }
+        }
+
+        window.pushBroadcast = async () => {
+            const input = document.getElementById('adminBroadcastInput');
+            const msg = input.value.trim();
+            if (msg) {
+                try {
+                    await updateDoc(docRef, { alertMsg: msg });
+                    input.value = '';
+                    alert('✅ 廣播通報已同步推播至全域大螢幕！');
+                } catch(e) {
+                    console.error("廣播失敗: ", e);
+                }
+            }
+        };
+
+        window.clearBroadcast = async () => {
+            try {
+                await updateDoc(docRef, { alertMsg: "" });
+            } catch(e) {
+                console.error("清除廣播失敗: ", e);
+            }
+        };
+
         function checkExternalScores() {
             const params = new URLSearchParams(window.location.search);
             pendingImportScores = [];
-            
             for (let i = 1; i <= 6; i++) {
                 const val = params.get(`team${i}`);
                 if (val && parseInt(val) > 0) {
@@ -325,23 +837,23 @@
                 window.history.replaceState(null, '', window.location.pathname);
                 const detailsDiv = document.getElementById('import-details');
                 detailsDiv.innerHTML = pendingImportScores.map(s => 
-                    `<div class="flex justify-between border-b border-slate-200 last:border-0 pb-1 pt-1">
-                        <span class="text-slate-600">${teamNames[s.index]}</span>
+                    `<div class="flex justify-between border-b border-slate-200 dark:border-slate-800 last:border-0 pb-1 pt-1">
+                        <span class="text-slate-600 dark:text-slate-300">${teamNames[s.index]}</span>
                         <span class="text-green-600 font-black">+${s.score}</span>
                      </div>`
                 ).join('');
-                document.getElementById('import-modal').classList.remove('hidden-view');
+                document.getElementById('import-modal').classList.remove('hidden');
             }
         }
 
         window.cancelImport = () => {
-            document.getElementById('import-modal').classList.add('hidden-view');
+            document.getElementById('import-modal').classList.add('hidden');
             pendingImportScores = [];
         };
 
         window.confirmImport = async () => {
             if (pendingImportScores.length === 0) return;
-            document.getElementById('import-modal').classList.add('hidden-view');
+            document.getElementById('import-modal').classList.add('hidden');
             
             try {
                 await runTransaction(db, async (transaction) => {
@@ -361,12 +873,13 @@
                             reason: "東勢林場據點戰結算匯入",
                             time: new Date().toLocaleTimeString()
                         });
+                        triggerScoreEffect(item.index, item.score);
                     });
                     
                     if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
                     transaction.update(docRef, { scores: currentScores, logs: currentLogs });
                 });
-                alert("✅ 據點戰分數匯入成功！所有資料已同步。");
+                alert("✅ 據點戰分數已全數匯入！");
             } catch(e) {
                 console.error("匯入失敗: ", e);
                 alert("匯入失敗，請檢查網路連線。");
@@ -374,436 +887,212 @@
             pendingImportScores = []; 
         };
 
-        // --- 處理審核佇列面板與通知 ---
-        function updateBadges() {
-            const count = pendingRequests.length;
-            const btnBadge = document.getElementById('btn-pending-badge');
-            const countBadge = document.getElementById('pending-count-badge');
-
-            if (count > 0) {
-                if(btnBadge) {
-                    btnBadge.innerText = `${count} 筆新戰報`;
-                    btnBadge.classList.remove('hidden');
-                }
-                if(countBadge) {
-                    countBadge.innerText = count;
-                    countBadge.classList.remove('hidden');
-                }
-            } else {
-                if(btnBadge) btnBadge.classList.add('hidden');
-                if(countBadge) countBadge.classList.add('hidden');
-            }
+        function triggerScoreEffect(idx, amount) {
+            const card = document.getElementById(`card-${idx}`);
+            if (!card) return;
+            const floatEl = document.createElement('div');
+            const isPlus = amount > 0;
+            floatEl.className = `floating-score font-black text-2xl sm:text-3xl ${isPlus ? 'text-green-500' : 'text-red-500'}`;
+            floatEl.innerText = isPlus ? `+${amount}` : `${amount}`;
+            card.appendChild(floatEl);
+            setTimeout(() => { floatEl.remove(); }, 1200);
         }
 
-        function renderPendingList() {
-            const list = document.getElementById('pending-list');
-            
-            if (pendingRequests.length === 0) {
-                list.innerHTML = '<div class="text-gray-400 italic text-center py-6 bg-slate-700 rounded-lg">✅ 目前無待審核的戰況回報</div>';
-                return;
-            }
+        window.showFocus = (idx) => {
+            document.getElementById('focus-name').innerText = teamNames[idx];
+            document.getElementById('focus-score').innerText = scores[idx].toLocaleString();
+            document.getElementById('focus-overlay').classList.remove('hidden');
+            document.getElementById('sideFloatingDock').classList.add('hidden');
+        };
 
-            const reversedPending = [...pendingRequests].reverse();
+        window.hideFocus = () => {
+            document.getElementById('focus-overlay').classList.add('hidden');
+            document.getElementById('sideFloatingDock').classList.remove('hidden');
+        };
 
-            // 💡 魔法點 1：幫每一張卡片跟按鈕都加上專屬的 ID (req-card-xxx, btn-approve-xxx)
-            list.innerHTML = reversedPending.map(req => `
-                <div id="req-card-${req.id}" class="bg-slate-100 p-4 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4 border-l-4 border-yellow-500 shadow-md transform transition duration-300 hover:-translate-y-1">
-                    <div class="flex-1 text-left w-full">
-                        <div class="text-xs text-gray-500 font-bold mb-1"><span class="bg-gray-200 px-2 py-0.5 rounded mr-2">時間：${req.time}</span></div>
-                        <div class="text-lg text-slate-800 font-black mb-1">小隊：<span class="text-blue-700">${req.team}</span></div>
-                        <div class="text-sm text-slate-600 font-bold flex items-center">
-                            項目：${req.reason} 
-                            <span class="text-green-600 text-xl font-black ml-3 bg-green-100 px-2 rounded">+${req.score} 分</span>
-                        </div>
-                    </div>
-                    <div class="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
-                        <button id="btn-reject-${req.id}" onclick="rejectRequest('${req.id}')" class="flex-1 md:flex-none bg-red-100 hover:bg-red-200 text-red-600 border border-red-300 px-4 py-3 rounded-lg font-bold transition">❌ 退回</button>
-                        <button id="btn-approve-${req.id}" onclick="approveRequest('${req.id}')" class="flex-1 md:flex-none bg-green-500 hover:bg-green-600 text-white shadow-md px-6 py-3 rounded-lg font-bold transition">✅ 核准加分</button>
-                    </div>
-                </div>
-            `).join('');
-        }
+        window.openScoreModal = (idx) => {
+            pendingUpdateIndex = idx;
+            document.getElementById('scoreModalTitle').innerText = `⚡ 調整 ${teamNames[idx]}`;
+            document.getElementById('scoreModalDesc').innerText = `目前戰力值: ${scores[idx].toLocaleString()}`;
+            document.getElementById('scoreInput').value = '100';
+            document.getElementById('scoreModal').classList.remove('hidden');
+        };
 
-        // 💡 魔法點 2：加入 Optimistic UI 即時回饋機制！
-        async function approveRequest(reqId) {
-            // 先讓畫面瞬間變色並顯示「處理中」，給操作者極致流暢的爽感！
-            const card = document.getElementById(`req-card-${reqId}`);
-            const btnApprove = document.getElementById(`btn-approve-${reqId}`);
-            const btnReject = document.getElementById(`btn-reject-${reqId}`);
-            
-            if (btnApprove && btnReject && card) {
-                btnApprove.innerHTML = "⏳ 處理中...";
-                btnApprove.disabled = true;
-                btnApprove.classList.replace('bg-green-500', 'bg-gray-400');
-                btnApprove.classList.replace('hover:bg-green-600', 'cursor-not-allowed');
-                
-                btnReject.disabled = true;
-                btnReject.classList.add('opacity-50', 'cursor-not-allowed');
-                
-                card.classList.add('opacity-50', 'scale-95'); // 讓整張卡片變暗微縮
-            }
+        // 🌟 快捷點擊函式
+        window.setChip = (val) => { 
+            const input = document.getElementById('scoreInput');
+            if (input) input.value = val; 
+        };
 
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const sfDoc = await transaction.get(docRef);
-                    if (!sfDoc.exists()) return;
-                    
-                    const data = sfDoc.data();
-                    let currentScores = data.scores || [0, 0, 0, 0, 0, 0];
-                    let currentLogs = data.logs || [];
-                    let currentTeamNames = data.teamNames || teamNames;
-                    let currentPending = data.pendingRequests || [];
-
-                    const targetReq = currentPending.find(r => r.id === reqId);
-                    if (!targetReq) return; 
-
-                    const targetIndex = currentTeamNames.indexOf(targetReq.team);
-                    
-                    if (targetIndex !== -1) {
-                        currentScores[targetIndex] += targetReq.score;
-                        currentLogs.push({
-                            team: targetReq.team,
-                            change: targetReq.score,
-                            reason: targetReq.reason + " (總部已核准)",
-                            time: targetReq.time || new Date().toLocaleTimeString()
-                        });
-                        if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
-                    } else {
-                        alert(`❌ 找不到小隊名稱「${targetReq.team}」，無法加分，但該筆請求已從佇列中清除。`);
-                    }
-
-                    currentPending = currentPending.filter(r => r.id !== reqId);
-
-                    transaction.update(docRef, {
-                        scores: currentScores,
-                        logs: currentLogs,
-                        pendingRequests: currentPending
-                    });
-                });
-            } catch (e) {
-                console.error("核准作業失敗: ", e);
-                alert("核准失敗，請檢查網路連線。");
-            }
-        }
-
-        // 退回不加分
-        async function rejectRequest(reqId) {
-            const confirmReject = confirm("確定要退回這筆成績嗎？退回後將不會加分！");
-            if (!confirmReject) return;
-
-            // 即時視覺回饋：顯示刪除中
-            const card = document.getElementById(`req-card-${reqId}`);
-            const btnApprove = document.getElementById(`btn-approve-${reqId}`);
-            const btnReject = document.getElementById(`btn-reject-${reqId}`);
-            
-            if (btnApprove && btnReject && card) {
-                btnReject.innerHTML = "🗑️ 刪除中...";
-                btnReject.disabled = true;
-                btnReject.classList.replace('text-red-600', 'text-gray-500');
-                btnReject.classList.replace('bg-red-100', 'bg-gray-200');
-                btnReject.classList.add('cursor-not-allowed');
-                
-                btnApprove.disabled = true;
-                btnApprove.classList.add('opacity-50', 'cursor-not-allowed');
-                
-                card.classList.add('opacity-50', 'scale-95'); 
-            }
-
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const sfDoc = await transaction.get(docRef);
-                    if (!sfDoc.exists()) return;
-                    
-                    const data = sfDoc.data();
-                    let currentPending = data.pendingRequests || [];
-
-                    currentPending = currentPending.filter(r => r.id !== reqId);
-
-                    transaction.update(docRef, {
-                        pendingRequests: currentPending
-                    });
-                });
-            } catch (e) {
-                console.error("退回失敗: ", e);
-            }
-        }
-
-
-        // --- 畫面渲染與 UI 操作 ---
-        function render() {
-            const mainGrid = document.getElementById('mainGrid');
-            const adminGrid = document.getElementById('adminGrid');
-            const mainLogs = document.getElementById('mainLogs');
-            
-            mainGrid.innerHTML = '';
-            adminGrid.innerHTML = '';
-            mainLogs.innerHTML = '';
-
-            for (let i = 0; i < 6; i++) {
-                mainGrid.innerHTML += `
-                    <div class="team-card rounded-2xl p-6 md:p-8 shadow-lg flex flex-col items-center justify-center relative min-h-[160px]" id="team-card-${i}" onclick="showFocus(${i})">
-                        <button onclick="event.stopPropagation(); openHistory(${i})" class="absolute top-3 right-3 text-2xl hover:scale-125 transition drop-shadow-md z-10" title="查看紀錄">📜</button>
-                        <div class="text-2xl md:text-3xl font-bold text-gray-700 mb-2 mt-2">${teamNames[i]}</div>
-                        <div class="text-6xl md:text-7xl font-black conan-red my-2 drop-shadow-sm">${scores[i]}</div>
-                    </div>`;
-                
-                adminGrid.innerHTML += `
-                    <div class="team-card rounded-2xl p-6 shadow-lg flex flex-col justify-between relative min-h-[180px]">
-                        <div class="flex justify-between items-center mb-2">
-                            <div class="font-bold text-xl text-gray-800">${teamNames[i]}</div>
-                            <button onclick="editName(${i})" class="text-gray-400 hover:text-blue-600 transition text-xl drop-shadow-sm hover:scale-110" title="修改隊名">✏️</button>
-                        </div>
-                        <div class="text-5xl md:text-6xl font-black text-center conan-red my-3 drop-shadow-sm">${scores[i]}</div>
-                        <button onclick="openAddScore(${i})" class="w-full conan-bg-red hover:bg-red-700 text-white font-bold py-3 rounded-xl shadow-md transition transform hover:scale-105 mt-2">
-                            調整分數 📝
-                        </button>
-                    </div>`;
-            }
-
-            const recentLogs = [...logs].reverse().slice(0, 10);
-            if (recentLogs.length === 0) {
-                mainLogs.innerHTML = '<div class="text-gray-400 italic text-center py-4">目前尚無搜查紀錄...</div>';
-            } else {
-                recentLogs.forEach(log => {
-                    const isPlus = log.change > 0;
-                    const colorClass = isPlus ? 'text-green-400' : 'text-red-400';
-                    const sign = isPlus ? '+' : '';
-                    mainLogs.innerHTML += `
-                        <div class="border-b border-white/10 pb-2 mb-2 last:border-0 text-sm md:text-base">
-                            <span class="text-gray-400 text-xs mr-2">[${log.time}]</span>
-                            <span class="font-bold text-white mr-2">${log.team}</span>
-                            <span class="font-bold ${colorClass} mx-2">${sign}${log.change}</span>
-                            <span class="text-gray-300">(${log.reason})</span>
-                        </div>`;
-                });
-            }
-        }
-
-        function toggleView() {
-            const mainView = document.getElementById('main-view');
-            const adminView = document.getElementById('admin-view');
-            const btn = document.getElementById('viewBtn');
-            const btnText = document.getElementById('viewBtn-text'); 
-
-            if (mainView.classList.contains('hidden-view')) {
-                mainView.classList.remove('hidden-view');
-                adminView.classList.add('hidden-view');
-                btnText.innerHTML = "切換到後台 ⚙️"; 
-                btn.classList.replace('bg-slate-700', 'conan-bg-red');
-            } else {
-                mainView.classList.add('hidden-view');
-                adminView.classList.remove('hidden-view');
-                btnText.innerHTML = "切換回搜查本部 🌟"; 
-                btn.classList.replace('conan-bg-red', 'bg-slate-700');
-            }
-            updateBadges(); 
-        }
-
-        function showFocus(index) {
-            currentFocusIndex = index;
-            document.getElementById('focus-score').innerText = scores[index];
-            document.getElementById('focus-name').innerText = teamNames[index];
-            document.getElementById('focus-overlay').classList.remove('hidden-view');
-        }
-
-        function hideFocus() {
-            currentFocusIndex = null;
-            document.getElementById('focus-overlay').classList.add('hidden-view');
-        }
-
-        function openHistory(index) {
-            const modal = document.getElementById('history-modal');
-            const title = document.getElementById('history-modal-title');
-            const content = document.getElementById('history-modal-content');
-            
-            title.innerText = `${teamNames[index]} - 搜查紀錄`;
-            content.innerHTML = '';
-            
-            const teamLogs = logs.filter(log => log.team === teamNames[index]).reverse();
-            
-            if (teamLogs.length === 0) {
-                content.innerHTML = '<div class="text-gray-500 italic text-center py-8">這個小隊目前還沒有任何紀錄喔！</div>';
-            } else {
-                teamLogs.forEach(log => {
-                    const isPlus = log.change > 0;
-                    const colorClass = isPlus ? 'text-green-600' : 'text-red-600';
-                    const sign = isPlus ? '+' : '';
-                    content.innerHTML += `
-                        <div class="bg-white border-l-4 ${isPlus ? 'border-green-500' : 'border-red-500'} p-3 mb-3 shadow-sm rounded-r-lg">
-                            <div class="text-xs text-gray-500 mb-1">${log.time}</div>
-                            <div class="flex justify-between items-center">
-                                <span class="font-bold text-gray-800 text-lg">${log.reason}</span>
-                                <span class="font-black ${colorClass} text-xl">${sign}${log.change}</span>
-                            </div>
-                        </div>`;
-                });
-            }
-            modal.classList.remove('hidden-view');
-        }
-
-        function closeHistory() {
-            document.getElementById('history-modal').classList.add('hidden-view');
-        }
-
-        function openAddScore(index) {
-            pendingUpdateIndex = index;
-            document.getElementById('score-modal-title').innerText = `調整 ${teamNames[index]} 分數`;
-            document.getElementById('score-modal-desc').innerText = `目前分數: ${scores[index]}`;
-            
-            document.getElementById('score-input').value = '100';
-            const reasonInput = document.getElementById('reason-input');
-            reasonInput.value = '關卡報酬';
-            
-            document.getElementById('score-modal').classList.remove('hidden-view');
-            setTimeout(() => { reasonInput.select(); }, 50);
-        }
-
-        function closeAddScore() {
-            document.getElementById('score-modal').classList.add('hidden-view');
-            pendingUpdateIndex = null;
-        }
-
-        async function submitScore(isPlus) {
+        // 🌟 人工調整分數送出 (支援即時數值滾動與光暈脈動)
+        window.submitScore = async (isPlus) => {
             if (pendingUpdateIndex === null) return;
-            
-            let val = parseInt(document.getElementById('score-input').value);
-            const reason = document.getElementById('reason-input').value.trim() || '未填寫原因';
-            
+            const val = parseInt(document.getElementById('scoreInput').value);
+            const reason = document.getElementById('reasonInput').value.trim() || '常規作戰指令';
+
             if (isNaN(val) || val <= 0) {
-                alert("請輸入大於 0 的正確數字！");
+                alert('請輸入有效數值！');
                 return;
             }
 
-            const changeAmount = isPlus ? val : -val;
-            const targetIndex = pendingUpdateIndex;
-            closeAddScore();
-
-            const card = document.getElementById(`team-card-${targetIndex}`);
-            if(card) {
-                card.classList.remove('flash-animation');
-                void card.offsetWidth; 
-                card.classList.add('flash-animation');
-            }
+            const change = isPlus ? val : -val;
+            const targetIdx = pendingUpdateIndex;
+            closeModal('scoreModal');
+            triggerScoreEffect(targetIdx, change);
 
             try {
                 await runTransaction(db, async (transaction) => {
                     const sfDoc = await transaction.get(docRef);
-                    if (!sfDoc.exists()) throw "資料庫不存在！";
-
+                    if (!sfDoc.exists()) return;
                     const data = sfDoc.data();
                     let currentScores = data.scores || [0, 0, 0, 0, 0, 0];
                     let currentLogs = data.logs || [];
                     let currentTeamNames = data.teamNames || teamNames;
 
-                    let newScore = currentScores[targetIndex] + changeAmount;
-                    if (newScore < 0) newScore = 0;
-                    
-                    const actualChange = newScore - currentScores[targetIndex];
-                    currentScores[targetIndex] = newScore;
-
-                    const now = new Date();
-                    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+                    currentScores[targetIdx] = Math.max(0, currentScores[targetIdx] + change);
                     currentLogs.push({
-                        team: currentTeamNames[targetIndex],
-                        change: actualChange,
+                        team: currentTeamNames[targetIdx],
+                        change: change,
                         reason: reason,
-                        time: timeStr
+                        time: new Date().toLocaleTimeString()
                     });
-
                     if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
-
-                    transaction.update(docRef, {
-                        scores: currentScores,
-                        logs: currentLogs
-                    });
+                    transaction.update(docRef, { scores: currentScores, logs: currentLogs });
                 });
             } catch (e) {
                 console.error("更新失敗: ", e);
             }
-        }
+        };
 
-        function editName(index) {
-            pendingRenameIndex = index;
-            document.getElementById('rename-input').value = teamNames[index];
-            document.getElementById('rename-modal').classList.remove('hidden-view');
-        }
-
-        function closeRenameModal() {
-            document.getElementById('rename-modal').classList.add('hidden-view');
-            pendingRenameIndex = null;
-        }
-
-        async function saveName() {
-            if (pendingRenameIndex === null) return;
-            const newName = document.getElementById('rename-input').value.trim();
-            if (newName === "") return;
-
-            const targetIndex = pendingRenameIndex;
-            closeRenameModal();
-
-            try {
-                await runTransaction(db, async (transaction) => {
-                    const sfDoc = await transaction.get(docRef);
-                    if (!sfDoc.exists()) return;
-                    
-                    let currentTeamNames = sfDoc.data().teamNames || teamNames;
-                    currentTeamNames[targetIndex] = newName;
-                    transaction.update(docRef, { teamNames: currentTeamNames });
-                });
-            } catch (e) {
-                console.error("改名失敗: ", e);
-            }
-        }
-
-        function openResetModal() { 
-            document.getElementById('reset-password').value = '';
-            document.getElementById('reset-modal').classList.remove('hidden-view'); 
-        }
-        
-        function closeResetModal() { 
-            document.getElementById('reset-modal').classList.add('hidden-view'); 
-        }
-
-        async function confirmReset() {
-            const pwd = document.getElementById('reset-password').value;
-            
-            if (pwd !== '1150918') {
-                alert('🛑 密碼錯誤！無法執行歸零程序！');
+        function renderLogs() {
+            const mainLogs = document.getElementById('mainLogs');
+            if (!mainLogs) return;
+            if (logs.length === 0) {
+                mainLogs.innerHTML = '<div class="text-slate-400 text-xs italic py-3 text-center">目前尚無作戰回報紀錄...</div>';
                 return;
             }
-
-            closeResetModal();
-            try {
-                await setDoc(docRef, {
-                    scores: [0, 0, 0, 0, 0, 0],
-                    teamNames: teamNames, 
-                    logs: [],
-                    pendingRequests: [] 
-                });
-                alert('✅ 驗證成功！所有分數與紀錄已重新歸零！');
-            } catch (e) {
-                console.error("歸零失敗: ", e);
-            }
+            mainLogs.innerHTML = logs.slice(-8).reverse().map(l => `
+                <div class="p-2 sm:p-2.5 bg-slate-100 dark:bg-slate-900/60 rounded-lg flex justify-between items-center text-xs border border-slate-300 dark:border-slate-800">
+                    <div class="truncate mr-2">
+                        <span class="text-slate-400 timer-font mr-1.5">[${l.time}]</span>
+                        <span class="font-black text-[#1e3a8a] dark:text-sky-400 mr-1.5">${l.team}</span>
+                        <span class="text-slate-600 dark:text-slate-300">(${l.reason})</span>
+                    </div>
+                    <span class="font-black timer-font shrink-0 ${l.change > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+                        ${l.change > 0 ? '+' : ''}${l.change}
+                    </span>
+                </div>
+            `).join('');
         }
 
-        window.toggleView = toggleView;
-        window.showFocus = showFocus;
-        window.hideFocus = hideFocus;
-        window.openHistory = openHistory;
-        window.closeHistory = closeHistory;
-        window.openAddScore = openAddScore;
-        window.closeAddScore = closeAddScore;
-        window.submitScore = submitScore;
-        window.editName = editName;
-        window.closeRenameModal = closeRenameModal;
-        window.saveName = saveName;
-        window.openResetModal = openResetModal;
-        window.closeResetModal = closeResetModal;
-        window.confirmReset = confirmReset;
+        window.openHistoryModal = (idx) => {
+            document.getElementById('historyModalTitle').innerText = `📜 ${teamNames[idx]} 歷史卷宗`;
+            const sqLogs = logs.filter(l => l.team === teamNames[idx]).reverse();
+            const container = document.getElementById('historyModalContent');
+
+            if (sqLogs.length === 0) {
+                container.innerHTML = '<div class="text-center text-slate-400 py-6 text-xs italic">此小隊尚無任何加扣分紀錄。</div>';
+            } else {
+                container.innerHTML = sqLogs.map(l => `
+                    <div class="p-2.5 sm:p-3 bg-white dark:bg-slate-800 rounded-xl border-l-4 ${l.change > 0 ? 'border-green-500' : 'border-red-500'} flex justify-between items-center shadow-sm">
+                        <div>
+                            <div class="text-[10px] text-slate-400 timer-font">${l.time}</div>
+                            <div class="font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200">${l.reason}</div>
+                        </div>
+                        <div class="font-black timer-font text-sm sm:text-base ${l.change > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+                            ${l.change > 0 ? '+' : ''}${l.change}
+                        </div>
+                    </div>
+                `).join('');
+            }
+            document.getElementById('historyModal').classList.remove('hidden');
+        };
+
+        window.openRenameModal = (idx) => {
+            pendingRenameIndex = idx;
+            document.getElementById('renameInput').value = teamNames[idx];
+            document.getElementById('renameModal').classList.remove('hidden');
+        };
+
+        window.saveRename = async () => {
+            const val = document.getElementById('renameInput').value.trim();
+            if (val && pendingRenameIndex !== null) {
+                const targetIdx = pendingRenameIndex;
+                closeModal('renameModal');
+                try {
+                    await runTransaction(db, async (transaction) => {
+                        const sfDoc = await transaction.get(docRef);
+                        if (!sfDoc.exists()) return;
+                        let currentNames = sfDoc.data().teamNames || teamNames;
+                        currentNames[targetIdx] = val;
+                        transaction.update(docRef, { teamNames: currentNames });
+                    });
+                } catch(e) {
+                    console.error("更名失敗: ", e);
+                }
+            }
+        };
+
+        window.openResetModal = () => {
+            document.getElementById('resetPasswordInput').value = '';
+            document.getElementById('resetModal').classList.remove('hidden');
+        };
+
+        window.confirmReset = async () => {
+            const pwd = document.getElementById('resetPasswordInput').value;
+            if (pwd === '1150918') {
+                closeModal('resetModal');
+                try {
+                    await setDoc(docRef, {
+                        scores: [0, 0, 0, 0, 0, 0],
+                        teamNames: teamNames,
+                        logs: [],
+                        pendingRequests: [],
+                        alertMsg: ""
+                    });
+                    alert('✅ 戰力值已全數歸零！');
+                } catch(e) {
+                    console.error("歸零失敗: ", e);
+                }
+            } else {
+                alert('🛑 密碼錯誤！拒絕授權！');
+            }
+        };
+
+        window.closeModal = (id) => { document.getElementById(id).classList.add('hidden'); };
+
+        window.toggleTheme = () => {
+            document.body.classList.toggle('dark-mode');
+            const isDark = document.body.classList.contains('dark-mode');
+            const btn = document.getElementById('themeBtn');
+            btn.innerHTML = isDark ? `<i class="fa-solid fa-sun text-yellow-400 text-lg sm:text-xl"></i>` : `<i class="fa-solid fa-moon text-lg sm:text-xl"></i>`;
+            localStorage.setItem('g5_theme', isDark ? 'dark' : 'light');
+        };
+
+        window.toggleAdminView = () => {
+            const mainView = document.getElementById('main-view');
+            const adminView = document.getElementById('admin-view');
+            const btn = document.getElementById('viewBtn');
+
+            if (mainView.classList.contains('hidden')) {
+                mainView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+                btn.classList.replace('bg-blue-600', 'bg-red-600');
+            } else {
+                mainView.classList.add('hidden');
+                adminView.classList.remove('hidden');
+                btn.classList.replace('bg-red-600', 'bg-blue-600');
+            }
+        };
+
+        if (localStorage.getItem('g5_theme') === 'dark') {
+            document.body.classList.add('dark-mode');
+            const btn = document.getElementById('themeBtn');
+            if (btn) btn.innerHTML = `<i class="fa-solid fa-sun text-yellow-400 text-lg sm:text-xl"></i>`;
+        }
+
         window.approveRequest = approveRequest;
         window.rejectRequest = rejectRequest;
-        window.cancelImport = cancelImport;
-        window.confirmImport = confirmImport;
 
         initApp();
     </script>
