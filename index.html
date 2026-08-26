@@ -17,59 +17,57 @@
     
     <style>
         :root {
-            /* ☀️ 日間戰術模式 */
-            --bg-body: #dbe4ee;
+            /* ☀️ 日間模式色彩 */
+            --bg-body: #e2e8f0;
             --bg-grid-dot: #94a3b8;
-            --bg-card: #ffffff;
-            --bg-inner: #f1f5f9;
-            --card-border: #334155;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --bg-inner: rgba(241, 245, 249, 0.7);
+            --card-border: rgba(148, 163, 184, 0.4);
             --text-main: #0f172a;
             --text-muted: #64748b;
             --header-blue: #1e3a8a;
             
-            --input-bg: #f8fafc;
-            --input-border: #94a3b8;
+            --input-bg: rgba(255, 255, 255, 0.8);
+            --input-border: rgba(148, 163, 184, 0.6);
             --input-text: #0f172a;
-            
-            --chip-bg: #e2e8f0;
-            --chip-text: #1e3a8a;
-            --chip-border: #94a3b8;
 
-            --tier-1-border: #eab308;
+            /* 🍏 iOS 玻璃按鈕色彩（日間） */
+            --glass-btn-bg: rgba(255, 255, 255, 0.75);
+            --glass-btn-border: rgba(255, 255, 255, 0.9);
+            --glass-btn-text: #0f172a;
+            --glass-btn-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.1), inset 0 1px 1px 0 rgba(255, 255, 255, 0.8);
+
+            /* 名次邊框與發光色（日間） */
+            --tier-1-border: #f59e0b;
             --tier-2-border: #6366f1;
-            --tier-3-border: #f97316;
-
-            --glass-bg-theme: rgba(30, 41, 59, 0.75);
-            --glass-bg-admin: rgba(220, 38, 38, 0.75);
-            --glass-border: rgba(255, 255, 255, 0.25);
+            --tier-3-border: #ea580c;
         }
 
-        /* 🌙 預設深藍戰情模式 */
+        /* 🌙 預設深藍戰情模式色彩 */
         body.dark-mode {
             --bg-body: #0b1120;
             --bg-grid-dot: #1e293b;
-            --bg-card: #131d31;
-            --bg-inner: #070d18;
-            --card-border: #22324d;
+            --bg-card: rgba(19, 29, 49, 0.85);
+            --bg-inner: rgba(7, 13, 24, 0.65);
+            --card-border: rgba(56, 189, 248, 0.25);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
             --header-blue: #38bdf8;
 
-            --input-bg: #070d18;
-            --input-border: #38bdf8;
+            --input-bg: rgba(15, 23, 42, 0.8);
+            --input-border: rgba(56, 189, 248, 0.4);
             --input-text: #fde68a;
 
-            --chip-bg: #1e293b;
-            --chip-text: #f59e0b;
-            --chip-border: #38bdf8;
+            /* 🍏 iOS 玻璃按鈕色彩（夜間） */
+            --glass-btn-bg: rgba(30, 41, 59, 0.65);
+            --glass-btn-border: rgba(255, 255, 255, 0.22);
+            --glass-btn-text: #f8fafc;
+            --glass-btn-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.45), inset 0 1px 1px 0 rgba(255, 255, 255, 0.35);
 
-            --tier-1-border: #facc15;
+            /* 名次邊框與發光色（夜間） */
+            --tier-1-border: #fbbf24;
             --tier-2-border: #818cf8;
-            --tier-3-border: #fb923c;
-
-            --glass-bg-theme: rgba(15, 23, 42, 0.7);
-            --glass-bg-admin: rgba(185, 28, 28, 0.7);
-            --glass-border: rgba(56, 189, 248, 0.35);
+            --tier-3-border: #ff6b2b;
         }
 
         html, body {
@@ -80,8 +78,8 @@
             font-family: 'Noto Sans TC', sans-serif; 
             background-color: var(--bg-body); 
             color: var(--text-main);
-            background-image: radial-gradient(var(--bg-grid-dot) 2px, transparent 2px);
-            background-size: 20px 20px;
+            background-image: radial-gradient(var(--bg-grid-dot) 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
             background-attachment: fixed;
             min-height: 100vh;
             transition: background-color 0.3s ease, color 0.3s ease;
@@ -123,20 +121,127 @@
             clip-path: polygon(0 0, 85% 0, 100% 100%, 0% 100%);
         }
 
-        /* 擬物風立體硬陰影卡片 */
+        /* 卡片容器：毛玻璃與柔和陰影 */
         .card-shadow { 
-            box-shadow: 4px 4px 0px rgba(0,0,0,0.25); 
-            border: 2px solid var(--card-border); 
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             background-color: var(--bg-card);
-            transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.3s ease;
+            border: 1.5px solid var(--card-border);
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background-color 0.3s ease;
         }
-        .btn-shadow { 
-            box-shadow: 3px 3px 0px rgba(0,0,0,0.3); 
-            transition: all 0.15s ease;
+
+        /* =========================================================
+           🍏 終極 iOS 液態毛玻璃按鍵核心 CSS 樣式庫 (Glassmorphism)
+           ========================================================= */
+        .ios-glass-btn {
+            position: relative;
+            background: var(--glass-btn-bg) !important;
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid var(--glass-btn-border) !important;
+            box-shadow: var(--glass-btn-shadow) !important;
+            color: var(--glass-btn-text) !important;
+            font-weight: 800;
+            overflow: hidden;
+            transition: all 0.22s cubic-bezier(0.25, 1, 0.5, 1);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
-        .btn-shadow:active { 
-            box-shadow: 0px 0px 0px rgba(0,0,0,0.3); 
-            transform: translate(2px, 2px); 
+
+        .ios-glass-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 45%;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0) 100%);
+            pointer-events: none;
+            border-radius: inherit;
+        }
+
+        .ios-glass-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(1.08);
+            box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.25), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6) !important;
+        }
+
+        .ios-glass-btn:active {
+            transform: scale(0.95);
+            filter: brightness(0.92);
+            box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2) !important;
+        }
+
+        /* 🔵 iOS 玻璃主色調（深藍/天藍調） */
+        .ios-glass-primary {
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.85), rgba(14, 116, 144, 0.75)) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(56, 189, 248, 0.45) !important;
+            box-shadow: 0 10px 24px -4px rgba(14, 116, 144, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6) !important;
+        }
+
+        /* 🟢 iOS 玻璃綠色（加分/確認） */
+        .ios-glass-success {
+            background: linear-gradient(135deg, rgba(22, 163, 74, 0.85), rgba(13, 148, 136, 0.75)) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(74, 222, 128, 0.5) !important;
+            box-shadow: 0 10px 24px -4px rgba(22, 163, 74, 0.35), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6) !important;
+        }
+
+        /* 🔴 iOS 玻璃紅色（扣分/危險/廣播） */
+        .ios-glass-danger {
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.85), rgba(185, 28, 28, 0.75)) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(248, 113, 113, 0.5) !important;
+            box-shadow: 0 10px 24px -4px rgba(220, 38, 38, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6) !important;
+        }
+
+        /* 🟡 iOS 玻璃耀眼黃金（第一名 🥇） */
+        .ios-glass-gold {
+            background: linear-gradient(135deg, rgba(234, 179, 8, 0.9), rgba(202, 138, 4, 0.85)) !important;
+            color: #ffffff !important;
+            border: 1.5px solid rgba(254, 240, 138, 0.9) !important;
+            box-shadow: 0 10px 24px -4px rgba(234, 179, 8, 0.55), inset 0 1px 1px 0 rgba(255, 255, 255, 0.9) !important;
+        }
+
+        /* 🟠 iOS 玻璃亮橘青銅（第三名 🥉 - 與第一名有極明顯區分） */
+        .ios-glass-bronze {
+            background: linear-gradient(135deg, rgba(234, 88, 12, 0.9), rgba(194, 65, 12, 0.85)) !important;
+            color: #ffffff !important;
+            border: 1.5px solid rgba(254, 215, 170, 0.85) !important;
+            box-shadow: 0 10px 24px -4px rgba(234, 88, 12, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.8) !important;
+        }
+
+        /* 🟡 廣播經典黃色按鍵 */
+        .ios-glass-amber {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.85), rgba(217, 119, 6, 0.75)) !important;
+            color: #ffffff !important;
+            border: 1px solid rgba(253, 224, 71, 0.55) !important;
+            box-shadow: 0 10px 24px -4px rgba(245, 158, 11, 0.35), inset 0 1px 1px 0 rgba(255, 255, 255, 0.7) !important;
+        }
+
+        /* 📱 快捷晶片按鈕 (iOS Widget 玻璃標籤風格) */
+        .tactical-chip {
+            background: var(--glass-btn-bg) !important;
+            backdrop-filter: blur(18px) saturate(180%);
+            -webkit-backdrop-filter: blur(18px) saturate(180%);
+            border: 1px solid var(--glass-btn-border) !important;
+            box-shadow: var(--glass-btn-shadow) !important;
+            color: var(--text-main) !important;
+            font-family: 'Space Mono', monospace;
+            font-weight: 900;
+            font-size: 14px;
+            transition: all 0.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+        .tactical-chip:hover {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.9), rgba(217, 119, 6, 0.85)) !important;
+            color: #ffffff !important;
+            border-color: rgba(253, 224, 71, 0.8) !important;
+            transform: translateY(-2px) scale(1.03);
+        }
+        .tactical-chip:active {
+            transform: scale(0.92);
         }
 
         /* 🌟 手機專用：超強烈彈跳高光動畫 */
@@ -154,50 +259,34 @@
             position: relative;
         }
 
-        /* 輸入框樣式 */
+        /* 輸入框玻璃擬態樣式 */
         .tactical-input {
             background-color: var(--input-bg) !important;
-            border-color: var(--input-border) !important;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1.5px solid var(--input-border) !important;
             color: var(--input-text) !important;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
             outline: none;
             transition: all 0.2s ease;
         }
         .tactical-input:focus {
-            box-shadow: 0 0 12px rgba(56, 189, 248, 0.45);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.45), inset 0 1px 2px rgba(0,0,0,0.05);
             border-color: #38bdf8 !important;
         }
 
-        /* 快捷晶片按鈕 */
-        .tactical-chip {
-            background-color: var(--chip-bg) !important;
-            color: var(--chip-text) !important;
-            border: 2px solid var(--chip-border) !important;
-            font-family: 'Space Mono', monospace;
-            font-weight: 900;
-            font-size: 14px;
-            transition: all 0.15s ease;
-        }
-        .tactical-chip:hover {
-            background-color: #f59e0b !important;
-            color: #0b1120 !important;
-            border-color: #f59e0b !important;
-        }
-        .tactical-chip:active {
-            transform: scale(0.92);
-        }
-
-        /* 🥇 金銀銅戰隊分級光暈 */
+        /* 🥇 金、銀、銅戰隊分級光暈（強化 1 與 3 的色彩對比） */
         .rank-tier-1 {
-            border-color: var(--tier-1-border);
-            box-shadow: 4px 4px 0px #ca8a04, 0 0 20px rgba(234, 179, 8, 0.35);
+            border-color: var(--tier-1-border) !important;
+            box-shadow: 0 14px 35px rgba(245, 158, 11, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.6);
         }
         .rank-tier-2 {
-            border-color: var(--tier-2-border);
-            box-shadow: 4px 4px 0px #4f46e5, 0 0 16px rgba(99, 102, 241, 0.3);
+            border-color: var(--tier-2-border) !important;
+            box-shadow: 0 12px 30px rgba(99, 102, 241, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.5);
         }
         .rank-tier-3 {
-            border-color: var(--tier-3-border);
-            box-shadow: 4px 4px 0px #ea580c, 0 0 16px rgba(249, 115, 22, 0.3);
+            border-color: var(--tier-3-border) !important;
+            box-shadow: 0 14px 35px rgba(234, 88, 12, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.6);
         }
 
         /* 分數變動閃爍動畫 */
@@ -266,36 +355,12 @@
         /* 側邊戰術毛玻璃懸浮島 */
         .side-floating-dock {
             position: fixed;
-            right: 14px;
+            right: 16px;
             bottom: 24px;
             z-index: 40;
             display: flex;
             flex-direction: column;
-            gap: 12px;
-        }
-
-        .glass-btn-theme {
-            background: var(--glass-bg-theme) !important;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1.5px solid var(--glass-border) !important;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
-            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .glass-btn-admin {
-            background: var(--glass-bg-admin) !important;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
-            box-shadow: 0 8px 32px rgba(220, 38, 38, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
-            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .glass-btn-theme:hover, .glass-btn-admin:hover {
-            transform: translateY(-3px) scale(1.04);
-            filter: brightness(1.15);
-        }
-        .glass-btn-theme:active, .glass-btn-admin:active {
-            transform: scale(0.86) rotate(3deg);
+            gap: 14px;
         }
 
         /* 頂部手勢滑動通知 Toast */
@@ -377,7 +442,7 @@
         <div class="loading-text">🌲 戰情終端連線中...</div>
     </div>
 
-    <div id="network-toast" class="card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-xl border-2 cursor-grab active:cursor-grabbing">
+    <div id="network-toast" class="card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-2xl border-2 cursor-grab active:cursor-grabbing">
         <div class="flex items-center gap-2.5">
             <div id="toast-icon-box" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0">
                 <i id="toast-icon" class="fa-solid fa-wifi"></i>
@@ -389,15 +454,15 @@
         </div>
         <div class="flex items-center gap-1.5 shrink-0">
             <span class="text-[10px] text-slate-400 font-bold hidden sm:inline"><i class="fa-solid fa-angles-up"></i> 上滑關閉</span>
-            <button onclick="dismissNetworkToast()" class="w-7 h-7 rounded-lg bg-black/20 hover:bg-black/40 text-slate-400 hover:text-white flex items-center justify-center text-xs font-bold transition">
+            <button onclick="dismissNetworkToast()" class="ios-glass-btn w-7 h-7 rounded-lg text-slate-400 hover:text-white flex items-center justify-center text-xs font-bold">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
     </div>
 
-    <div id="broadcast-popup-modal" class="card-shadow rounded-2xl overflow-hidden border-2 border-amber-500 shadow-2xl bg-slate-900 text-white">
+    <div id="broadcast-popup-modal" class="card-shadow rounded-3xl overflow-hidden border-2 border-amber-500 shadow-2xl bg-slate-900/90 backdrop-blur-2xl text-white">
         <div class="crime-tape h-3 w-full"></div>
-        <div class="p-4 flex items-start gap-3.5 bg-gradient-to-r from-amber-950/80 via-slate-900 to-slate-900">
+        <div class="p-4 flex items-start gap-3.5 bg-gradient-to-r from-amber-950/80 via-slate-900/90 to-slate-900/90">
             <div class="w-11 h-11 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl font-black shrink-0 shadow-[0_0_20px_rgba(245,158,11,0.5)] animate-bounce">
                 <i class="fa-solid fa-bullhorn"></i>
             </div>
@@ -412,7 +477,7 @@
                     通報讀取中...
                 </p>
                 <div class="mt-3 flex justify-end">
-                    <button onclick="closeBroadcastPopup()" class="min-h-[36px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-1.5 rounded-xl text-xs btn-shadow transition flex items-center gap-1.5 active:scale-95">
+                    <button onclick="closeBroadcastPopup()" class="ios-glass-btn ios-glass-amber min-h-[38px] px-5 py-1.5 rounded-2xl text-xs font-black flex items-center gap-1.5">
                         <i class="fa-solid fa-check"></i> 確認收到
                     </button>
                 </div>
@@ -421,12 +486,12 @@
         <div class="crime-tape h-2 w-full"></div>
     </div>
 
-    <div id="announcement-banner" class="hidden max-w-[1400px] mx-auto mb-3 sm:mb-4 card-shadow rounded-xl flex flex-col overflow-hidden border-2 border-amber-500/60">
+    <div id="announcement-banner" class="hidden max-w-[1400px] mx-auto mb-3 sm:mb-4 card-shadow rounded-2xl flex flex-col overflow-hidden border-2 border-amber-500/60">
         <div class="crime-tape h-3.5 w-full"></div>
-        <div class="p-3 sm:p-3.5 flex items-center justify-between gap-3 relative bg-amber-50 dark:bg-amber-950/50 overflow-hidden">
+        <div class="p-3 sm:p-3.5 flex items-center justify-between gap-3 relative bg-amber-50/70 dark:bg-amber-950/40 backdrop-blur-xl overflow-hidden">
             <div class="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 overflow-hidden">
-                <div class="bg-amber-100 dark:bg-amber-900 p-1.5 sm:p-2 rounded-full border-2 border-amber-500 shrink-0">
-                    <i class="fa-solid fa-tower-broadcast text-amber-600 dark:text-amber-300 animate-bounce text-sm sm:text-base"></i>
+                <div class="ios-glass-btn ios-glass-amber p-2.5 rounded-2xl shrink-0 flex items-center justify-center shadow-[0_0_15px_rgba(245,158,11,0.5)]">
+                    <i class="fa-solid fa-tower-broadcast animate-bounce text-base sm:text-lg text-amber-200"></i>
                 </div>
                 <div class="flex-1 min-w-0 overflow-hidden">
                     <h3 class="text-[11px] sm:text-xs font-bold tracking-widest text-[#64748b] dark:text-amber-400">🚨 警視廳全域作戰廣播</h3>
@@ -437,18 +502,20 @@
                     </div>
                 </div>
             </div>
-            <span class="bg-red-600 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full animate-pulse shrink-0 border border-red-700">
+            <span class="ios-glass-btn ios-glass-danger text-[10px] sm:text-xs font-black px-3 py-1 rounded-full animate-pulse shrink-0">
                 LIVE
             </span>
         </div>
         <div class="crime-tape h-3 w-full"></div>
     </div>
 
-    <header class="max-w-[1400px] mx-auto flex justify-between items-center mb-4 sm:mb-6 pb-3 border-b-4 border-[#1e3a8a] dark:border-sky-500">
+    <header class="max-w-[1400px] mx-auto flex justify-between items-center mb-4 sm:mb-6 pb-3 border-b-2 border-slate-300 dark:border-slate-800">
         <div class="flex items-center gap-3">
-            <div class="bg-[#1e3a8a] dark:bg-sky-600 text-white p-3 rounded-2xl btn-shadow relative shrink-0">
-                <i class="fa-solid fa-user-secret text-2xl sm:text-3xl text-amber-400"></i>
-                <div class="absolute -bottom-2 -right-2 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full border-2 border-slate-900">
+            <div class="relative shrink-0">
+                <div class="ios-glass-btn ios-glass-primary p-3 rounded-2xl flex items-center justify-center">
+                    <i class="fa-solid fa-user-secret text-2xl sm:text-3xl text-amber-400"></i>
+                </div>
+                <div class="absolute -bottom-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full border-2 border-slate-900 shadow-lg z-20">
                     AP
                 </div>
             </div>
@@ -462,8 +529,8 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 timer-font bg-slate-200 dark:bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700">
-            <span id="header-status-dot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <div class="ios-glass-btn flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 timer-font px-3.5 py-1.5 rounded-full">
+            <span id="header-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span>
             <span id="header-status-text">ONLINE</span>
         </div>
     </header>
@@ -472,19 +539,19 @@
         <div id="main-view">
             <div class="flex items-center justify-between pl-1 mb-3">
                 <div class="flex items-center gap-2">
-                    <div class="w-5 h-5 bg-red-600 rounded flex items-center justify-center text-white font-bold transform -rotate-6">
+                    <div class="w-5 h-5 bg-red-600 rounded flex items-center justify-center text-white font-bold transform -rotate-6 shadow">
                         <i class="fa-solid fa-crosshairs text-[10px]"></i>
                     </div>
                     <h2 class="font-black text-base sm:text-lg tracking-wider">小隊戰況監視檔案</h2>
                 </div>
                 <span class="text-[11px] text-[#64748b] dark:text-slate-400 font-bold hidden sm:inline">
-                    💡 提示：點擊任何小隊卡片可放大純淨投影
+                    💡 提示：卡片依 1~6 小隊排列，點擊可純淨投影
                 </span>
             </div>
 
             <div id="squadGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5 md:gap-6 mb-6"></div>
 
-            <div class="card-shadow rounded-2xl p-4 sm:p-5 mb-6">
+            <div class="card-shadow rounded-3xl p-4 sm:p-5 mb-6">
                 <h3 class="font-black text-sm sm:text-base md:text-lg mb-3 flex items-center gap-2 text-[#1e3a8a] dark:text-sky-400">
                     <i class="fa-solid fa-file-waveform"></i> 最新搜查記錄日誌 (TACTICAL LOGS)
                 </h3>
@@ -494,25 +561,25 @@
 
         <div id="admin-view" class="hidden">
             
-            <div class="card-shadow rounded-2xl p-4 sm:p-5 mb-5 border-2 border-blue-600/40">
+            <div class="card-shadow rounded-3xl p-4 sm:p-5 mb-5 border-2 border-blue-600/30">
                 <h3 class="text-sm sm:text-base font-black text-[#1e3a8a] dark:text-sky-400 mb-1 flex items-center gap-2">
                     <i class="fa-solid fa-bullhorn"></i> 警視廳廣播系統中樞
                 </h3>
                 <p class="text-[11px] text-[#64748b] dark:text-slate-400 font-bold mb-3">發布全域緊急通報，將同步推播至大螢幕並觸發側邊滑動動畫與聲光通知：</p>
                 <div class="flex flex-col sm:flex-row gap-2.5">
-                    <input type="text" id="adminBroadcastInput" class="tactical-input flex-1 p-3 rounded-xl border-2 font-bold text-xs sm:text-sm" placeholder="輸入作戰通報內容...">
+                    <input type="text" id="adminBroadcastInput" class="tactical-input flex-1 p-3 rounded-2xl font-bold text-xs sm:text-sm" placeholder="輸入作戰通報內容...">
                     <div class="flex gap-2">
-                        <button onclick="pushBroadcast()" class="min-h-[46px] flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white font-black px-5 py-2.5 rounded-xl btn-shadow text-xs sm:text-sm shrink-0 active:scale-95">
-                            <i class="fa-solid fa-paper-plane mr-1"></i> 發布廣播
+                        <button onclick="pushBroadcast()" class="ios-glass-btn ios-glass-danger min-h-[46px] flex-1 sm:flex-none px-6 py-2.5 rounded-2xl text-xs sm:text-sm shrink-0">
+                            <i class="fa-solid fa-paper-plane mr-1.5"></i> 發布廣播
                         </button>
-                        <button onclick="clearBroadcast()" class="min-h-[46px] bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-white font-bold px-4 py-2.5 rounded-xl btn-shadow text-xs sm:text-sm shrink-0 active:scale-95">
+                        <button onclick="clearBroadcast()" class="ios-glass-btn min-h-[46px] px-5 py-2.5 rounded-2xl text-xs sm:text-sm shrink-0">
                             清除
                         </button>
                     </div>
                 </div>
             </div>
 
-            <div class="card-shadow rounded-2xl p-4 sm:p-5 mb-5 border-2 border-amber-500/50">
+            <div class="card-shadow rounded-3xl p-4 sm:p-5 mb-5 border-2 border-amber-500/40">
                 <h2 class="text-base sm:text-lg font-black text-amber-500 dark:text-amber-400 mb-3 flex items-center">
                     <i class="fa-solid fa-siren-on mr-2 animate-pulse"></i>
                     <span>待審核戰報回報</span>
@@ -521,14 +588,14 @@
                 <div id="pending-list" class="space-y-2.5 max-h-72 overflow-y-auto pr-1"></div>
             </div>
 
-            <div class="card-shadow rounded-2xl p-4 sm:p-5 mb-6 border-2 border-slate-300 dark:border-slate-700">
+            <div class="card-shadow rounded-3xl p-4 sm:p-5 mb-6">
                 <h2 class="text-base sm:text-lg font-black text-[#1e3a8a] dark:text-sky-400 mb-4 flex items-center gap-2">
                     <i class="fa-solid fa-sliders"></i> 各小隊戰力值人工調配
                 </h2>
                 <div id="adminGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5"></div>
 
-                <div class="mt-8 pt-5 border-t-2 border-slate-200 dark:border-slate-800 text-center">
-                    <button onclick="openResetModal()" class="w-full sm:w-auto min-h-[48px] bg-slate-800 hover:bg-slate-900 text-red-400 font-black px-7 py-3 rounded-xl btn-shadow transition text-xs sm:text-sm border-2 border-red-500 active:scale-95">
+                <div class="mt-8 pt-5 border-t border-slate-200 dark:border-slate-800 text-center">
+                    <button onclick="openResetModal()" class="ios-glass-btn ios-glass-danger w-full sm:w-auto min-h-[48px] px-8 py-3 rounded-2xl text-xs sm:text-sm">
                         ⚠️ 全隊戰力重置歸零
                     </button>
                 </div>
@@ -537,10 +604,10 @@
     </main>
 
     <div class="side-floating-dock" id="sideFloatingDock">
-        <button onclick="toggleTheme()" id="themeBtn" class="glass-btn-theme w-12 h-12 sm:w-14 sm:h-14 text-amber-400 rounded-2xl flex items-center justify-center cursor-pointer" title="切換日/夜間模式">
+        <button onclick="toggleTheme()" id="themeBtn" class="ios-glass-btn w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center cursor-pointer shadow-xl" title="切換日/夜間模式">
             <i class="fa-solid fa-sun text-yellow-400 text-lg sm:text-xl"></i>
         </button>
-        <button onclick="toggleAdminView()" id="viewBtn" class="glass-btn-admin w-12 h-12 sm:w-14 sm:h-14 text-white rounded-2xl flex items-center justify-center cursor-pointer relative" title="切換值勤後台">
+        <button onclick="toggleAdminView()" id="viewBtn" class="ios-glass-btn ios-glass-danger w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center cursor-pointer relative shadow-xl" title="切換值勤後台">
             <i class="fa-solid fa-user-shield text-lg sm:text-xl"></i>
             <span id="btn-pending-badge" class="absolute -top-1.5 -right-1 bg-amber-400 text-red-900 text-[9px] font-black px-1.5 py-0.2 rounded-full animate-bounce hidden shadow border border-red-600">!</span>
         </button>
@@ -548,7 +615,7 @@
 
     <div id="focus-overlay" class="hidden flex flex-col justify-center items-center cursor-pointer p-4 select-none" onclick="hideFocus()">
         <div class="text-center zoom-animation w-full max-w-[95vw] sm:max-w-3xl flex flex-col items-center justify-center">
-            <div class="text-[11px] sm:text-xs font-mono tracking-widest text-amber-400 mb-3 uppercase border border-amber-400/50 px-3.5 py-1 rounded-full inline-block bg-amber-950/60">
+            <div class="ios-glass-btn text-[11px] sm:text-xs font-mono tracking-widest text-amber-400 mb-3 uppercase px-4 py-1.5 rounded-full inline-block">
                 TACTICAL TARGET FOCUS
             </div>
             <div class="text-white text-2xl sm:text-4xl md:text-5xl font-black mb-4 drop-shadow-md truncate max-w-full px-4" id="focus-name">
@@ -565,80 +632,80 @@
         </div>
     </div>
 
-    <div id="scoreModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-3 sm:p-4">
-        <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-sm max-h-[90vh] overflow-y-auto p-5 sm:p-6 relative">
+    <div id="scoreModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="card-shadow rounded-3xl w-full max-w-[92vw] sm:max-w-sm max-h-[90vh] overflow-y-auto p-5 sm:p-6 relative">
             <h3 class="text-lg sm:text-xl font-black text-center mb-0.5 text-[#1e3a8a] dark:text-sky-400" id="scoreModalTitle">調整分數</h3>
             <p class="text-center text-[11px] font-bold text-slate-400 mb-4" id="scoreModalDesc">目前分數: 0</p>
             
             <div class="mb-3.5">
                 <label class="block text-[11px] font-bold text-[#64748b] dark:text-slate-400 mb-1">調整點數 (點擊快捷或輸入)：</label>
-                <input type="number" id="scoreInput" class="tactical-input w-full text-center text-2xl sm:text-3xl font-black p-3 rounded-xl border-2 timer-font" value="100">
+                <input type="number" id="scoreInput" class="tactical-input w-full text-center text-2xl sm:text-3xl font-black p-3 rounded-2xl timer-font" value="100">
             </div>
 
             <div class="grid grid-cols-4 gap-2 mb-3.5">
-                <button type="button" onclick="setChip(10)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+10</button>
-                <button type="button" onclick="setChip(50)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+50</button>
-                <button type="button" onclick="setChip(100)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+100</button>
-                <button type="button" onclick="setChip(300)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+300</button>
+                <button type="button" onclick="setChip(10)" class="tactical-chip min-h-[44px] rounded-2xl flex items-center justify-center">+10</button>
+                <button type="button" onclick="setChip(50)" class="tactical-chip min-h-[44px] rounded-2xl flex items-center justify-center">+50</button>
+                <button type="button" onclick="setChip(100)" class="tactical-chip min-h-[44px] rounded-2xl flex items-center justify-center">+100</button>
+                <button type="button" onclick="setChip(300)" class="tactical-chip min-h-[44px] rounded-2xl flex items-center justify-center">+300</button>
             </div>
 
             <div class="mb-5">
                 <label class="block text-[11px] font-bold text-[#64748b] dark:text-slate-400 mb-1">任務名稱 / 加分事由：</label>
-                <input type="text" id="reasonInput" class="tactical-input w-full text-xs sm:text-sm font-bold p-3 rounded-xl border-2" value="據點攻防作戰獲勝">
+                <input type="text" id="reasonInput" class="tactical-input w-full text-xs sm:text-sm font-bold p-3 rounded-2xl" value="關卡結算報酬">
             </div>
 
-            <div class="grid grid-cols-2 gap-2.5">
-                <button type="button" onclick="submitScore(false)" class="min-h-[50px] bg-red-600 hover:bg-red-700 text-white font-black rounded-xl text-sm sm:text-base btn-shadow active:scale-95">➖ 扣分</button>
-                <button type="button" onclick="submitScore(true)" class="min-h-[50px] bg-green-600 hover:bg-green-700 text-white font-black rounded-xl text-sm sm:text-base btn-shadow active:scale-95">➕ 加分</button>
+            <div class="grid grid-cols-2 gap-3">
+                <button type="button" onclick="submitScore(false)" class="ios-glass-btn ios-glass-danger min-h-[50px] rounded-2xl text-sm sm:text-base font-black">➖ 扣分</button>
+                <button type="button" onclick="submitScore(true)" class="ios-glass-btn ios-glass-success min-h-[50px] rounded-2xl text-sm sm:text-base font-black">➕ 加分</button>
             </div>
             <button type="button" onclick="closeModal('scoreModal')" class="w-full mt-3 py-2 text-xs font-bold text-slate-400 hover:text-slate-200">取消返回</button>
         </div>
     </div>
 
-    <div id="historyModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-3 sm:p-4">
-        <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-md max-h-[82vh] flex flex-col overflow-hidden relative">
-            <div class="p-3.5 sm:p-4 bg-slate-800 text-white flex justify-between items-center border-b border-slate-700">
+    <div id="historyModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="card-shadow rounded-3xl w-full max-w-[92vw] sm:max-w-md max-h-[82vh] flex flex-col overflow-hidden relative">
+            <div class="p-4 bg-slate-900/80 backdrop-blur-xl text-white flex justify-between items-center border-b border-slate-700/50">
                 <h3 class="font-black text-sm sm:text-base flex items-center gap-2 text-amber-400" id="historyModalTitle">小隊戰績卷宗</h3>
-                <button onclick="closeModal('historyModal')" class="text-xl font-bold p-1">&times;</button>
+                <button onclick="closeModal('historyModal')" class="ios-glass-btn w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">&times;</button>
             </div>
-            <div class="p-3.5 sm:p-4 overflow-y-auto flex-1 space-y-2 bg-slate-100 dark:bg-slate-900" id="historyModalContent"></div>
+            <div class="p-3.5 sm:p-4 overflow-y-auto flex-1 space-y-2 bg-transparent" id="historyModalContent"></div>
         </div>
     </div>
 
-    <div id="renameModal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center p-3 sm:p-4">
-        <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-sm p-5 sm:p-6">
+    <div id="renameModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="card-shadow rounded-3xl w-full max-w-[92vw] sm:max-w-sm p-5 sm:p-6">
             <h3 class="text-base sm:text-lg font-black text-center mb-3 text-[#1e3a8a] dark:text-sky-400">✏️ 修改戰隊名稱</h3>
-            <input type="text" id="renameInput" class="tactical-input w-full text-center text-base sm:text-lg font-bold p-3 rounded-xl border-2 mb-4">
+            <input type="text" id="renameInput" class="tactical-input w-full text-center text-base sm:text-lg font-bold p-3 rounded-2xl mb-4">
             <div class="flex gap-2.5">
-                <button onclick="closeModal('renameModal')" class="min-h-[46px] flex-1 py-2.5 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-white font-bold text-xs sm:text-sm btn-shadow active:scale-95">取消</button>
-                <button onclick="saveRename()" class="min-h-[46px] flex-1 py-2.5 rounded-xl bg-[#1e3a8a] hover:bg-blue-900 text-white font-black text-xs sm:text-sm btn-shadow active:scale-95">儲存名稱</button>
+                <button onclick="closeModal('renameModal')" class="ios-glass-btn min-h-[46px] flex-1 rounded-2xl text-xs sm:text-sm">取消</button>
+                <button onclick="saveRename()" class="ios-glass-btn ios-glass-primary min-h-[46px] flex-1 rounded-2xl text-xs sm:text-sm">儲存名稱</button>
             </div>
         </div>
     </div>
 
-    <div id="resetModal" class="fixed inset-0 bg-black/85 z-50 hidden flex items-center justify-center p-3 sm:p-4">
-        <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-sm p-5 sm:p-6 text-center border-2 border-red-500">
+    <div id="resetModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="card-shadow rounded-3xl w-full max-w-[92vw] sm:max-w-sm p-5 sm:p-6 text-center border-2 border-red-500/50">
             <div class="text-3xl text-red-500 mb-2 animate-bounce"><i class="fa-solid fa-triangle-exclamation"></i></div>
             <h3 class="text-lg sm:text-xl font-black text-red-600 mb-1.5">最高權限授權認證</h3>
             <p class="text-[11px] text-slate-400 mb-3.5">此動作將清空所有積分與日誌，請輸入管理密碼：</p>
-            <input type="password" id="resetPasswordInput" class="tactical-input w-full text-center text-lg sm:text-xl font-black tracking-widest p-3 rounded-xl border-2 border-red-500 mb-4 font-mono" placeholder="輸入密碼解鎖">
+            <input type="password" id="resetPasswordInput" class="tactical-input w-full text-center text-lg sm:text-xl font-black tracking-widest p-3 rounded-2xl border-red-500 mb-4 font-mono" placeholder="輸入密碼解鎖">
             <div class="flex gap-2.5">
-                <button onclick="closeModal('resetModal')" class="min-h-[46px] flex-1 py-2.5 rounded-xl bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-white font-bold text-xs sm:text-sm btn-shadow active:scale-95">取消</button>
-                <button onclick="confirmReset()" class="min-h-[46px] flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs sm:text-sm btn-shadow active:scale-95">確定歸零</button>
+                <button onclick="closeModal('resetModal')" class="ios-glass-btn min-h-[46px] flex-1 rounded-2xl text-xs sm:text-sm">取消</button>
+                <button onclick="confirmReset()" class="ios-glass-btn ios-glass-danger min-h-[46px] flex-1 rounded-2xl text-xs sm:text-sm">確定歸零</button>
             </div>
         </div>
     </div>
 
-    <div id="import-modal" class="fixed inset-0 bg-black/85 z-50 hidden flex items-center justify-center p-3 sm:p-4">
-        <div class="card-shadow rounded-2xl w-full max-w-[92vw] sm:max-w-sm p-5 text-center relative overflow-hidden border-2 border-amber-500">
+    <div id="import-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
+        <div class="card-shadow rounded-3xl w-full max-w-[92vw] sm:max-w-sm p-5 text-center relative overflow-hidden border-2 border-amber-500">
             <div class="bg-amber-500 text-slate-900 py-1 absolute top-0 left-0 w-full font-black tracking-widest text-[10px]">🌐 系統戰術連線偵測</div>
             <div class="text-4xl mb-2 mt-4 animate-bounce">📡</div>
             <h3 class="text-lg font-black text-[#1e3a8a] dark:text-sky-400 mb-1">接收到外部戰報！</h3>
             <p class="text-[11px] font-bold text-slate-400 mb-3">來自【東勢林場據點戰】的結算分數已送達：</p>
-            <div id="import-details" class="bg-slate-100 dark:bg-slate-900 rounded-xl p-2.5 text-left mb-4 max-h-32 overflow-y-auto text-xs font-bold space-y-1 border border-slate-300 dark:border-slate-700"></div>
+            <div id="import-details" class="bg-slate-100/70 dark:bg-slate-900/70 backdrop-blur-md rounded-2xl p-3 text-left mb-4 max-h-32 overflow-y-auto text-xs font-bold space-y-1.5 border border-slate-300 dark:border-slate-700"></div>
             <div class="flex gap-2">
-                <button onclick="cancelImport()" class="min-h-[44px] flex-1 bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-white font-bold py-2 rounded-xl btn-shadow active:scale-95 text-xs">放棄</button>
-                <button onclick="confirmImport()" class="min-h-[44px] flex-1 bg-amber-500 hover:bg-amber-600 text-slate-900 font-black py-2 rounded-xl btn-shadow active:scale-95 text-xs">✅ 匯入總分</button>
+                <button onclick="cancelImport()" class="ios-glass-btn min-h-[44px] flex-1 rounded-2xl text-xs">放棄</button>
+                <button onclick="confirmImport()" class="ios-glass-btn ios-glass-amber min-h-[44px] flex-1 rounded-2xl text-xs">✅ 匯入總分</button>
             </div>
         </div>
     </div>
@@ -807,29 +874,29 @@
 
             if (type === 'offline') {
                 triggerHaptic('warning');
-                toast.className = "card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-xl border-2 border-red-500/80 bg-red-950/90 text-red-200 cursor-grab show";
+                toast.className = "card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-2xl border-2 border-red-500/80 bg-red-950/80 text-red-200 cursor-grab show";
                 iconBox.className = "w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0 bg-red-600 text-white shadow";
                 icon.className = "fa-solid fa-wifi-slash";
                 title.innerText = "🚨 網路連線已中斷";
                 desc.innerText = "目前處於離線狀態，已鎖定寫入防護！";
                 
-                if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-red-500 animate-pulse";
+                if (statusDot) statusDot.className = "w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]";
                 if (statusText) statusText.innerText = "OFFLINE";
             } else if (type === 'online') {
                 triggerHaptic('light');
-                toast.className = "card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-xl border-2 border-emerald-500/80 bg-emerald-950/90 text-emerald-200 cursor-grab show";
+                toast.className = "card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-2xl border-2 border-emerald-500/80 bg-emerald-950/80 text-emerald-200 cursor-grab show";
                 iconBox.className = "w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0 bg-emerald-600 text-white shadow";
                 icon.className = "fa-solid fa-wifi";
                 title.innerText = "✅ 網路已重新連線";
                 desc.innerText = "戰情終端連線恢復，資料庫同步中...";
                 
-                if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+                if (statusDot) statusDot.className = "w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]";
                 if (statusText) statusText.innerText = "ONLINE";
 
                 toastTimeout = setTimeout(() => { dismissNetworkToast(); }, 3500);
             } else if (type === 'blocked') {
                 triggerHaptic('warning');
-                toast.className = "card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-xl border-2 border-amber-500/80 bg-amber-950/90 text-amber-200 cursor-grab show";
+                toast.className = "card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-2xl border-2 border-amber-500/80 bg-amber-950/80 text-amber-200 cursor-grab show";
                 iconBox.className = "w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0 bg-amber-500 text-slate-900 shadow";
                 icon.className = "fa-solid fa-ban";
                 title.innerText = "⚠️ 離線防護：無法執行更動";
@@ -936,21 +1003,18 @@
             }, { passive: true });
         });
 
-        // ================= 🌟 終極修復：全平台 100% 絕對滾動與卡片跳動 =================
+        // ================= 🌟 手機專用：精準聚焦卡片彈跳 =================
         function triggerTargetCardFocus(targetIdx) {
             const mainView = document.getElementById('main-view');
             
-            // 只要目前該手機處於「前台首頁」
             if (mainView && !mainView.classList.contains('hidden')) {
                 setTimeout(() => {
                     const targetCard = document.getElementById(`card-${targetIdx}`);
                     if (targetCard) {
-                        // 1. 原生手機相容度最高的強制置中滾動
                         targetCard.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
 
-                        // 2. 強制掛上高對比跳動光暈動畫
                         targetCard.classList.remove('card-jump-pulse');
-                        void targetCard.offsetWidth; // 🪄 Reflow 強制重繪
+                        void targetCard.offsetWidth;
                         targetCard.classList.add('card-jump-pulse');
                         
                         triggerHaptic('jump');
@@ -959,7 +1023,7 @@
             }
         }
 
-        // ================= Firebase 初始化與監聽 =================
+        // ================= Firebase 初始化與即時監聽 =================
         function initApp() {
             onSnapshot(docRef, (snap) => {
                 if (snap.exists()) {
@@ -984,7 +1048,6 @@
                         closeBroadcastPopup();
                     }
 
-                    // 🌟 核心比對：比對前後陣列，找出變動的小隊 index
                     let changedIndex = -1;
                     if (previousScores !== null) {
                         for (let i = 0; i < newScores.length; i++) {
@@ -997,7 +1060,6 @@
 
                     const isFirstTime = (previousScores === null);
                     
-                    // 先渲染畫面
                     render(previousScores || newScores, newScores); 
                     
                     previousScores = [...newScores]; 
@@ -1006,7 +1068,6 @@
                     renderPendingList(); 
                     updateBadges(); 
 
-                    // 🌟 只要不是初次載入，且有隊伍分數變更，全場手機 100% 同步滾動跳動！
                     if (!isFirstTime && changedIndex !== -1) {
                         triggerTargetCardFocus(changedIndex);
                     }
@@ -1014,7 +1075,6 @@
                     setDoc(docRef, { scores, teamNames, logs, pendingRequests: [], alertMsg: "" });
                 }
 
-                // 關閉初始連線遮罩
                 const loader = document.getElementById('loadingScreen');
                 if (loader) {
                     loader.classList.add('fade-out');
@@ -1048,57 +1108,62 @@
             requestAnimationFrame(step);
         }
 
-        // 🌟 畫面渲染 (精準綁定 card-${sq.id})
+        // 🌟 畫面渲染（固定 1~6 隊排序 + 1與3名強烈區分顏色）
         function render(prevList = [], currentList = []) {
             const squadGrid = document.getElementById('squadGrid');
             const adminGrid = document.getElementById('adminGrid');
 
             const renderScores = currentList.length ? currentList : scores;
-            const scoreObjects = renderScores.map((s, idx) => ({ id: idx, score: s }));
-            scoreObjects.sort((a, b) => b.score - a.score);
+            
+            // 1. 計算各小隊的排名名次 (Rank 1~6)
+            const scoreSorted = renderScores.map((s, idx) => ({ id: idx, score: s }));
+            scoreSorted.sort((a, b) => b.score - a.score);
             const rankMap = {};
-            scoreObjects.forEach((sq, idx) => { rankMap[sq.id] = idx + 1; });
+            scoreSorted.forEach((item, rIdx) => { 
+                rankMap[item.id] = rIdx + 1; 
+            });
 
-            // 🌟 這裡使用 sq.id 確保每一隊的卡片 ID 永遠對應其原始索引！
-            squadGrid.innerHTML = scoreObjects.map((sq, sortIdx) => {
-                const idx = sq.id;
-                const score = sq.score;
+            // 2. 🌟 固定照隊伍順序 (第 1 隊 到 第 6 隊) 進行排版渲染
+            squadGrid.innerHTML = renderScores.map((score, idx) => {
                 const rank = rankMap[idx];
                 let rankClass = '';
-                let rankBadge = `<span class="bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-[11px] font-black px-2 py-0.5 rounded border border-slate-400 dark:border-slate-700 timer-font">#0${rank}</span>`;
+                let rankBadge = `<span class="ios-glass-btn text-[11px] font-black px-2.5 py-0.5 rounded-full timer-font">#0${rank}</span>`;
 
                 if (rank === 1) {
+                    // 🥇 第一名：耀眼金黃色
                     rankClass = 'rank-tier-1';
-                    rankBadge = `<span class="bg-amber-100 text-amber-900 border border-amber-500 text-[11px] font-black px-2 py-0.5 rounded shadow-sm timer-font"><i class="fa-solid fa-crown text-amber-600 mr-1"></i>TOP 1</span>`;
+                    rankBadge = `<span class="ios-glass-btn ios-glass-gold text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-lg timer-font"><i class="fa-solid fa-crown mr-1"></i>TOP 1</span>`;
                 } else if (rank === 2) {
+                    // 🥈 第二名：科技冷藍紫色
                     rankClass = 'rank-tier-2';
-                    rankBadge = `<span class="bg-indigo-100 text-indigo-900 border border-indigo-500 text-[11px] font-black px-2 py-0.5 rounded shadow-sm timer-font"><i class="fa-solid fa-medal text-indigo-600 mr-1"></i>TOP 2</span>`;
+                    rankBadge = `<span class="ios-glass-btn ios-glass-primary text-[11px] font-black px-2.5 py-0.5 rounded-full shadow timer-font"><i class="fa-solid fa-medal mr-1"></i>TOP 2</span>`;
                 } else if (rank === 3) {
+                    // 🥉 第三名：鮮明亮橘紅銅色 (與第一名完全區隔！)
                     rankClass = 'rank-tier-3';
-                    rankBadge = `<span class="bg-orange-100 text-orange-900 border border-orange-500 text-[11px] font-black px-2 py-0.5 rounded shadow-sm timer-font"><i class="fa-solid fa-award text-orange-600 mr-1"></i>TOP 3</span>`;
+                    rankBadge = `<span class="ios-glass-btn ios-glass-bronze text-[11px] font-black px-2.5 py-0.5 rounded-full shadow-lg timer-font"><i class="fa-solid fa-award mr-1"></i>TOP 3</span>`;
                 }
 
                 return `
-                    <div class="card-shadow rounded-2xl p-4 sm:p-5 flex flex-col justify-between relative cursor-pointer group hover:-translate-y-1 active:scale-[0.99] ${rankClass}" id="card-${idx}" onclick="showFocus(${idx})">
-                        <div class="absolute -top-[2px] -left-[2px] bg-slate-800 text-white text-[9px] sm:text-[10px] font-bold px-2.5 py-0.5 folder-tab z-10 border-b border-r border-slate-700">
+                    <div class="card-shadow rounded-3xl p-4 sm:p-5 flex flex-col justify-between relative cursor-pointer group hover:-translate-y-1 active:scale-[0.99] ${rankClass}" id="card-${idx}" onclick="showFocus(${idx})">
+                        <div class="absolute -top-[2px] -left-[2px] bg-slate-900/90 text-sky-400 text-[9px] sm:text-[10px] font-bold px-3 py-0.5 folder-tab z-10 border-b border-r border-sky-500/30">
                             FILE: SQUAD-0${idx + 1}
                         </div>
 
                         <div class="flex justify-between items-center mt-2 mb-1.5">
                             <div class="flex items-center gap-2">
                                 <h3 class="text-lg sm:text-xl font-black tracking-wide">${teamNames[idx]}</h3>
-                                <button onclick="event.stopPropagation(); openHistoryModal(${idx})" class="text-[11px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300 hover:text-[#1e3a8a] dark:hover:text-sky-400 px-2 py-0.5 rounded-md border border-slate-300 dark:border-slate-700 transition" title="查看小隊紀錄">
+                                <button onclick="event.stopPropagation(); openHistoryModal(${idx})" class="ios-glass-btn text-[11px] px-2.5 py-0.5 rounded-xl transition" title="查看小隊紀錄">
                                     <i class="fa-solid fa-clock-rotate-left"></i> 履歷
                                 </button>
                             </div>
                             <div>${rankBadge}</div>
                         </div>
 
-                        <div class="rounded-xl p-3 sm:p-4 my-1 text-center border border-slate-300 dark:border-slate-700 group-hover:border-[#1e3a8a] transition" style="background-color: var(--bg-inner);">
+                        <div class="rounded-2xl p-3 sm:p-4 my-1 text-center border border-slate-300/40 dark:border-slate-700/50 group-hover:border-[#1e3a8a] transition" style="background-color: var(--bg-inner);">
                             <div class="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5 flex items-center justify-center gap-1">
                                 TOTAL TACTICAL SCORE <i class="fa-solid fa-up-right-and-down-left-from-center text-[8px] opacity-0 group-hover:opacity-100 transition"></i>
                             </div>
-                            <div class="text-4xl sm:text-5xl font-black text-[#1e3a8a] dark:text-amber-400 timer-font drop-shadow-sm truncate" id="score-text-${idx}">
+                            <div class="text-4xl sm:text-5xl font-black text-[#1e3a8a] dark:text-amber-400 timer-font drop-shadow truncate" id="score-text-${idx}">
                                 ${(prevList[idx] ?? score).toLocaleString()}
                             </div>
                         </div>
@@ -1107,16 +1172,16 @@
             }).join('');
 
             adminGrid.innerHTML = renderScores.map((score, idx) => `
-                <div class="card-shadow rounded-2xl p-4 flex flex-col justify-between" id="admin-card-${idx}">
+                <div class="card-shadow rounded-3xl p-4 flex flex-col justify-between" id="admin-card-${idx}">
                     <div class="flex justify-between items-center mb-1.5">
                         <span class="font-black text-base sm:text-lg">${teamNames[idx]}</span>
-                        <button onclick="openRenameModal(${idx})" class="text-slate-400 hover:text-blue-600 transition p-1 text-xs sm:text-sm"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="openRenameModal(${idx})" class="ios-glass-btn w-8 h-8 rounded-xl flex items-center justify-center text-xs sm:text-sm text-sky-400 hover:text-sky-300"><i class="fa-solid fa-pen"></i></button>
                     </div>
                     <div class="text-3xl sm:text-4xl font-black text-center text-[#1e3a8a] dark:text-amber-400 timer-font my-1.5" id="admin-score-text-${idx}">
                         ${(prevList[idx] ?? score).toLocaleString()}
                     </div>
-                    <button onclick="openScoreModal(${idx})" class="min-h-[46px] w-full bg-[#1e3a8a] hover:bg-blue-900 text-white font-black rounded-xl btn-shadow transition mt-1.5 text-xs sm:text-sm active:scale-95">
-                        <i class="fa-solid fa-sliders mr-1"></i> 調整戰力值
+                    <button onclick="openScoreModal(${idx})" class="ios-glass-btn ios-glass-primary min-h-[46px] w-full rounded-2xl transition mt-1.5 text-xs sm:text-sm flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-sliders"></i> 調整戰力值
                     </button>
                 </div>
             `).join('');
@@ -1150,24 +1215,24 @@
             if (!list) return;
 
             if (pendingRequests.length === 0) {
-                list.innerHTML = '<div class="text-slate-400 italic text-center py-5 rounded-xl border border-slate-300 dark:border-slate-800 text-xs sm:text-sm" style="background-color: var(--bg-inner);">✅ 目前無待審核的戰況回報</div>';
+                list.innerHTML = '<div class="text-slate-400 italic text-center py-5 rounded-2xl border border-slate-300 dark:border-slate-800 text-xs sm:text-sm" style="background-color: var(--bg-inner);">✅ 目前無待審核的戰況回報</div>';
                 return;
             }
 
             const reversed = [...pendingRequests].reverse();
             list.innerHTML = reversed.map(req => `
-                <div id="req-card-${req.id}" class="p-3 sm:p-4 rounded-xl sm:rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-l-4 border-amber-500 shadow border border-slate-300 dark:border-slate-800 transition duration-200" style="background-color: var(--bg-inner);">
+                <div id="req-card-${req.id}" class="p-3 sm:p-4 rounded-2xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-l-4 border-amber-500 shadow border border-slate-300/40 dark:border-slate-800/80 transition duration-200 backdrop-blur-md" style="background-color: var(--bg-inner);">
                     <div class="flex-1 text-left w-full">
-                        <div class="text-[10px] sm:text-xs text-slate-400 font-bold mb-0.5"><span class="px-1.5 py-0.5 rounded mr-1.5" style="background-color: var(--bg-card);">時間：${req.time}</span></div>
+                        <div class="text-[10px] sm:text-xs text-slate-400 font-bold mb-0.5"><span class="px-2 py-0.5 rounded-md mr-1.5 border border-slate-400/30" style="background-color: var(--bg-card);">時間：${req.time}</span></div>
                         <div class="text-sm sm:text-base font-black mb-0.5">小隊：<span class="text-[#1e3a8a] dark:text-sky-400">${req.team}</span></div>
                         <div class="text-xs text-slate-600 dark:text-slate-300 font-bold flex items-center">
                             項目：${req.reason} 
-                            <span class="text-green-600 dark:text-green-400 text-sm sm:text-base font-black ml-2 px-2 py-0.5 rounded border border-green-500/30" style="background-color: var(--bg-card);">+${req.score} 分</span>
+                            <span class="text-green-600 dark:text-green-400 text-sm sm:text-base font-black ml-2 px-2 py-0.5 rounded-lg border border-green-500/30" style="background-color: var(--bg-card);">+${req.score} 分</span>
                         </div>
                     </div>
                     <div class="flex gap-2 w-full md:w-auto shrink-0 mt-1 md:mt-0">
-                        <button id="btn-reject-${req.id}" onclick="rejectRequest('${req.id}')" class="min-h-[44px] flex-1 md:flex-none bg-red-100 dark:bg-red-950/60 hover:bg-red-200 text-red-600 dark:text-red-300 border border-red-300 dark:border-red-700 px-3.5 py-2 rounded-xl font-bold text-xs btn-shadow active:scale-95">❌ 退回</button>
-                        <button id="btn-approve-${req.id}" onclick="approveRequest('${req.id}')" class="min-h-[44px] flex-1 md:flex-none bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl font-bold text-xs btn-shadow active:scale-95">✅ 核准加分</button>
+                        <button id="btn-reject-${req.id}" onclick="rejectRequest('${req.id}')" class="ios-glass-btn ios-glass-danger min-h-[44px] flex-1 md:flex-none px-4 py-2 rounded-2xl font-bold text-xs">❌ 退回</button>
+                        <button id="btn-approve-${req.id}" onclick="approveRequest('${req.id}')" class="ios-glass-btn ios-glass-success min-h-[44px] flex-1 md:flex-none px-4 py-2 rounded-2xl font-bold text-xs">✅ 核准加分</button>
                     </div>
                 </div>
             `).join('');
@@ -1268,7 +1333,7 @@
                 try {
                     await updateDoc(docRef, { alertMsg: msg });
                     input.value = '';
-                    alert('✅ 廣播通報已同步推播至全域大螢幕並啟動持續滑動警示！');
+                    alert('✅ 廣播通報已同步推播至全域大螢幕！');
                 } catch(e) {
                     console.error("廣播失敗: ", e);
                 }
@@ -1299,9 +1364,9 @@
                 window.history.replaceState(null, '', window.location.pathname);
                 const detailsDiv = document.getElementById('import-details');
                 detailsDiv.innerHTML = pendingImportScores.map(s => 
-                    `<div class="flex justify-between border-b border-slate-200 dark:border-slate-800 last:border-0 pb-1 pt-1">
-                        <span class="text-slate-600 dark:text-slate-300">${teamNames[s.index]}</span>
-                        <span class="text-green-600 font-black">+${s.score}</span>
+                    `<div class="flex justify-between border-b border-slate-200/50 dark:border-slate-800/50 last:border-0 pb-1.5 pt-1.5">
+                        <span class="text-slate-700 dark:text-slate-300 font-bold">${teamNames[s.index]}</span>
+                        <span class="text-green-500 font-black">+${s.score}</span>
                      </div>`
                 ).join('');
                 document.getElementById('import-modal').classList.remove('hidden');
@@ -1449,13 +1514,13 @@
                 return;
             }
             mainLogs.innerHTML = logs.slice(-8).reverse().map(l => `
-                <div class="p-2 sm:p-2.5 rounded-lg flex justify-between items-center text-xs border border-slate-300 dark:border-slate-800" style="background-color: var(--bg-inner);">
+                <div class="p-2 sm:p-2.5 rounded-xl flex justify-between items-center text-xs border border-slate-300/40 dark:border-slate-800/80 backdrop-blur-md" style="background-color: var(--bg-inner);">
                     <div class="truncate mr-2">
                         <span class="text-slate-400 timer-font mr-1.5">[${l.time}]</span>
                         <span class="font-black text-[#1e3a8a] dark:text-sky-400 mr-1.5">${l.team}</span>
                         <span class="text-slate-600 dark:text-slate-300">(${l.reason})</span>
                     </div>
-                    <span class="font-black timer-font shrink-0 ${l.change > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+                    <span class="font-black timer-font shrink-0 ${l.change > 0 ? 'text-green-500' : 'text-red-500'}">
                         ${l.change > 0 ? '+' : ''}${l.change}
                     </span>
                 </div>
@@ -1472,12 +1537,12 @@
                 container.innerHTML = '<div class="text-center text-slate-400 py-6 text-xs italic">此小隊尚無任何加扣分紀錄。</div>';
             } else {
                 container.innerHTML = sqLogs.map(l => `
-                    <div class="p-2.5 sm:p-3 rounded-xl border-l-4 ${l.change > 0 ? 'border-green-500' : 'border-red-500'} flex justify-between items-center shadow-sm" style="background-color: var(--bg-card);">
+                    <div class="p-2.5 sm:p-3 rounded-2xl border-l-4 ${l.change > 0 ? 'border-green-500' : 'border-red-500'} flex justify-between items-center shadow-sm backdrop-blur-md" style="background-color: var(--bg-card);">
                         <div>
                             <div class="text-[10px] text-slate-400 timer-font">${l.time}</div>
                             <div class="font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200">${l.reason}</div>
                         </div>
-                        <div class="font-black timer-font text-sm sm:text-base ${l.change > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}">
+                        <div class="font-black timer-font text-sm sm:text-base ${l.change > 0 ? 'text-green-500' : 'text-red-500'}">
                             ${l.change > 0 ? '+' : ''}${l.change}
                         </div>
                     </div>
@@ -1564,15 +1629,14 @@
             if (mainView.classList.contains('hidden')) {
                 mainView.classList.remove('hidden');
                 adminView.classList.add('hidden');
-                btn.classList.replace('bg-blue-600', 'bg-red-600');
+                btn.className = "ios-glass-btn ios-glass-danger w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center cursor-pointer relative shadow-xl";
             } else {
                 mainView.classList.add('hidden');
                 adminView.classList.remove('hidden');
-                btn.classList.replace('bg-red-600', 'bg-blue-600');
+                btn.className = "ios-glass-btn ios-glass-primary w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center cursor-pointer relative shadow-xl";
             }
         };
 
-        // 初始化日落主題判定
         initAutoTheme();
 
         window.approveRequest = approveRequest;
@@ -1585,4 +1649,4 @@
         initApp();
     </script>
 </body>
-</html>
+</html>ㄋ
