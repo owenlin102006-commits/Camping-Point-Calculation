@@ -297,6 +297,21 @@
         #network-toast.show { transform: translateX(-50%) translateY(0); }
         #network-toast.swiping-up { transform: translateX(-50%) translateY(-150%) !important; opacity: 0 !important; }
 
+        /* 全域緊急作戰通報 HUD 實體彈窗 */
+        #broadcast-popup-modal {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-150%);
+            z-index: 3000;
+            width: calc(100% - 28px);
+            max-width: 480px;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #broadcast-popup-modal.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
         /* 啟動畫面 */
         #loadingScreen {
             position: fixed;
@@ -338,7 +353,7 @@
         ::-webkit-scrollbar-thumb { background: #64748b; border-radius: 3px; }
     </style>
 </head>
-<body class="dark-mode p-3 sm:p-4 md:p-6 relative">
+<body class="p-3 sm:p-4 md:p-6 relative">
 
     <!-- 🚀 啟動連線畫面 -->
     <div id="loadingScreen">
@@ -365,6 +380,33 @@
         </div>
     </div>
 
+    <!-- 🌟 全域緊急作戰通報 HUD 實體彈窗 -->
+    <div id="broadcast-popup-modal" class="card-shadow rounded-2xl overflow-hidden border-2 border-amber-500 shadow-2xl bg-slate-900 text-white">
+        <div class="crime-tape h-3 w-full"></div>
+        <div class="p-4 flex items-start gap-3.5 bg-gradient-to-r from-amber-950/80 via-slate-900 to-slate-900">
+            <div class="w-11 h-11 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center text-xl font-black shrink-0 shadow-[0_0_20px_rgba(245,158,11,0.5)] animate-bounce">
+                <i class="fa-solid fa-bullhorn"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center justify-between gap-2 mb-1">
+                    <span class="text-xs font-black text-amber-400 tracking-widest uppercase flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span> 緊急作戰通報
+                    </span>
+                    <span class="text-[10px] text-slate-400 timer-font" id="popup-time">JUST NOW</span>
+                </div>
+                <p id="popup-message" class="text-sm sm:text-base font-black text-slate-100 leading-snug break-words">
+                    通報讀取中...
+                </p>
+                <div class="mt-3 flex justify-end">
+                    <button onclick="closeBroadcastPopup()" class="min-h-[36px] bg-amber-500 hover:bg-amber-400 text-slate-950 font-black px-4 py-1.5 rounded-xl text-xs btn-shadow transition flex items-center gap-1.5 active:scale-95">
+                        <i class="fa-solid fa-check"></i> 確認收到
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="crime-tape h-2 w-full"></div>
+    </div>
+
     <!-- 🚧 全域作戰廣播條 -->
     <div id="announcement-banner" class="hidden max-w-[1400px] mx-auto mb-3 sm:mb-4 card-shadow rounded-xl flex flex-col overflow-hidden border-2 border-amber-500/60">
         <div class="crime-tape h-3.5 w-full"></div>
@@ -386,7 +428,7 @@
                 LIVE
             </span>
         </div>
-        <div class="crime-tape h-3.5 w-full"></div>
+        <div class="crime-tape h-3 w-full"></div>
     </div>
 
     <!-- 📡 頂部指揮中樞 Header -->
@@ -641,11 +683,57 @@
         let isFirstLoad = true; 
         let pendingImportScores = []; 
 
+        // ================= 🌙 智慧日落自動感應主題系統 (純本機 0 耗電) =================
+        function applyThemeMode(isDark) {
+            const btn = document.getElementById('themeBtn');
+            if (isDark) {
+                document.body.classList.add('dark-mode');
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-sun text-yellow-400 text-lg sm:text-xl"></i>`;
+            } else {
+                document.body.classList.remove('dark-mode');
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-moon text-lg sm:text-xl"></i>`;
+            }
+        }
+
+        function initAutoTheme() {
+            const savedTheme = localStorage.getItem('g5_theme');
+            // 若使用者曾手動選擇，以手動設定為主
+            if (savedTheme) {
+                applyThemeMode(savedTheme === 'dark');
+                return;
+            }
+
+            // 自動判定：18:00 ~ 06:00 為深藍夜間模式，其餘為日間
+            const currentHour = new Date().getHours();
+            const isNight = currentHour >= 18 || currentHour < 6;
+            applyThemeMode(isNight);
+        }
+
+        window.toggleTheme = () => {
+            triggerHaptic('light');
+            const willBeDark = !document.body.classList.contains('dark-mode');
+            applyThemeMode(willBeDark);
+            localStorage.setItem('g5_theme', willBeDark ? 'dark' : 'light');
+        };
+
+        // 螢幕點亮喚醒時自動重新比對
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && !localStorage.getItem('g5_theme')) {
+                initAutoTheme();
+            }
+        });
+
+        // 每 5 分鐘在背景微量比對時刻
+        setInterval(() => {
+            if (!localStorage.getItem('g5_theme')) {
+                initAutoTheme();
+            }
+        }, 5 * 60 * 1000);
+
         // ================= 🎵 Web Audio 戰術音效合成器 & 系統推播通知 =================
         let audioCtx = null;
 
         function initAudioAndNotification() {
-            // 初始化音效合成器
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
@@ -653,30 +741,26 @@
                 audioCtx.resume();
             }
 
-            // 請求系統推播權限
             if ("Notification" in window && Notification.permission === "default") {
                 Notification.requestPermission();
             }
         }
 
-        // 使用者第一次碰觸螢幕時無感解鎖音效與通知權限
         window.addEventListener('click', initAudioAndNotification, { once: true });
         window.addEventListener('touchstart', initAudioAndNotification, { once: true });
 
-        // 🌟 純程式碼合成特戰提示音 (叮-咚-登！)
         function playTacticalAlertSound() {
             try {
                 initAudioAndNotification();
                 if (!audioCtx) return;
                 const now = audioCtx.currentTime;
                 
-                // C5 (523Hz) -> G5 (784Hz) -> C6 (1046Hz) 戰術提示音階
                 const notes = [523.25, 783.99, 1046.50];
                 notes.forEach((freq, idx) => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
                     
-                    osc.type = 'triangle'; // 晶透三角波
+                    osc.type = 'triangle';
                     osc.frequency.setValueAtTime(freq, now + idx * 0.11);
                     
                     gain.gain.setValueAtTime(0, now + idx * 0.11);
@@ -694,7 +778,6 @@
             }
         }
 
-        // 🌟 發送瀏覽器/手機系統原生推播
         function sendSystemNotification(msg) {
             if ("Notification" in window && Notification.permission === "granted") {
                 try {
@@ -795,12 +878,36 @@
             return true;
         }
 
-        // ================= 🌟 智慧廣播狀態機 (新訊息滑動 + 聲光推播 + 互動停止) =================
+        // ================= 🌟 實體彈窗與廣播狀態機 =================
         let lastActiveAlertMsg = "";
         let isBannerSliding = false;
         let bannerMinTimePassed = false;
         let bannerAutoStopTimer = null;
         let bannerMinTimer = null;
+        let popupAutoDismissTimer = null;
+
+        function showBroadcastPopup(msg) {
+            const popup = document.getElementById('broadcast-popup-modal');
+            const msgEl = document.getElementById('popup-message');
+            const timeEl = document.getElementById('popup-time');
+
+            msgEl.innerText = msg;
+            const now = new Date();
+            timeEl.innerText = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+            
+            popup.classList.add('show');
+            clearTimeout(popupAutoDismissTimer);
+            popupAutoDismissTimer = setTimeout(() => {
+                closeBroadcastPopup();
+            }, 8000);
+        }
+
+        window.closeBroadcastPopup = () => {
+            const popup = document.getElementById('broadcast-popup-modal');
+            popup.classList.remove('show');
+            clearTimeout(popupAutoDismissTimer);
+            triggerHaptic('light');
+        };
 
         function startBroadcastSlider(newMsg) {
             const banner = document.getElementById('announcement-banner');
@@ -810,14 +917,13 @@
             textEl.innerText = newMsg;
             banner.classList.remove('hidden');
 
-            // 啟動封鎖線輸送帶動畫、文字側邊滑入、警戒高光
             tapes.forEach(t => t.classList.add('tape-sliding'));
             textEl.classList.remove('broadcast-slide-anim');
-            void textEl.offsetWidth; // 強制重繪
+            void textEl.offsetWidth; 
             textEl.classList.add('broadcast-slide-anim');
             banner.classList.add('banner-alert-glow');
 
-            // 🌟 發出立體通知：戰術音效 + 震動 + 系統推播
+            showBroadcastPopup(newMsg);
             playTacticalAlertSound();
             triggerHaptic('warning');
             sendSystemNotification(newMsg);
@@ -827,12 +933,10 @@
             clearTimeout(bannerMinTimer);
             clearTimeout(bannerAutoStopTimer);
 
-            // 保證滑動至少 3.5 秒
             bannerMinTimer = setTimeout(() => {
                 bannerMinTimePassed = true;
             }, 3500);
 
-            // 10 秒自動平靜停止
             bannerAutoStopTimer = setTimeout(() => {
                 stopBroadcastSlider();
             }, 10000);
@@ -879,6 +983,7 @@
                         lastActiveAlertMsg = "";
                         stopBroadcastSlider();
                         banner.classList.add('hidden');
+                        closeBroadcastPopup();
                     }
 
                     render(previousScores, newScores); 
@@ -1412,15 +1517,6 @@
             document.getElementById(id).classList.add('hidden'); 
         };
 
-        window.toggleTheme = () => {
-            triggerHaptic('light');
-            document.body.classList.toggle('dark-mode');
-            const isDark = document.body.classList.contains('dark-mode');
-            const btn = document.getElementById('themeBtn');
-            btn.innerHTML = isDark ? `<i class="fa-solid fa-sun text-yellow-400 text-lg sm:text-xl"></i>` : `<i class="fa-solid fa-moon text-lg sm:text-xl"></i>`;
-            localStorage.setItem('g5_theme', isDark ? 'dark' : 'light');
-        };
-
         window.toggleAdminView = () => {
             triggerHaptic('light');
             const mainView = document.getElementById('main-view');
@@ -1438,17 +1534,8 @@
             }
         };
 
-        // 讀取設定
-        const savedTheme = localStorage.getItem('g5_theme');
-        if (savedTheme === 'light') {
-            document.body.classList.remove('dark-mode');
-            const btn = document.getElementById('themeBtn');
-            if (btn) btn.innerHTML = `<i class="fa-solid fa-moon text-lg sm:text-xl"></i>`;
-        } else {
-            document.body.classList.add('dark-mode');
-            const btn = document.getElementById('themeBtn');
-            if (btn) btn.innerHTML = `<i class="fa-solid fa-sun text-yellow-400 text-lg sm:text-xl"></i>`;
-        }
+        // 🌟 初始化日落主題判定
+        initAutoTheme();
 
         window.approveRequest = approveRequest;
         window.rejectRequest = rejectRequest;
@@ -1460,4 +1547,4 @@
         initApp();
     </script>
 </body>
-</html>
+</html>ㄋ
