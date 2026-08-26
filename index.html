@@ -8,7 +8,6 @@
     <!-- 引入 Tailwind CSS 工具庫 -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // 🌟 關鍵修復：強制 Tailwind 深色模式由 class 控制，杜絕系統外觀干擾
         tailwind.config = {
             darkMode: 'class'
         }
@@ -41,9 +40,13 @@
             --tier-1-border: #eab308;
             --tier-2-border: #6366f1;
             --tier-3-border: #f97316;
+
+            --glass-bg-theme: rgba(30, 41, 59, 0.75);
+            --glass-bg-admin: rgba(220, 38, 38, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.25);
         }
 
-        /* 🌙 預設深藍戰情模式 (東勢林場專屬配色，完全無白邊) */
+        /* 🌙 預設深藍戰情模式 */
         body.dark-mode {
             --bg-body: #0b1120;
             --bg-grid-dot: #1e293b;
@@ -65,6 +68,10 @@
             --tier-1-border: #facc15;
             --tier-2-border: #818cf8;
             --tier-3-border: #fb923c;
+
+            --glass-bg-theme: rgba(15, 23, 42, 0.7);
+            --glass-bg-admin: rgba(185, 28, 28, 0.7);
+            --glass-border: rgba(56, 189, 248, 0.35);
         }
 
         body { 
@@ -98,7 +105,7 @@
             clip-path: polygon(0 0, 85% 0, 100% 100%, 0% 100%);
         }
 
-        /* 擬物風立體硬陰影卡片 (徹底去除突兀白邊) */
+        /* 擬物風立體硬陰影卡片 */
         .card-shadow { 
             box-shadow: 4px 4px 0px rgba(0,0,0,0.25); 
             border: 2px solid var(--card-border); 
@@ -114,7 +121,7 @@
             transform: translate(2px, 2px); 
         }
 
-        /* 輸入框戰術樣式 */
+        /* 🌟 輸入框樣式 */
         .tactical-input {
             background-color: var(--input-bg) !important;
             border-color: var(--input-border) !important;
@@ -127,7 +134,7 @@
             border-color: #38bdf8 !important;
         }
 
-        /* 🌟 高對比快捷晶片按鈕 (深底 + 營火金字) */
+        /* 🌟 高對比快捷晶片按鈕 */
         .tactical-chip {
             background-color: var(--chip-bg) !important;
             color: var(--chip-text) !important;
@@ -143,7 +150,7 @@
             border-color: #f59e0b !important;
         }
         .tactical-chip:active {
-            transform: scale(0.95);
+            transform: scale(0.92);
         }
 
         /* 🥇 金銀銅戰隊分級光暈 */
@@ -170,7 +177,7 @@
             animation: scorePulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        /* 🌟 實色深藍全螢幕投影 (無模糊、純實色沉浸) */
+        /* 實色深藍全螢幕投影 */
         #focus-overlay {
             position: fixed;
             inset: 0;
@@ -211,7 +218,7 @@
             animation: floatUp 1.2s forwards cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
-        /* 📱 側邊懸浮動作中樞 */
+        /* ================= 🌟 側邊戰術毛玻璃懸浮島 (Glassmorphism Dock) ================= */
         .side-floating-dock {
             position: fixed;
             right: 14px;
@@ -219,10 +226,55 @@
             z-index: 40;
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
         }
 
-        /* 啟動連線畫面 */
+        .glass-btn-theme {
+            background: var(--glass-bg-theme) !important;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1.5px solid var(--glass-border) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .glass-btn-admin {
+            background: var(--glass-bg-admin) !important;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1.5px solid rgba(255, 255, 255, 0.3) !important;
+            box-shadow: 0 8px 32px rgba(220, 38, 38, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .glass-btn-theme:hover, .glass-btn-admin:hover {
+            transform: translateY(-3px) scale(1.04);
+            filter: brightness(1.15);
+        }
+        .glass-btn-theme:active, .glass-btn-admin:active {
+            transform: scale(0.86) rotate(3deg); /* 🌟 極致按壓動態回饋 */
+        }
+
+        /* ================= 🚨 頂部可滑動懸浮網路狀態通知 (Swipeable Toast) ================= */
+        #network-toast {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-150%);
+            z-index: 2000;
+            width: calc(100% - 32px);
+            max-width: 440px;
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
+            touch-action: pan-y;
+            user-select: none;
+        }
+        #network-toast.show {
+            transform: translateX(-50%) translateY(0);
+        }
+        #network-toast.swiping-up {
+            transform: translateX(-50%) translateY(-150%) !important;
+            opacity: 0 !important;
+        }
+
+        /* 啟動畫面 */
         #loadingScreen {
             position: fixed;
             inset: 0;
@@ -263,13 +315,31 @@
         ::-webkit-scrollbar-thumb { background: #64748b; border-radius: 3px; }
     </style>
 </head>
-<!-- 🌟 預設直接套用 dark-mode 類別 -->
 <body class="dark-mode p-3 sm:p-4 md:p-6 relative">
 
     <!-- 🚀 啟動連線畫面 -->
     <div id="loadingScreen">
         <img src="IMG_1716.jpg" alt="115 新生宿營 Logo" class="loading-logo" onerror="this.src='https://placehold.co/200x200/1e3a8a/ffffff?text=連線中';">
         <div class="loading-text">🌲 戰情終端連線中...</div>
+    </div>
+
+    <!-- 🚨 頂部手勢滑動懸浮網路狀態 Toast -->
+    <div id="network-toast" class="card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-xl border-2 cursor-grab active:cursor-grabbing">
+        <div class="flex items-center gap-2.5">
+            <div id="toast-icon-box" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0">
+                <i id="toast-icon" class="fa-solid fa-wifi"></i>
+            </div>
+            <div>
+                <div id="toast-title" class="text-xs font-black tracking-wider leading-tight">網路狀態檢查</div>
+                <div id="toast-desc" class="text-[11px] font-bold text-slate-400 mt-0.5 leading-tight">訊息內容</div>
+            </div>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+            <span class="text-[10px] text-slate-400 font-bold hidden sm:inline"><i class="fa-solid fa-angles-up"></i> 上滑關閉</span>
+            <button onclick="dismissNetworkToast()" class="w-7 h-7 rounded-lg bg-black/20 hover:bg-black/40 text-slate-400 hover:text-white flex items-center justify-center text-xs font-bold transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
     </div>
 
     <!-- 🚧 全域作戰廣播條 -->
@@ -305,16 +375,17 @@
             </div>
             <div>
                 <h1 class="text-xl sm:text-2xl md:text-3xl font-black tracking-wider text-[#1e3a8a] dark:text-sky-400 flex items-center gap-1.5">
-                    宿營計分系統
+                    東勢林場終端戰情室
                 </h1>
                 <p class="text-[10px] sm:text-xs text-[#64748b] dark:text-slate-400 font-bold tracking-widest timer-font">
-                    Camping Point Calculation System
+                    DONGSHI FOREST TACTICAL OPERATIONS CENTER
                 </p>
             </div>
         </div>
 
         <div class="flex items-center gap-2 text-xs font-bold text-slate-500 dark:text-slate-400 timer-font bg-slate-200 dark:bg-slate-800/90 px-3 py-1.5 rounded-full border border-slate-300 dark:border-slate-700">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> ONLINE
+            <span id="header-status-dot" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="header-status-text">ONLINE</span>
         </div>
     </header>
 
@@ -393,12 +464,14 @@
         </div>
     </main>
 
-    <!-- ==================== 📱 側邊懸浮動作中樞 ==================== -->
+    <!-- ==================== 📱 側邊戰術毛玻璃懸浮動作中樞 (Glassmorphism Dock) ==================== -->
     <div class="side-floating-dock" id="sideFloatingDock">
-        <button onclick="toggleTheme()" id="themeBtn" class="w-12 h-12 sm:w-14 sm:h-14 bg-slate-800 hover:bg-slate-700 text-amber-400 rounded-2xl btn-shadow flex items-center justify-center border-2 border-slate-600 active:scale-95 shadow-xl transition" title="切換日/夜間模式">
+        <!-- 🌓 日夜模式開關 -->
+        <button onclick="toggleTheme()" id="themeBtn" class="glass-btn-theme w-12 h-12 sm:w-14 sm:h-14 text-amber-400 rounded-2xl flex items-center justify-center cursor-pointer" title="切換日/夜間模式">
             <i class="fa-solid fa-sun text-yellow-400 text-lg sm:text-xl"></i>
         </button>
-        <button onclick="toggleAdminView()" id="viewBtn" class="w-12 h-12 sm:w-14 sm:h-14 bg-red-600 hover:bg-red-700 text-white rounded-2xl btn-shadow flex items-center justify-center border-2 border-red-500 relative active:scale-95 shadow-xl transition" title="切換值勤後台">
+        <!-- ⚙️ 前後台切換開關 -->
+        <button onclick="toggleAdminView()" id="viewBtn" class="glass-btn-admin w-12 h-12 sm:w-14 sm:h-14 text-white rounded-2xl flex items-center justify-center cursor-pointer relative" title="切換值勤後台">
             <i class="fa-solid fa-user-shield text-lg sm:text-xl"></i>
             <span id="btn-pending-badge" class="absolute -top-1.5 -right-1 bg-amber-400 text-red-900 text-[9px] font-black px-1.5 py-0.2 rounded-full animate-bounce hidden shadow border border-red-600">!</span>
         </button>
@@ -513,7 +586,6 @@
     <!-- ==================== JavaScript Firebase 邏輯區 ==================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // 🌟 這裡把所有需要的 Firebase 功能一次匯入（包含快取套件與更新資料套件）
         import { getFirestore, doc, setDoc, onSnapshot, runTransaction, updateDoc, initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -528,12 +600,11 @@
 
         const app = initializeApp(firebaseConfig);
         
-        // 🚀 啟動本地快取魔法！就算大家狂按 F5 重新整理，也不會浪費資料庫讀取次數！
+        // 🚀 啟動本機快取
         const db = initializeFirestore(app, {
-            localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()})
+            localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
         });
         
-        // 確保 docRef 只宣告一次！
         const docRef = doc(db, 'conanGame', 'scoreboard');
 
         let scores = [0, 0, 0, 0, 0, 0];
@@ -548,6 +619,98 @@
         let isFirstLoad = true; 
         let pendingImportScores = []; 
 
+        // ================= 🚨 網路狀態監聽與手勢滑動 Toast =================
+        let toastTimeout = null;
+        let touchStartY = 0;
+
+        function triggerHaptic(type = 'light') {
+            if ('vibrate' in navigator) {
+                try {
+                    if (type === 'light') navigator.vibrate(15);
+                    else if (type === 'warning') navigator.vibrate([40, 60, 40]);
+                } catch(e) {}
+            }
+        }
+
+        function showNetworkToast(type, customMsg = '') {
+            const toast = document.getElementById('network-toast');
+            const iconBox = document.getElementById('toast-icon-box');
+            const icon = document.getElementById('toast-icon');
+            const title = document.getElementById('toast-title');
+            const desc = document.getElementById('toast-desc');
+            const statusDot = document.getElementById('header-status-dot');
+            const statusText = document.getElementById('header-status-text');
+
+            clearTimeout(toastTimeout);
+            toast.classList.remove('swiping-up');
+
+            if (type === 'offline') {
+                triggerHaptic('warning');
+                toast.className = "card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-xl border-2 border-red-500/80 bg-red-950/90 text-red-200 cursor-grab show";
+                iconBox.className = "w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0 bg-red-600 text-white shadow";
+                icon.className = "fa-solid fa-wifi-slash";
+                title.innerText = "🚨 網路連線已中斷";
+                desc.innerText = "目前處於離線狀態，已鎖定寫入防護！";
+                
+                if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-red-500 animate-pulse";
+                if (statusText) statusText.innerText = "OFFLINE";
+            } else if (type === 'online') {
+                triggerHaptic('light');
+                toast.className = "card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-xl border-2 border-emerald-500/80 bg-emerald-950/90 text-emerald-200 cursor-grab show";
+                iconBox.className = "w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0 bg-emerald-600 text-white shadow";
+                icon.className = "fa-solid fa-wifi";
+                title.innerText = "✅ 網路已重新連線";
+                desc.innerText = "戰情終端連線恢復，資料庫同步中...";
+                
+                if (statusDot) statusDot.className = "w-2 h-2 rounded-full bg-emerald-500 animate-pulse";
+                if (statusText) statusText.innerText = "ONLINE";
+
+                toastTimeout = setTimeout(() => { dismissNetworkToast(); }, 3500);
+            } else if (type === 'blocked') {
+                triggerHaptic('warning');
+                toast.className = "card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-xl border-2 border-amber-500/80 bg-amber-950/90 text-amber-200 cursor-grab show";
+                iconBox.className = "w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0 bg-amber-500 text-slate-900 shadow";
+                icon.className = "fa-solid fa-ban";
+                title.innerText = "⚠️ 離線防護：無法執行更動";
+                desc.innerText = customMsg || "請待網路恢復連線後再進行操作！";
+
+                toastTimeout = setTimeout(() => { dismissNetworkToast(); }, 3500);
+            }
+        }
+
+        window.dismissNetworkToast = () => {
+            const toast = document.getElementById('network-toast');
+            toast.classList.add('swiping-up');
+            setTimeout(() => { toast.classList.remove('show', 'swiping-up'); }, 300);
+        };
+
+        // 🌟 手勢上滑滑掉 Toast 支援
+        const toastEl = document.getElementById('network-toast');
+        toastEl.addEventListener('touchstart', (e) => {
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        toastEl.addEventListener('touchend', (e) => {
+            const touchEndY = e.changedTouches[0].clientY;
+            if (touchStartY - touchEndY > 30) { // 手指往上滑動超過 30px
+                window.dismissNetworkToast();
+            }
+        }, { passive: true });
+
+        // 監聽瀏覽器連線狀態變更
+        window.addEventListener('online', () => { showNetworkToast('online'); });
+        window.addEventListener('offline', () => { showNetworkToast('offline'); });
+
+        // 🌟 離線防呆核心攔截器
+        function checkOnlineAction(actionName) {
+            if (!navigator.onLine) {
+                showNetworkToast('blocked', `處於離線狀態，無法執行【${actionName}】！`);
+                return false;
+            }
+            return true;
+        }
+
+        // ================= Firebase 初始化與監聽 =================
         function initApp() {
             onSnapshot(docRef, (snap) => {
                 if (snap.exists()) {
@@ -592,7 +755,7 @@
             });
         }
 
-        // 🌟 數字滾動平滑演算法
+        // 🌟 數字滾動演算法
         function animateScore(el, start, end, duration = 650) {
             if (!el || start === end) {
                 if (el) el.innerText = end.toLocaleString();
@@ -614,7 +777,7 @@
             requestAnimationFrame(step);
         }
 
-        // 🌟 渲染函式 (徹底綁定色彩變數)
+        // 🌟 畫面渲染
         function render(prevList = [], currentList = []) {
             const squadGrid = document.getElementById('squadGrid');
             const adminGrid = document.getElementById('adminGrid');
@@ -737,6 +900,9 @@
         }
 
         async function approveRequest(reqId) {
+            // 🛡️ 離線攔截檢查
+            if (!checkOnlineAction("核准戰報加分")) return;
+
             const card = document.getElementById(`req-card-${reqId}`);
             const btnApprove = document.getElementById(`btn-approve-${reqId}`);
             const btnReject = document.getElementById(`btn-reject-${reqId}`);
@@ -785,6 +951,9 @@
         }
 
         async function rejectRequest(reqId) {
+            // 🛡️ 離線攔截檢查
+            if (!checkOnlineAction("退回戰報")) return;
+
             if (!confirm("確定要退回這筆戰報嗎？")) return;
             try {
                 await runTransaction(db, async (transaction) => {
@@ -812,7 +981,11 @@
             }
         }
 
+        // 🌟 廣播操作
         window.pushBroadcast = async () => {
+            // 🛡️ 離線攔截檢查
+            if (!checkOnlineAction("發布廣播通報")) return;
+
             const input = document.getElementById('adminBroadcastInput');
             const msg = input.value.trim();
             if (msg) {
@@ -827,6 +1000,9 @@
         };
 
         window.clearBroadcast = async () => {
+            // 🛡️ 離線攔截檢查
+            if (!checkOnlineAction("清除廣播通報")) return;
+
             try {
                 await updateDoc(docRef, { alertMsg: "" });
             } catch(e) {
@@ -863,6 +1039,9 @@
         };
 
         window.confirmImport = async () => {
+            // 🛡️ 離線攔截檢查
+            if (!checkOnlineAction("匯入外部據點戰分數")) return;
+
             if (pendingImportScores.length === 0) return;
             document.getElementById('import-modal').classList.add('hidden');
             
@@ -910,6 +1089,7 @@
         }
 
         window.showFocus = (idx) => {
+            triggerHaptic('light');
             document.getElementById('focus-name').innerText = teamNames[idx];
             document.getElementById('focus-score').innerText = scores[idx].toLocaleString();
             document.getElementById('focus-overlay').classList.remove('hidden');
@@ -917,11 +1097,13 @@
         };
 
         window.hideFocus = () => {
+            triggerHaptic('light');
             document.getElementById('focus-overlay').classList.add('hidden');
             document.getElementById('sideFloatingDock').classList.remove('hidden');
         };
 
         window.openScoreModal = (idx) => {
+            triggerHaptic('light');
             pendingUpdateIndex = idx;
             document.getElementById('scoreModalTitle').innerText = `⚡ 調整 ${teamNames[idx]}`;
             document.getElementById('scoreModalDesc').innerText = `目前戰力值: ${scores[idx].toLocaleString()}`;
@@ -930,11 +1112,16 @@
         };
 
         window.setChip = (val) => { 
+            triggerHaptic('light');
             const input = document.getElementById('scoreInput');
             if (input) input.value = val; 
         };
 
+        // 🌟 人工調整分數送出
         window.submitScore = async (isPlus) => {
+            // 🛡️ 離線攔截檢查
+            if (!checkOnlineAction("手動調整分數")) return;
+
             if (pendingUpdateIndex === null) return;
             const val = parseInt(document.getElementById('scoreInput').value);
             const reason = document.getElementById('reasonInput').value.trim() || '常規作戰指令';
@@ -995,6 +1182,7 @@
         }
 
         window.openHistoryModal = (idx) => {
+            triggerHaptic('light');
             document.getElementById('historyModalTitle').innerText = `📜 ${teamNames[idx]} 歷史卷宗`;
             const sqLogs = logs.filter(l => l.team === teamNames[idx]).reverse();
             const container = document.getElementById('historyModalContent');
@@ -1018,12 +1206,16 @@
         };
 
         window.openRenameModal = (idx) => {
+            triggerHaptic('light');
             pendingRenameIndex = idx;
             document.getElementById('renameInput').value = teamNames[idx];
             document.getElementById('renameModal').classList.remove('hidden');
         };
 
         window.saveRename = async () => {
+            // 🛡️ 離線攔截檢查
+            if (!checkOnlineAction("修改小隊名稱")) return;
+
             const val = document.getElementById('renameInput').value.trim();
             if (val && pendingRenameIndex !== null) {
                 const targetIdx = pendingRenameIndex;
@@ -1043,11 +1235,15 @@
         };
 
         window.openResetModal = () => {
+            triggerHaptic('light');
             document.getElementById('resetPasswordInput').value = '';
             document.getElementById('resetModal').classList.remove('hidden');
         };
 
         window.confirmReset = async () => {
+            // 🛡️ 離線攔截檢查
+            if (!checkOnlineAction("重置全隊戰力積分")) return;
+
             const pwd = document.getElementById('resetPasswordInput').value;
             if (pwd === '1150918') {
                 closeModal('resetModal');
@@ -1068,9 +1264,13 @@
             }
         };
 
-        window.closeModal = (id) => { document.getElementById(id).classList.add('hidden'); };
+        window.closeModal = (id) => { 
+            triggerHaptic('light');
+            document.getElementById(id).classList.add('hidden'); 
+        };
 
         window.toggleTheme = () => {
+            triggerHaptic('light');
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
             const btn = document.getElementById('themeBtn');
@@ -1079,6 +1279,7 @@
         };
 
         window.toggleAdminView = () => {
+            triggerHaptic('light');
             const mainView = document.getElementById('main-view');
             const adminView = document.getElementById('admin-view');
             const btn = document.getElementById('viewBtn');
@@ -1094,7 +1295,7 @@
             }
         };
 
-        // 🌟 預設若無紀錄直接設定為深藍模式
+        // 預設深藍模式初始化
         const savedTheme = localStorage.getItem('g5_theme');
         if (savedTheme === 'light') {
             document.body.classList.remove('dark-mode');
@@ -1109,7 +1310,12 @@
         window.approveRequest = approveRequest;
         window.rejectRequest = rejectRequest;
 
+        // 初始檢查網路狀態
+        if (!navigator.onLine) {
+            setTimeout(() => { showNetworkToast('offline'); }, 500);
+        }
+
         initApp();
     </script>
 </body>
-</html>
+</html>ㄋ
