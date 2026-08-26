@@ -82,7 +82,6 @@
             background-size: 20px 20px;
             min-height: 100vh;
             overflow-x: hidden;
-            scroll-behavior: smooth;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
@@ -138,16 +137,17 @@
             transform: translate(2px, 2px); 
         }
 
-        /* 🌟 分數調整後卡片跳動聚焦動畫 */
+        /* 🌟 分數調整後卡片跳動聚焦動畫 (強化手機跳動效果) */
         @keyframes cardJumpPulse {
             0% { transform: scale(1); box-shadow: 4px 4px 0px rgba(0,0,0,0.25); }
-            30% { transform: scale(1.06) translateY(-8px); box-shadow: 0 0 35px rgba(56, 189, 248, 0.7); border-color: #38bdf8 !important; }
-            60% { transform: scale(0.98) translateY(2px); }
+            25% { transform: scale(1.08) translateY(-12px); box-shadow: 0 0 40px rgba(56, 189, 248, 0.85); border-color: #38bdf8 !important; }
+            50% { transform: scale(0.96) translateY(3px); }
+            75% { transform: scale(1.03) translateY(-4px); box-shadow: 0 0 25px rgba(56, 189, 248, 0.5); border-color: #38bdf8 !important; }
             100% { transform: scale(1); box-shadow: 4px 4px 0px rgba(0,0,0,0.25); }
         }
         .card-jump-pulse {
-            animation: cardJumpPulse 1s cubic-bezier(0.34, 1.56, 0.64, 1);
-            z-index: 20;
+            animation: cardJumpPulse 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+            z-index: 30 !important;
         }
 
         /* 輸入框樣式 */
@@ -598,7 +598,7 @@
 
             <div class="mb-5">
                 <label class="block text-[11px] font-bold text-[#64748b] dark:text-slate-400 mb-1">任務名稱 / 加分事由：</label>
-                <input type="text" id="reasonInput" class="tactical-input w-full text-xs sm:text-sm font-bold p-3 rounded-xl border-2" value="關卡結算報酬">
+                <input type="text" id="reasonInput" class="tactical-input w-full text-xs sm:text-sm font-bold p-3 rounded-xl border-2" value="據點攻防作戰獲勝">
             </div>
 
             <div class="grid grid-cols-2 gap-2.5">
@@ -695,7 +695,7 @@
         let pendingRenameIndex = null; 
         let isFirstLoad = true; 
         let pendingImportScores = []; 
-        let lastProcessedUpdateTimestamp = 0; // 🌟 記錄已處理的最新更新時間戳，防止初次載入或重複跳動
+        let lastProcessedUpdateTimestamp = 0; 
 
         // ================= 🌙 智慧日落自動感應主題系統 =================
         function applyThemeMode(isDark) {
@@ -956,21 +956,33 @@
             }, { passive: true });
         });
 
-        // 🌟 焦點卡片動畫觸發（跨裝置同步跳轉與聚焦核心）
+        // ================= 🌟 強化版：跨裝置絕對跳動與精準平滑滾動 =================
         function triggerTargetCardFocus(targetIdx) {
             const mainView = document.getElementById('main-view');
             
-            // 只要目前該裝置身處「前台首頁」，便自動平滑滾動並跳動聚焦
+            // 只要目前手機處於前台首頁
             if (mainView && !mainView.classList.contains('hidden')) {
+                // 給予 150ms 確保 render() 的 DOM 節點完全上屏
                 setTimeout(() => {
                     const targetCard = document.getElementById(`card-${targetIdx}`);
                     if (targetCard) {
-                        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        // 1. 手機精確視窗中央滾動計算
+                        const cardRect = targetCard.getBoundingClientRect();
+                        const cardCenter = cardRect.top + window.pageYOffset - (window.innerHeight / 2) + (cardRect.height / 2);
+                        
+                        window.scrollTo({
+                            top: Math.max(0, cardCenter),
+                            behavior: 'smooth'
+                        });
+
+                        // 2. 觸發醒目跳動動畫
                         targetCard.classList.remove('card-jump-pulse');
-                        void targetCard.offsetWidth; // 強制重繪
+                        void targetCard.offsetWidth; // 🪄 Reflow 強制重繪
                         targetCard.classList.add('card-jump-pulse');
+                        
+                        triggerHaptic('light');
                     }
-                }, 120);
+                }, 150);
             }
         }
 
@@ -984,7 +996,7 @@
                     logs = data.logs || [];
                     pendingRequests = data.pendingRequests || [];
                     alertMsg = data.alertMsg || "";
-                    const lastUpdatedTeam = data.lastUpdatedTeam || null; // 🌟 讀取全域最新更新事件
+                    const lastUpdatedTeam = data.lastUpdatedTeam || null; 
                     
                     const banner = document.getElementById('announcement-banner');
 
@@ -1007,8 +1019,8 @@
                     renderPendingList(); 
                     updateBadges(); 
 
-                    // 🌟 跨裝置同步判斷：若其他裝置更新了分數，且時間戳記比上次處理更新，則自動滾動聚焦！
-                    if (!isFirstLoad && lastUpdatedTeam && lastUpdatedTeam.timestamp > lastProcessedUpdateTimestamp) {
+                    // 🌟 跨裝置同步判斷修復：接收到新變更即刻觸發滾動聚焦！
+                    if (lastUpdatedTeam && lastUpdatedTeam.timestamp > lastProcessedUpdateTimestamp) {
                         lastProcessedUpdateTimestamp = lastUpdatedTeam.timestamp;
                         triggerTargetCardFocus(lastUpdatedTeam.index);
                     }
@@ -1018,7 +1030,6 @@
 
                 if (isFirstLoad) {
                     isFirstLoad = false;
-                    // 初次載入時記錄最後的時間戳，避免載入網頁瞬間莫名跳動
                     if (snap.exists() && snap.data().lastUpdatedTeam) {
                         lastProcessedUpdateTimestamp = snap.data().lastUpdatedTeam.timestamp || 0;
                     }
@@ -1223,7 +1234,7 @@
 
                     currentPending = currentPending.filter(r => r.id !== reqId);
                     
-                    // 🌟 寫入全域最新更新時間戳，觸發其他所有裝置同步跳轉聚焦！
+                    // 🌟 廣播最新更新事件
                     transaction.update(docRef, { 
                         scores: currentScores, 
                         logs: currentLogs, 
@@ -1351,7 +1362,6 @@
                     
                     if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
                     
-                    // 🌟 廣播最新聚焦小隊
                     const focusIdx = pendingImportScores.length > 0 ? pendingImportScores[0].index : 0;
                     transaction.update(docRef, { 
                         scores: currentScores, 
@@ -1407,7 +1417,7 @@
             if (input) input.value = val; 
         };
 
-        // 🌟 人工調整分數送出 (同步廣播更新時間戳，觸發其他所有裝置自動跳轉聚焦)
+        // 🌟 人工調整分數送出
         window.submitScore = async (isPlus) => {
             if (!checkOnlineAction("手動調整分數")) return;
 
@@ -1443,7 +1453,6 @@
                     });
                     if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
                     
-                    // 🌟 寫入最新更新時間戳，讓全場大螢幕與其他手機自動滾動並跳動該卡片！
                     transaction.update(docRef, { 
                         scores: currentScores, 
                         logs: currentLogs,
