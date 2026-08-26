@@ -87,17 +87,33 @@
 
         .timer-font { font-family: 'Space Mono', monospace; font-variant-numeric: tabular-nums; }
         
-        /* 🚧 警視廳黃黑警戒封鎖線 */
+        /* 🚧 警視廳黃黑警戒封鎖線 (動態無縫輸送滑動) */
+        @keyframes crimeTapeConveyor {
+            0% { background-position: 0 0; }
+            100% { background-position: 39.6px 0; }
+        }
+
         .crime-tape {
             background: repeating-linear-gradient(
                 45deg,
-                #facc15,
+                #facc15 0px,
                 #facc15 14px,
                 #111827 14px,
                 #111827 28px
             );
+            background-size: 39.6px 100%;
             border-top: 2px solid #000;
             border-bottom: 2px solid #000;
+        }
+
+        .crime-tape.tape-sliding {
+            animation: crimeTapeConveyor 1.2s linear infinite;
+        }
+
+        .banner-alert-glow {
+            box-shadow: 0 0 25px rgba(245, 158, 11, 0.45) !important;
+            border-color: #f59e0b !important;
+            transition: all 0.3s ease;
         }
 
         /* 🗂️ 檔案夾斜切標籤 */
@@ -121,7 +137,7 @@
             transform: translate(2px, 2px); 
         }
 
-        /* 🌟 輸入框樣式 */
+        /* 輸入框樣式 */
         .tactical-input {
             background-color: var(--input-bg) !important;
             border-color: var(--input-border) !important;
@@ -134,7 +150,7 @@
             border-color: #38bdf8 !important;
         }
 
-        /* 🌟 高對比快捷晶片按鈕 */
+        /* 快捷晶片按鈕 */
         .tactical-chip {
             background-color: var(--chip-bg) !important;
             color: var(--chip-text) !important;
@@ -175,6 +191,18 @@
         }
         .score-pulse {
             animation: scorePulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* 廣播側邊滑入動畫 */
+        @keyframes broadcastSlideIn {
+            0% { transform: translateX(100%); opacity: 0; }
+            65% { transform: translateX(-10px); opacity: 1; }
+            100% { transform: translateX(0); opacity: 1; }
+        }
+        .broadcast-slide-anim {
+            animation: broadcastSlideIn 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            display: inline-block;
+            width: 100%;
         }
 
         /* 實色深藍全螢幕投影 */
@@ -218,7 +246,7 @@
             animation: floatUp 1.2s forwards cubic-bezier(0.2, 0.8, 0.2, 1);
         }
 
-        /* ================= 🌟 側邊戰術毛玻璃懸浮島 (Glassmorphism Dock) ================= */
+        /* 側邊戰術毛玻璃懸浮島 */
         .side-floating-dock {
             position: fixed;
             right: 14px;
@@ -250,10 +278,10 @@
             filter: brightness(1.15);
         }
         .glass-btn-theme:active, .glass-btn-admin:active {
-            transform: scale(0.86) rotate(3deg); /* 🌟 極致按壓動態回饋 */
+            transform: scale(0.86) rotate(3deg);
         }
 
-        /* ================= 🚨 頂部可滑動懸浮網路狀態通知 (Swipeable Toast) ================= */
+        /* 頂部手勢滑動通知 Toast */
         #network-toast {
             position: fixed;
             top: 16px;
@@ -266,13 +294,8 @@
             touch-action: pan-y;
             user-select: none;
         }
-        #network-toast.show {
-            transform: translateX(-50%) translateY(0);
-        }
-        #network-toast.swiping-up {
-            transform: translateX(-50%) translateY(-150%) !important;
-            opacity: 0 !important;
-        }
+        #network-toast.show { transform: translateX(-50%) translateY(0); }
+        #network-toast.swiping-up { transform: translateX(-50%) translateY(-150%) !important; opacity: 0 !important; }
 
         /* 啟動畫面 */
         #loadingScreen {
@@ -344,24 +367,26 @@
 
     <!-- 🚧 全域作戰廣播條 -->
     <div id="announcement-banner" class="hidden max-w-[1400px] mx-auto mb-3 sm:mb-4 card-shadow rounded-xl flex flex-col overflow-hidden border-2 border-amber-500/60">
-        <div class="crime-tape h-3 w-full"></div>
-        <div class="p-3 sm:p-3.5 flex items-center justify-between gap-3 relative bg-amber-50 dark:bg-amber-950/50">
-            <div class="flex items-center gap-2.5 sm:gap-3">
+        <div class="crime-tape h-3.5 w-full"></div>
+        <div class="p-3 sm:p-3.5 flex items-center justify-between gap-3 relative bg-amber-50 dark:bg-amber-950/50 overflow-hidden">
+            <div class="flex items-center gap-2.5 sm:gap-3 flex-1 min-w-0 overflow-hidden">
                 <div class="bg-amber-100 dark:bg-amber-900 p-1.5 sm:p-2 rounded-full border-2 border-amber-500 shrink-0">
                     <i class="fa-solid fa-tower-broadcast text-amber-600 dark:text-amber-300 animate-bounce text-sm sm:text-base"></i>
                 </div>
-                <div>
+                <div class="flex-1 min-w-0 overflow-hidden">
                     <h3 class="text-[11px] sm:text-xs font-bold tracking-widest text-[#64748b] dark:text-amber-400">🚨 警視廳全域作戰廣播</h3>
-                    <p id="announcement-text" class="text-xs sm:text-sm md:text-base font-black tracking-wide leading-tight text-slate-800 dark:text-slate-100">
-                        作戰通報讀取中...
-                    </p>
+                    <div id="announcement-slider-box" class="overflow-hidden w-full mt-0.5">
+                        <p id="announcement-text" class="text-xs sm:text-sm md:text-base font-black tracking-wide leading-tight text-slate-800 dark:text-slate-100 truncate">
+                            作戰通報讀取中...
+                        </p>
+                    </div>
                 </div>
             </div>
             <span class="bg-red-600 text-white text-[10px] sm:text-xs font-black px-2.5 py-0.5 rounded-full animate-pulse shrink-0 border border-red-700">
                 LIVE
             </span>
         </div>
-        <div class="crime-tape h-3 w-full"></div>
+        <div class="crime-tape h-3.5 w-full"></div>
     </div>
 
     <!-- 📡 頂部指揮中樞 Header -->
@@ -370,15 +395,15 @@
             <div class="bg-[#1e3a8a] dark:bg-sky-600 text-white p-3 rounded-2xl btn-shadow relative shrink-0">
                 <i class="fa-solid fa-user-secret text-2xl sm:text-3xl text-amber-400"></i>
                 <div class="absolute -bottom-2 -right-2 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full border-2 border-slate-900">
-                    AP
+                    APㄋ
                 </div>
             </div>
             <div>
                 <h1 class="text-xl sm:text-2xl md:text-3xl font-black tracking-wider text-[#1e3a8a] dark:text-sky-400 flex items-center gap-1.5">
                     新生宿營計分系統
                 </h1>
-                <p class="text-[10px] sm:text-xs text-[#64748b] dark:text-slate-400 font-bold tracking-widest timer-font">
-                    Camping Point Calculation System
+                <p class="text-[10px] sm:text-xs text-[#64748b] dark:text-slate-400 font-bold tracking-widest timer-font mt-0.5">
+                    Camping Point Calculation Systemㄋ
                 </p>
             </div>
         </div>
@@ -424,7 +449,7 @@
                 <h3 class="text-sm sm:text-base font-black text-[#1e3a8a] dark:text-sky-400 mb-1 flex items-center gap-2">
                     <i class="fa-solid fa-bullhorn"></i> 警視廳廣播系統中樞
                 </h3>
-                <p class="text-[11px] text-[#64748b] dark:text-slate-400 font-bold mb-3">發布全域緊急通報，將同步推播至大螢幕與全體裝置：</p>
+                <p class="text-[11px] text-[#64748b] dark:text-slate-400 font-bold mb-3">發布全域緊急通報，將同步推播至大螢幕並觸發側邊滑動動畫與聲光通知：</p>
                 <div class="flex flex-col sm:flex-row gap-2.5">
                     <input type="text" id="adminBroadcastInput" class="tactical-input flex-1 p-3 rounded-xl border-2 font-bold text-xs sm:text-sm" placeholder="輸入作戰通報內容...">
                     <div class="flex gap-2">
@@ -464,13 +489,11 @@
         </div>
     </main>
 
-    <!-- ==================== 📱 側邊戰術毛玻璃懸浮動作中樞 (Glassmorphism Dock) ==================== -->
+    <!-- ==================== 📱 側邊戰術毛玻璃懸浮動作中樞 ==================== -->
     <div class="side-floating-dock" id="sideFloatingDock">
-        <!-- 🌓 日夜模式開關 -->
         <button onclick="toggleTheme()" id="themeBtn" class="glass-btn-theme w-12 h-12 sm:w-14 sm:h-14 text-amber-400 rounded-2xl flex items-center justify-center cursor-pointer" title="切換日/夜間模式">
             <i class="fa-solid fa-sun text-yellow-400 text-lg sm:text-xl"></i>
         </button>
-        <!-- ⚙️ 前後台切換開關 -->
         <button onclick="toggleAdminView()" id="viewBtn" class="glass-btn-admin w-12 h-12 sm:w-14 sm:h-14 text-white rounded-2xl flex items-center justify-center cursor-pointer relative" title="切換值勤後台">
             <i class="fa-solid fa-user-shield text-lg sm:text-xl"></i>
             <span id="btn-pending-badge" class="absolute -top-1.5 -right-1 bg-amber-400 text-red-900 text-[9px] font-black px-1.5 py-0.2 rounded-full animate-bounce hidden shadow border border-red-600">!</span>
@@ -510,7 +533,7 @@
                 <input type="number" id="scoreInput" class="tactical-input w-full text-center text-2xl sm:text-3xl font-black p-3 rounded-xl border-2 timer-font" value="100">
             </div>
 
-            <!-- 🌟 高對比戰術快捷晶片按鈕 -->
+            <!-- 快捷晶片按鈕 -->
             <div class="grid grid-cols-4 gap-2 mb-3.5">
                 <button type="button" onclick="setChip(10)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+10</button>
                 <button type="button" onclick="setChip(50)" class="tactical-chip min-h-[44px] rounded-xl flex items-center justify-center btn-shadow">+50</button>
@@ -600,7 +623,6 @@
 
         const app = initializeApp(firebaseConfig);
         
-        // 🚀 啟動本機快取
         const db = initializeFirestore(app, {
             localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
         });
@@ -619,7 +641,73 @@
         let isFirstLoad = true; 
         let pendingImportScores = []; 
 
-        // ================= 🚨 網路狀態監聽與手勢滑動 Toast =================
+        // ================= 🎵 Web Audio 戰術音效合成器 & 系統推播通知 =================
+        let audioCtx = null;
+
+        function initAudioAndNotification() {
+            // 初始化音效合成器
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            // 請求系統推播權限
+            if ("Notification" in window && Notification.permission === "default") {
+                Notification.requestPermission();
+            }
+        }
+
+        // 使用者第一次碰觸螢幕時無感解鎖音效與通知權限
+        window.addEventListener('click', initAudioAndNotification, { once: true });
+        window.addEventListener('touchstart', initAudioAndNotification, { once: true });
+
+        // 🌟 純程式碼合成特戰提示音 (叮-咚-登！)
+        function playTacticalAlertSound() {
+            try {
+                initAudioAndNotification();
+                if (!audioCtx) return;
+                const now = audioCtx.currentTime;
+                
+                // C5 (523Hz) -> G5 (784Hz) -> C6 (1046Hz) 戰術提示音階
+                const notes = [523.25, 783.99, 1046.50];
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    
+                    osc.type = 'triangle'; // 晶透三角波
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.11);
+                    
+                    gain.gain.setValueAtTime(0, now + idx * 0.11);
+                    gain.gain.linearRampToValueAtTime(0.3, now + idx * 0.11 + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.11 + 0.2);
+                    
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    osc.start(now + idx * 0.11);
+                    osc.stop(now + idx * 0.11 + 0.22);
+                });
+            } catch(e) {
+                console.warn("音效播放受限:", e);
+            }
+        }
+
+        // 🌟 發送瀏覽器/手機系統原生推播
+        function sendSystemNotification(msg) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                try {
+                    new Notification("🚨 警視廳全域作戰廣播", {
+                        body: msg,
+                        icon: "IMG_1716.jpg",
+                        vibrate: [200, 100, 200]
+                    });
+                } catch(e) {}
+            }
+        }
+
+        // ================= 🚨 網路狀態監聽與 Toast =================
         let toastTimeout = null;
         let touchStartY = 0;
 
@@ -627,7 +715,7 @@
             if ('vibrate' in navigator) {
                 try {
                     if (type === 'light') navigator.vibrate(15);
-                    else if (type === 'warning') navigator.vibrate([40, 60, 40]);
+                    else if (type === 'warning') navigator.vibrate([60, 40, 80]);
                 } catch(e) {}
             }
         }
@@ -684,7 +772,6 @@
             setTimeout(() => { toast.classList.remove('show', 'swiping-up'); }, 300);
         };
 
-        // 🌟 手勢上滑滑掉 Toast 支援
         const toastEl = document.getElementById('network-toast');
         toastEl.addEventListener('touchstart', (e) => {
             touchStartY = e.touches[0].clientY;
@@ -692,16 +779,14 @@
 
         toastEl.addEventListener('touchend', (e) => {
             const touchEndY = e.changedTouches[0].clientY;
-            if (touchStartY - touchEndY > 30) { // 手指往上滑動超過 30px
+            if (touchStartY - touchEndY > 30) {
                 window.dismissNetworkToast();
             }
         }, { passive: true });
 
-        // 監聽瀏覽器連線狀態變更
         window.addEventListener('online', () => { showNetworkToast('online'); });
         window.addEventListener('offline', () => { showNetworkToast('offline'); });
 
-        // 🌟 離線防呆核心攔截器
         function checkOnlineAction(actionName) {
             if (!navigator.onLine) {
                 showNetworkToast('blocked', `處於離線狀態，無法執行【${actionName}】！`);
@@ -709,6 +794,68 @@
             }
             return true;
         }
+
+        // ================= 🌟 智慧廣播狀態機 (新訊息滑動 + 聲光推播 + 互動停止) =================
+        let lastActiveAlertMsg = "";
+        let isBannerSliding = false;
+        let bannerMinTimePassed = false;
+        let bannerAutoStopTimer = null;
+        let bannerMinTimer = null;
+
+        function startBroadcastSlider(newMsg) {
+            const banner = document.getElementById('announcement-banner');
+            const textEl = document.getElementById('announcement-text');
+            const tapes = banner.querySelectorAll('.crime-tape');
+
+            textEl.innerText = newMsg;
+            banner.classList.remove('hidden');
+
+            // 啟動封鎖線輸送帶動畫、文字側邊滑入、警戒高光
+            tapes.forEach(t => t.classList.add('tape-sliding'));
+            textEl.classList.remove('broadcast-slide-anim');
+            void textEl.offsetWidth; // 強制重繪
+            textEl.classList.add('broadcast-slide-anim');
+            banner.classList.add('banner-alert-glow');
+
+            // 🌟 發出立體通知：戰術音效 + 震動 + 系統推播
+            playTacticalAlertSound();
+            triggerHaptic('warning');
+            sendSystemNotification(newMsg);
+
+            isBannerSliding = true;
+            bannerMinTimePassed = false;
+            clearTimeout(bannerMinTimer);
+            clearTimeout(bannerAutoStopTimer);
+
+            // 保證滑動至少 3.5 秒
+            bannerMinTimer = setTimeout(() => {
+                bannerMinTimePassed = true;
+            }, 3500);
+
+            // 10 秒自動平靜停止
+            bannerAutoStopTimer = setTimeout(() => {
+                stopBroadcastSlider();
+            }, 10000);
+        }
+
+        function stopBroadcastSlider() {
+            if (!isBannerSliding) return;
+            const banner = document.getElementById('announcement-banner');
+            const textEl = document.getElementById('announcement-text');
+            const tapes = banner.querySelectorAll('.crime-tape');
+
+            tapes.forEach(t => t.classList.remove('tape-sliding'));
+            banner.classList.remove('banner-alert-glow');
+            isBannerSliding = false;
+        }
+
+        ['click', 'touchstart', 'scroll', 'keydown'].forEach(evt => {
+            window.addEventListener(evt, () => {
+                if (isBannerSliding && bannerMinTimePassed && document.visibilityState === 'visible') {
+                    stopBroadcastSlider();
+                }
+            }, { passive: true });
+        });
 
         // ================= Firebase 初始化與監聽 =================
         function initApp() {
@@ -722,10 +869,15 @@
                     alertMsg = data.alertMsg || "";
                     
                     const banner = document.getElementById('announcement-banner');
+
                     if (alertMsg.trim() !== "") {
-                        document.getElementById('announcement-text').innerText = alertMsg;
-                        banner.classList.remove('hidden');
+                        if (alertMsg !== lastActiveAlertMsg) {
+                            lastActiveAlertMsg = alertMsg;
+                            startBroadcastSlider(alertMsg);
+                        }
                     } else {
+                        lastActiveAlertMsg = "";
+                        stopBroadcastSlider();
                         banner.classList.add('hidden');
                     }
 
@@ -900,7 +1052,6 @@
         }
 
         async function approveRequest(reqId) {
-            // 🛡️ 離線攔截檢查
             if (!checkOnlineAction("核准戰報加分")) return;
 
             const card = document.getElementById(`req-card-${reqId}`);
@@ -951,7 +1102,6 @@
         }
 
         async function rejectRequest(reqId) {
-            // 🛡️ 離線攔截檢查
             if (!checkOnlineAction("退回戰報")) return;
 
             if (!confirm("確定要退回這筆戰報嗎？")) return;
@@ -983,7 +1133,6 @@
 
         // 🌟 廣播操作
         window.pushBroadcast = async () => {
-            // 🛡️ 離線攔截檢查
             if (!checkOnlineAction("發布廣播通報")) return;
 
             const input = document.getElementById('adminBroadcastInput');
@@ -992,7 +1141,7 @@
                 try {
                     await updateDoc(docRef, { alertMsg: msg });
                     input.value = '';
-                    alert('✅ 廣播通報已同步推播至全域大螢幕！');
+                    alert('✅ 廣播通報已同步推播至全域大螢幕並觸發聲光通知！');
                 } catch(e) {
                     console.error("廣播失敗: ", e);
                 }
@@ -1000,7 +1149,6 @@
         };
 
         window.clearBroadcast = async () => {
-            // 🛡️ 離線攔截檢查
             if (!checkOnlineAction("清除廣播通報")) return;
 
             try {
@@ -1039,7 +1187,6 @@
         };
 
         window.confirmImport = async () => {
-            // 🛡️ 離線攔截檢查
             if (!checkOnlineAction("匯入外部據點戰分數")) return;
 
             if (pendingImportScores.length === 0) return;
@@ -1117,9 +1264,7 @@
             if (input) input.value = val; 
         };
 
-        // 🌟 人工調整分數送出
         window.submitScore = async (isPlus) => {
-            // 🛡️ 離線攔截檢查
             if (!checkOnlineAction("手動調整分數")) return;
 
             if (pendingUpdateIndex === null) return;
@@ -1213,7 +1358,6 @@
         };
 
         window.saveRename = async () => {
-            // 🛡️ 離線攔截檢查
             if (!checkOnlineAction("修改小隊名稱")) return;
 
             const val = document.getElementById('renameInput').value.trim();
@@ -1241,7 +1385,6 @@
         };
 
         window.confirmReset = async () => {
-            // 🛡️ 離線攔截檢查
             if (!checkOnlineAction("重置全隊戰力積分")) return;
 
             const pwd = document.getElementById('resetPasswordInput').value;
@@ -1295,7 +1438,7 @@
             }
         };
 
-        // 預設深藍模式初始化
+        // 讀取設定
         const savedTheme = localStorage.getItem('g5_theme');
         if (savedTheme === 'light') {
             document.body.classList.remove('dark-mode');
@@ -1310,7 +1453,6 @@
         window.approveRequest = approveRequest;
         window.rejectRequest = rejectRequest;
 
-        // 初始檢查網路狀態
         if (!navigator.onLine) {
             setTimeout(() => { showNetworkToast('offline'); }, 500);
         }
