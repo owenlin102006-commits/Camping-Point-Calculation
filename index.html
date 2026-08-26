@@ -141,17 +141,28 @@
             transform: translate(2px, 2px); 
         }
 
-        /* 🌟 專門為手機優化的卡片跳動光暈動畫 (100% 支援 GPU 加速) */
-        @keyframes mobileCardJump {
-            0% { transform: scale(1); filter: brightness(1); }
-            20% { transform: scale(1.06) translateY(-10px); filter: brightness(1.25) drop-shadow(0 0 16px rgba(56, 189, 248, 0.9)); border-color: #38bdf8 !important; }
-            45% { transform: scale(0.96) translateY(2px); }
-            70% { transform: scale(1.03) translateY(-4px); filter: brightness(1.15) drop-shadow(0 0 10px rgba(56, 189, 248, 0.6)); border-color: #38bdf8 !important; }
-            100% { transform: scale(1); filter: brightness(1); }
+        /* 🌟 極致震撼：iPhone 專屬立體彈跳脈衝高光動畫 */
+        @keyframes intenseCardJump {
+            0% { transform: scale(1) translateY(0); }
+            20% { 
+                transform: scale(1.08) translateY(-16px); 
+                outline: 4px solid #38bdf8 !important; 
+                box-shadow: 0 0 45px rgba(56, 189, 248, 0.95), 0 16px 30px rgba(0,0,0,0.6) !important;
+                filter: brightness(1.25);
+            }
+            40% { transform: scale(0.95) translateY(4px); }
+            60% { 
+                transform: scale(1.05) translateY(-8px); 
+                outline: 4px solid #f59e0b !important; 
+                box-shadow: 0 0 35px rgba(245, 158, 11, 0.85) !important;
+                filter: brightness(1.15);
+            }
+            80% { transform: scale(0.98) translateY(2px); }
+            100% { transform: scale(1) translateY(0); }
         }
         .card-jump-pulse {
-            animation: mobileCardJump 1.2s cubic-bezier(0.25, 1, 0.5, 1) !important;
-            z-index: 30 !important;
+            animation: intenseCardJump 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+            z-index: 50 !important;
             position: relative;
         }
 
@@ -189,16 +200,16 @@
 
         /* 🥇 金銀銅戰隊分級光暈 */
         .rank-tier-1 {
-            border-color: var(--tier-1-border) !important;
-            box-shadow: 4px 4px 0px #ca8a04, 0 0 20px rgba(234, 179, 8, 0.35) !important;
+            border-color: var(--tier-1-border);
+            box-shadow: 4px 4px 0px #ca8a04, 0 0 20px rgba(234, 179, 8, 0.35);
         }
         .rank-tier-2 {
-            border-color: var(--tier-2-border) !important;
-            box-shadow: 4px 4px 0px #4f46e5, 0 0 16px rgba(99, 102, 241, 0.3) !important;
+            border-color: var(--tier-2-border);
+            box-shadow: 4px 4px 0px #4f46e5, 0 0 16px rgba(99, 102, 241, 0.3);
         }
         .rank-tier-3 {
-            border-color: var(--tier-3-border) !important;
-            box-shadow: 4px 4px 0px #ea580c, 0 0 16px rgba(249, 115, 22, 0.3) !important;
+            border-color: var(--tier-3-border);
+            box-shadow: 4px 4px 0px #ea580c, 0 0 16px rgba(249, 115, 22, 0.3);
         }
 
         /* 分數變動閃爍動畫 */
@@ -695,7 +706,7 @@
         let pendingRequests = []; 
         let alertMsg = "";
 
-        let previousScores = null; // 🌟 設為 null，用來偵測首次連線
+        let previousScores = null; 
         let pendingUpdateIndex = null; 
         let pendingRenameIndex = null; 
         let pendingImportScores = []; 
@@ -811,6 +822,7 @@
             if ('vibrate' in navigator) {
                 try {
                     if (type === 'light') navigator.vibrate(15);
+                    else if (type === 'jump') navigator.vibrate([100, 60, 120]);
                     else if (type === 'warning') navigator.vibrate([60, 40, 80]);
                 } catch(e) {}
             }
@@ -959,27 +971,37 @@
             }, { passive: true });
         });
 
-        // ================= 🌟 物理級手機滾動與卡片跳動修復 =================
+        // ================= 🌟 iPhone 專用雙軌精準置中滾動與跳動觸發 =================
         function triggerTargetCardFocus(targetIdx) {
             const mainView = document.getElementById('main-view');
             
             // 只要目前該手機處於「前台首頁」
             if (mainView && !mainView.classList.contains('hidden')) {
-                // 等待瀏覽器完成 DOM 渲染
                 setTimeout(() => {
                     const targetCard = document.getElementById(`card-${targetIdx}`);
                     if (targetCard) {
-                        // 1. 使用原生手機相容度最高的置中滾動
-                        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+                        // 1. 雙軌滾動：先用座標 scrollTo，再輔以 scrollIntoView 保證任何瀏覽器都置中
+                        const rect = targetCard.getBoundingClientRect();
+                        const scrollTop = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+                        const targetY = rect.top + scrollTop - (window.innerHeight / 2) + (rect.height / 2);
+                        
+                        window.scrollTo({
+                            top: Math.max(0, targetY),
+                            behavior: 'smooth'
+                        });
 
-                        // 2. 強制重繪並掛上跳動動畫
+                        try {
+                            targetCard.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+                        } catch(e) {}
+
+                        // 2. 移除並重新掛上強烈跳動與高光動畫
                         targetCard.classList.remove('card-jump-pulse');
                         void targetCard.offsetWidth; // 🪄 Reflow 強制重繪
                         targetCard.classList.add('card-jump-pulse');
                         
-                        triggerHaptic('light');
+                        triggerHaptic('jump');
                     }
-                }, 100);
+                }, 120);
             }
         }
 
@@ -1008,7 +1030,7 @@
                         closeBroadcastPopup();
                     }
 
-                    // 🌟 核心比對：比對前後陣列，找出變動的小隊 index
+                    // 🌟 100% 精準找出數值改變的小隊 index
                     let changedIndex = -1;
                     if (previousScores !== null) {
                         for (let i = 0; i < newScores.length; i++) {
@@ -1019,18 +1041,18 @@
                         }
                     }
 
-                    // 先渲染畫面
+                    const isFirstTime = (previousScores === null);
+                    
+                    // 渲染大螢幕卡片
                     render(previousScores || newScores, newScores); 
                     
-                    // 檢查是否是第一次載入
-                    const isFirstTime = (previousScores === null);
                     previousScores = [...newScores]; 
                     scores = [...newScores];
 
                     renderPendingList(); 
                     updateBadges(); 
 
-                    // 🌟 只要不是初次連線、且分數確實有變更，全場手機保證 100% 滾動跳動！
+                    // 🌟 非首次載入且有分數變動，強制觸發跳動與滾動！
                     if (!isFirstTime && changedIndex !== -1) {
                         triggerTargetCardFocus(changedIndex);
                     }
@@ -1038,7 +1060,7 @@
                     setDoc(docRef, { scores, teamNames, logs, pendingRequests: [], alertMsg: "" });
                 }
 
-                // 移除啟動遮罩
+                // 關閉初始連線遮罩
                 const loader = document.getElementById('loadingScreen');
                 if (loader) {
                     loader.classList.add('fade-out');
@@ -1571,9 +1593,9 @@
 
         window.toggleTheme = () => {
             triggerHaptic('light');
-            const isDark = document.body.classList.contains('dark-mode');
-            applyThemeMode(!isDark);
-            localStorage.setItem('g5_theme', !isDark ? 'dark' : 'light');
+            const willBeDark = !document.body.classList.contains('dark-mode');
+            applyThemeMode(willBeDark);
+            localStorage.setItem('g5_theme', willBeDark ? 'dark' : 'light');
         };
 
         window.toggleAdminView = () => {
