@@ -82,6 +82,7 @@
             background-size: 20px 20px;
             min-height: 100vh;
             overflow-x: hidden;
+            scroll-behavior: smooth;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
@@ -135,6 +136,18 @@
         .btn-shadow:active { 
             box-shadow: 0px 0px 0px rgba(0,0,0,0.3); 
             transform: translate(2px, 2px); 
+        }
+
+        /* 分數調整後卡片跳動聚焦動畫 */
+        @keyframes cardJumpPulse {
+            0% { transform: scale(1); box-shadow: 4px 4px 0px rgba(0,0,0,0.25); }
+            30% { transform: scale(1.06) translateY(-8px); box-shadow: 0 0 35px rgba(56, 189, 248, 0.7); border-color: #38bdf8 !important; }
+            60% { transform: scale(0.98) translateY(2px); }
+            100% { transform: scale(1); box-shadow: 4px 4px 0px rgba(0,0,0,0.25); }
+        }
+        .card-jump-pulse {
+            animation: cardJumpPulse 1s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 20;
         }
 
         /* 輸入框樣式 */
@@ -683,7 +696,7 @@
         let isFirstLoad = true; 
         let pendingImportScores = []; 
 
-        // ================= 🌙 智慧日落自動感應主題系統 (純本機 0 耗電) =================
+        // ================= 🌙 智慧日落自動感應主題系統 =================
         function applyThemeMode(isDark) {
             const btn = document.getElementById('themeBtn');
             if (isDark) {
@@ -874,7 +887,7 @@
             return true;
         }
 
-        // ================= 🌟 廣播狀態機 (新訊息持續滑動，直到使用者觸碰畫面才停止) =================
+        // ================= 🌟 廣播狀態機 =================
         let lastActiveAlertMsg = "";
         let isBannerSliding = false;
         let popupAutoDismissTimer = null;
@@ -890,7 +903,6 @@
             
             popup.classList.add('show');
             clearTimeout(popupAutoDismissTimer);
-            // 彈窗 8 秒後自動關閉，但「不會停止」頂部的滑動動畫
             popupAutoDismissTimer = setTimeout(() => {
                 popup.classList.remove('show');
             }, 8000);
@@ -911,7 +923,6 @@
             textEl.innerText = newMsg;
             banner.classList.remove('hidden');
 
-            // 啟動封鎖線無窮輸送帶與文字滑入
             tapes.forEach(t => t.classList.add('tape-sliding'));
             textEl.classList.remove('broadcast-slide-anim');
             void textEl.offsetWidth; 
@@ -923,7 +934,7 @@
             triggerHaptic('warning');
             sendSystemNotification(newMsg);
 
-            isBannerSliding = true; // 🌟 進入持續滑動狀態，直到使用者觸碰畫面
+            isBannerSliding = true; 
         }
 
         function stopBroadcastSlider() {
@@ -936,7 +947,6 @@
             isBannerSliding = false;
         }
 
-        // 🌟 核心：使用者觸碰畫面（點擊、觸控、滾動、按鍵）才停止滑動
         ['click', 'touchstart', 'scroll', 'keydown'].forEach(evt => {
             window.addEventListener(evt, () => {
                 if (isBannerSliding) {
@@ -944,6 +954,24 @@
                 }
             }, { passive: true });
         });
+
+        // ================= 🌟 焦點卡片動畫觸發（不強制跳轉首頁） =================
+        function triggerTargetCardFocus(targetIdx) {
+            const mainView = document.getElementById('main-view');
+            
+            // 只有當使用者目前身處「前台首頁」時，才進行滾動與跳動聚焦
+            if (!mainView.classList.contains('hidden')) {
+                setTimeout(() => {
+                    const targetCard = document.getElementById(`card-${targetIdx}`);
+                    if (targetCard) {
+                        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        targetCard.classList.remove('card-jump-pulse');
+                        void targetCard.offsetWidth; // 強制重繪
+                        targetCard.classList.add('card-jump-pulse');
+                    }
+                }, 100);
+            }
+        }
 
         // ================= Firebase 初始化與監聽 =================
         function initApp() {
@@ -1179,6 +1207,9 @@
                         });
                         if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
                         triggerScoreEffect(targetIndex, targetReq.score);
+
+                        // 🌟 若原本就在前台首頁，則滾動聚焦至該卡片
+                        triggerTargetCardFocus(targetIndex);
                     }
 
                     currentPending = currentPending.filter(r => r.id !== reqId);
@@ -1304,6 +1335,11 @@
                     
                     if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
                     transaction.update(docRef, { scores: currentScores, logs: currentLogs });
+
+                    // 若在前台首頁，則聚焦至第一支變動隊伍
+                    if (pendingImportScores.length > 0) {
+                        triggerTargetCardFocus(pendingImportScores[0].index);
+                    }
                 });
                 alert("✅ 據點戰分數已全數匯入！");
             } catch(e) {
@@ -1353,6 +1389,7 @@
             if (input) input.value = val; 
         };
 
+        // 🌟 人工調整分數送出 (保持在當前視圖，不強制切換首頁)
         window.submitScore = async (isPlus) => {
             if (!checkOnlineAction("手動調整分數")) return;
 
@@ -1369,6 +1406,9 @@
             const targetIdx = pendingUpdateIndex;
             closeModal('scoreModal');
             triggerScoreEffect(targetIdx, change);
+
+            // 若在前台首頁則平滑滾動聚焦
+            triggerTargetCardFocus(targetIdx);
 
             try {
                 await runTransaction(db, async (transaction) => {
@@ -1501,6 +1541,13 @@
             document.getElementById(id).classList.add('hidden'); 
         };
 
+        window.toggleTheme = () => {
+            triggerHaptic('light');
+            const isDark = document.body.classList.contains('dark-mode');
+            applyThemeMode(!isDark);
+            localStorage.setItem('g5_theme', !isDark ? 'dark' : 'light');
+        };
+
         window.toggleAdminView = () => {
             triggerHaptic('light');
             const mainView = document.getElementById('main-view');
@@ -1518,7 +1565,7 @@
             }
         };
 
-        // 🌟 初始化日落主題判定
+        // 初始化日落主題判定
         initAutoTheme();
 
         window.approveRequest = approveRequest;
