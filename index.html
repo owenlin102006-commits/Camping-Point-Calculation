@@ -697,13 +697,11 @@
 
         function initAutoTheme() {
             const savedTheme = localStorage.getItem('g5_theme');
-            // 若使用者曾手動選擇，以手動設定為主
             if (savedTheme) {
                 applyThemeMode(savedTheme === 'dark');
                 return;
             }
 
-            // 自動判定：18:00 ~ 06:00 為深藍夜間模式，其餘為日間
             const currentHour = new Date().getHours();
             const isNight = currentHour >= 18 || currentHour < 6;
             applyThemeMode(isNight);
@@ -716,14 +714,12 @@
             localStorage.setItem('g5_theme', willBeDark ? 'dark' : 'light');
         };
 
-        // 螢幕點亮喚醒時自動重新比對
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible' && !localStorage.getItem('g5_theme')) {
                 initAutoTheme();
             }
         });
 
-        // 每 5 分鐘在背景微量比對時刻
         setInterval(() => {
             if (!localStorage.getItem('g5_theme')) {
                 initAutoTheme();
@@ -878,12 +874,9 @@
             return true;
         }
 
-        // ================= 🌟 實體彈窗與廣播狀態機 =================
+        // ================= 🌟 廣播狀態機 (新訊息持續滑動，直到使用者觸碰畫面才停止) =================
         let lastActiveAlertMsg = "";
         let isBannerSliding = false;
-        let bannerMinTimePassed = false;
-        let bannerAutoStopTimer = null;
-        let bannerMinTimer = null;
         let popupAutoDismissTimer = null;
 
         function showBroadcastPopup(msg) {
@@ -897,8 +890,9 @@
             
             popup.classList.add('show');
             clearTimeout(popupAutoDismissTimer);
+            // 彈窗 8 秒後自動關閉，但「不會停止」頂部的滑動動畫
             popupAutoDismissTimer = setTimeout(() => {
-                closeBroadcastPopup();
+                popup.classList.remove('show');
             }, 8000);
         }
 
@@ -917,6 +911,7 @@
             textEl.innerText = newMsg;
             banner.classList.remove('hidden');
 
+            // 啟動封鎖線無窮輸送帶與文字滑入
             tapes.forEach(t => t.classList.add('tape-sliding'));
             textEl.classList.remove('broadcast-slide-anim');
             void textEl.offsetWidth; 
@@ -928,24 +923,12 @@
             triggerHaptic('warning');
             sendSystemNotification(newMsg);
 
-            isBannerSliding = true;
-            bannerMinTimePassed = false;
-            clearTimeout(bannerMinTimer);
-            clearTimeout(bannerAutoStopTimer);
-
-            bannerMinTimer = setTimeout(() => {
-                bannerMinTimePassed = true;
-            }, 3500);
-
-            bannerAutoStopTimer = setTimeout(() => {
-                stopBroadcastSlider();
-            }, 10000);
+            isBannerSliding = true; // 🌟 進入持續滑動狀態，直到使用者觸碰畫面
         }
 
         function stopBroadcastSlider() {
             if (!isBannerSliding) return;
             const banner = document.getElementById('announcement-banner');
-            const textEl = document.getElementById('announcement-text');
             const tapes = banner.querySelectorAll('.crime-tape');
 
             tapes.forEach(t => t.classList.remove('tape-sliding'));
@@ -953,9 +936,10 @@
             isBannerSliding = false;
         }
 
+        // 🌟 核心：使用者觸碰畫面（點擊、觸控、滾動、按鍵）才停止滑動
         ['click', 'touchstart', 'scroll', 'keydown'].forEach(evt => {
             window.addEventListener(evt, () => {
-                if (isBannerSliding && bannerMinTimePassed && document.visibilityState === 'visible') {
+                if (isBannerSliding) {
                     stopBroadcastSlider();
                 }
             }, { passive: true });
@@ -1246,7 +1230,7 @@
                 try {
                     await updateDoc(docRef, { alertMsg: msg });
                     input.value = '';
-                    alert('✅ 廣播通報已同步推播至全域大螢幕並觸發聲光通知！');
+                    alert('✅ 廣播通報已同步推播至全域大螢幕並啟動持續滑動警示！');
                 } catch(e) {
                     console.error("廣播失敗: ", e);
                 }
