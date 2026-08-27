@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🌐 115新生宿營戰隊計分系統_計分後台</title>
+    <title>🌐 宿營戰隊計分系統 - 工作人員指揮中樞</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -174,11 +174,6 @@
             transform: none !important;
             cursor: default !important;
         }
-        .static-log-panel:hover, .static-log-panel:active {
-            transform: none !important;
-            box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2) !important;
-            filter: none !important;
-        }
 
         .modal-card-static {
             backdrop-filter: blur(24px) saturate(180%);
@@ -240,6 +235,13 @@
             transform: translateY(2px) scale(0.94);
             filter: brightness(0.92);
             box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.2), inset 0 1px 0 0 rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .ios-glass-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+            filter: grayscale(0.6) !important;
         }
 
         .ios-glass-primary {
@@ -497,9 +499,10 @@
 
     <div id="loadingScreen">
         <img src="IMG_1716.jpg" alt="115 新生宿營 Logo" class="loading-logo" onerror="this.src='https://placehold.co/200x200/1e3a8a/ffffff?text=連線中';">
-        <div class="loading-text">🌲 戰情終端連線中...</div>
+        <div class="loading-text">🌲 指揮終端連線中...</div>
     </div>
 
+    <!-- 頂部網路連線 Toast -->
     <div id="network-toast" class="card-shadow rounded-2xl p-3.5 flex items-center justify-between gap-3 backdrop-blur-2xl border-2 cursor-grab active:cursor-grabbing">
         <div class="flex items-center gap-2.5">
             <div id="toast-icon-box" class="w-8 h-8 rounded-xl flex items-center justify-center text-sm font-black shrink-0">
@@ -518,6 +521,7 @@
         </div>
     </div>
 
+    <!-- 緊急通報 HUD 彈窗 -->
     <div id="broadcast-popup-modal" class="card-shadow rounded-3xl overflow-hidden border-2 border-amber-500 shadow-2xl bg-slate-900/90 backdrop-blur-2xl text-white">
         <div class="crime-tape h-3 w-full"></div>
         <div class="p-4 flex items-start gap-3.5 bg-gradient-to-r from-amber-950/80 via-slate-900/90 to-slate-900/90">
@@ -544,6 +548,7 @@
         <div class="crime-tape h-2 w-full"></div>
     </div>
 
+    <!-- 全域作戰廣播條 -->
     <div id="announcement-banner" onclick="showBroadcastDetail()" class="hidden max-w-[1400px] mx-auto mb-3 sm:mb-4 card-shadow rounded-2xl flex flex-col overflow-hidden border-2 border-amber-500/60" title="點擊放大全螢幕通報">
         <div class="crime-tape h-3.5 w-full"></div>
         <div class="p-3 sm:p-3.5 flex items-center justify-between gap-3 relative bg-amber-50/70 dark:bg-amber-950/40 backdrop-blur-xl overflow-hidden">
@@ -570,6 +575,7 @@
         <div class="crime-tape h-3 w-full"></div>
     </div>
 
+    <!-- 頂部指揮中樞 Header -->
     <header class="max-w-[1400px] mx-auto flex justify-between items-center mb-4 sm:mb-6 pb-3 border-b-2 border-slate-300 dark:border-slate-800">
         <div class="flex items-center gap-3">
             <div class="relative shrink-0">
@@ -582,21 +588,24 @@
             </div>
             <div>
                 <h1 class="text-xl sm:text-2xl md:text-3xl font-black tracking-wider text-[#1e3a8a] dark:text-sky-400 flex items-center gap-1.5">
-                    宿營計分系統
+                    新生宿營計分系統
                 </h1>
                 <p class="text-[10px] sm:text-xs text-[#64748b] dark:text-slate-400 font-bold tracking-widest timer-font mt-0.5">
-                    Camping Point Calculation System
+                    Command Control System (Admin)
                 </p>
             </div>
         </div>
 
-        <div class="ios-glass-btn flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 timer-font px-3.5 py-1.5 rounded-full shrink-0">
-            <span id="header-status-dot" class="inline-block w-2.5 h-2.5 min-w-[10px] min-h-[10px] rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.9)] shrink-0"></span>
-            <span id="header-status-text" class="tracking-wider">ONLINE</span>
+        <div class="flex items-center gap-2">
+            <div class="ios-glass-btn flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-300 timer-font px-3.5 py-1.5 rounded-full shrink-0">
+                <span id="header-status-dot" class="inline-block w-2.5 h-2.5 min-w-[10px] min-h-[10px] rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.9)] shrink-0"></span>
+                <span id="header-status-text" class="tracking-wider">ONLINE</span>
+            </div>
         </div>
     </header>
 
     <main class="max-w-[1400px] mx-auto">
+        <!-- 🌟 前台：大螢幕即時監視 -->
         <div id="main-view">
             <div class="flex items-center justify-between pl-1 mb-3">
                 <div class="flex items-center gap-2">
@@ -606,7 +615,7 @@
                     <h2 class="font-black text-base sm:text-lg tracking-wider">小隊戰況監視檔案</h2>
                 </div>
                 <span class="text-[11px] text-[#64748b] dark:text-slate-400 font-bold hidden sm:inline">
-                    💡 提示：卡片依 1~6 小隊排列，點擊可純淨投影
+                    💡 提示：點擊任何小隊卡片可放大純淨投影
                 </span>
             </div>
 
@@ -623,12 +632,67 @@
             </div>
         </div>
 
+        <!-- ⚙️ 後台：管理與控制中心 -->
         <div id="admin-view" class="hidden">
+            
+            <!-- 🏆 結算控制台 -->
+            <div class="card-shadow rounded-3xl p-4 sm:p-5 mb-5 border-2 border-amber-500/50 bg-amber-950/10">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3 mb-3 border-b border-amber-500/30 pb-3">
+                    <div>
+                        <h3 class="text-sm sm:text-base font-black text-amber-500 dark:text-amber-400 flex items-center gap-2">
+                            <i class="fa-solid fa-trophy"></i> 戰績結算模式控制台
+                        </h3>
+                        <p class="text-[11px] text-[#64748b] dark:text-slate-400 font-bold mt-0.5">
+                            開啟後學員端分數將隱藏為「🔒 保密中」，並可由第 6 名至第 1 名依序揭曉！
+                        </p>
+                    </div>
+                    <div id="reveal-status-badge" class="ios-glass-btn text-xs font-black px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5 self-start sm:self-auto">
+                        <span class="w-2 h-2 rounded-full bg-slate-400"></span> 正常顯示中
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <button onclick="startRevealMode()" class="ios-glass-btn ios-glass-amber min-h-[46px] rounded-2xl text-xs sm:text-sm font-black flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-lock"></i> 1. 開啟結算保密模式
+                    </button>
+                    <button onclick="revealNextTeam()" id="btn-next-reveal" class="ios-glass-btn ios-glass-gold min-h-[46px] rounded-2xl text-xs sm:text-sm font-black flex items-center justify-center gap-1.5" disabled>
+                        <i class="fa-solid fa-forward-step"></i> 2. 依序公布下一名 (<span id="reveal-step-text">0/6</span>)
+                    </button>
+                    <button onclick="resetRevealMode()" class="ios-glass-btn min-h-[46px] rounded-2xl text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-rotate-left"></i> 重置結算狀態
+                    </button>
+                </div>
+            </div>
+
+            <!-- 💾 CSV 資料備份中樞 -->
+            <div class="card-shadow rounded-3xl p-4 sm:p-5 mb-5 border-2 border-emerald-500/40">
+                <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                    <div>
+                        <h3 class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
+                            <i class="fa-solid fa-file-csv"></i> CSV 資料備份與匯出中樞
+                        </h3>
+                        <p class="text-[11px] text-[#64748b] dark:text-slate-400 font-bold mt-0.5">
+                            即時匯出 Excel/CSV 檔案，每次雲端變更自動同步儲存至本機快照。
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="exportCSV()" class="ios-glass-btn ios-glass-success min-h-[44px] px-4 py-2 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-1.5">
+                            <i class="fa-solid fa-download"></i> 立即匯出 CSV 報表
+                        </button>
+                        <label class="ios-glass-btn flex items-center gap-2 text-xs font-bold px-3.5 py-2.5 rounded-2xl cursor-pointer">
+                            <input type="checkbox" id="autoBackupCheckbox" onchange="toggleAutoBackup()" class="accent-emerald-500 w-4 h-4 cursor-pointer">
+                            <span>每 10 分鐘自動備份</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 📢 廣播系統中樞 -->
             <div class="card-shadow rounded-3xl p-4 sm:p-5 mb-5 border-2 border-blue-600/30">
                 <h3 class="text-sm sm:text-base font-black text-[#1e3a8a] dark:text-sky-400 mb-1 flex items-center gap-2">
                     <i class="fa-solid fa-bullhorn"></i> 警視廳廣播系統中樞
                 </h3>
-                <p class="text-[11px] text-[#64748b] dark:text-slate-400 font-bold mb-3">發布全域緊急通報，將同步推播至大螢幕並觸發側邊滑動動畫與聲光通知：</p>
+                <p class="text-[11px] text-[#64748b] dark:text-slate-400 font-bold mb-3">發布全域緊急通報，將同步推播至大螢幕與學員端：</p>
                 <div class="flex flex-col sm:flex-row gap-2.5">
                     <input type="text" id="adminBroadcastInput" class="tactical-input flex-1 p-3 rounded-2xl font-bold text-xs sm:text-sm" placeholder="輸入作戰通報內容...">
                     <div class="flex gap-2">
@@ -642,6 +706,7 @@
                 </div>
             </div>
 
+            <!-- 待審核戰報 -->
             <div class="card-shadow rounded-3xl p-4 sm:p-5 mb-5 border-2 border-amber-500/40">
                 <h2 class="text-base sm:text-lg font-black text-amber-500 dark:text-amber-400 mb-3 flex items-center">
                     <i class="fa-solid fa-siren-on mr-2 animate-pulse"></i>
@@ -651,6 +716,7 @@
                 <div id="pending-list" class="space-y-2.5 max-h-72 overflow-y-auto pr-1"></div>
             </div>
 
+            <!-- 小隊戰力人工調配 -->
             <div class="card-shadow rounded-3xl p-4 sm:p-5 mb-6">
                 <h2 class="text-base sm:text-lg font-black text-[#1e3a8a] dark:text-sky-400 mb-4 flex items-center gap-2">
                     <i class="fa-solid fa-sliders"></i> 各小隊戰力值人工調配
@@ -666,16 +732,18 @@
         </div>
     </main>
 
+    <!-- 側邊懸浮中樞 -->
     <div class="side-floating-dock" id="sideFloatingDock">
         <button onclick="toggleTheme()" id="themeBtn" class="ios-glass-btn w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center cursor-pointer shadow-xl" title="切換日/夜間模式">
             <i class="fa-solid fa-sun text-yellow-400 text-lg sm:text-xl"></i>
         </button>
-        <button onclick="toggleAdminView()" id="viewBtn" class="ios-glass-btn ios-glass-danger w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center cursor-pointer relative shadow-xl" title="切換值勤後台">
+        <button onclick="toggleAdminView()" id="viewBtn" class="ios-glass-btn ios-glass-danger w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center cursor-pointer relative shadow-xl" title="切換前/後台">
             <i class="fa-solid fa-user-shield text-lg sm:text-xl"></i>
             <span id="btn-pending-badge" class="absolute -top-1.5 -right-1 bg-amber-400 text-red-900 text-[9px] font-black px-1.5 py-0.2 rounded-full animate-bounce hidden shadow border border-red-600">!</span>
         </button>
     </div>
 
+    <!-- 實色全螢幕小隊投影 -->
     <div id="focus-overlay" class="hidden flex flex-col justify-center items-center cursor-pointer p-4 select-none" onclick="hideFocus()">
         <div class="text-center zoom-animation w-full max-w-[95vw] sm:max-w-3xl flex flex-col items-center justify-center">
             <div class="ios-glass-btn text-[11px] sm:text-xs font-mono tracking-widest text-amber-400 mb-3 uppercase px-4 py-1.5 rounded-full inline-block">
@@ -695,6 +763,7 @@
         </div>
     </div>
 
+    <!-- 廣播特寫 HUD -->
     <div id="broadcast-focus-overlay" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-2xl z-[1500] flex flex-col justify-center items-center p-4 sm:p-6 cursor-pointer select-none" onclick="hideBroadcastDetail()">
         <div class="modal-card-static rounded-3xl w-full max-w-[95vw] sm:max-w-3xl border-2 border-amber-500 overflow-hidden shadow-2xl relative" onclick="event.stopPropagation()">
             <div class="crime-tape h-4 w-full"></div>
@@ -718,6 +787,25 @@
         </div>
     </div>
 
+    <!-- 結算揭曉全螢幕大字報 Modal -->
+    <div id="reveal-popup-modal" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-2xl z-[2500] flex flex-col justify-center items-center p-4 select-none cursor-pointer" onclick="closeRevealPopup()">
+        <div class="zoom-animation w-full max-w-4xl text-center flex flex-col items-center">
+            <div id="reveal-badge-tag" class="ios-glass-btn ios-glass-gold text-sm sm:text-lg font-black px-6 py-2 rounded-full mb-4 shadow-xl timer-font tracking-widest">
+                第 6 名揭曉
+            </div>
+            <div id="reveal-team-title" class="text-white text-3xl sm:text-6xl md:text-7xl font-black mb-4 drop-shadow-[0_0_25px_rgba(255,255,255,0.4)]">
+                小隊名稱
+            </div>
+            <div id="reveal-team-score" class="text-amber-400 hud-fluid-score font-black timer-font drop-shadow-[0_0_40px_rgba(245,158,11,0.8)] my-2">
+                0
+            </div>
+            <p class="text-slate-400 text-xs sm:text-sm mt-8 tracking-widest">
+                <i class="fa-solid fa-hand-pointer animate-pulse"></i> 點擊螢幕關閉大字報
+            </p>
+        </div>
+    </div>
+
+    <!-- 調整分數彈窗 (含防連點鎖定) -->
     <div id="scoreModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
         <div class="modal-card-static rounded-3xl w-full max-w-[92vw] sm:max-w-sm max-h-[90vh] overflow-y-auto p-5 sm:p-6 relative">
             <h3 class="text-lg sm:text-xl font-black text-center mb-0.5 text-[#1e3a8a] dark:text-sky-400" id="scoreModalTitle">調整分數</h3>
@@ -737,17 +825,18 @@
 
             <div class="mb-5">
                 <label class="block text-[11px] font-bold text-[#64748b] dark:text-slate-400 mb-1">任務名稱 / 加分事由：</label>
-                <input type="text" id="reasonInput" class="tactical-input w-full text-xs sm:text-sm font-bold p-3 rounded-2xl" value="關卡結算報酬">
+                <input type="text" id="reasonInput" class="tactical-input w-full text-xs sm:text-sm font-bold p-3 rounded-2xl" value="據點攻防作戰獲勝">
             </div>
 
-            <div class="grid grid-cols-2 gap-3">
-                <button type="button" onclick="submitScore(false)" class="ios-glass-btn ios-glass-danger min-h-[50px] rounded-2xl text-sm sm:text-base font-black">➖ 扣分</button>
-                <button type="button" onclick="submitScore(true)" class="ios-glass-btn ios-glass-success min-h-[50px] rounded-2xl text-sm sm:text-base font-black">➕ 加分</button>
+            <div class="grid grid-cols-2 gap-3" id="score-modal-btn-group">
+                <button type="button" id="btn-submit-minus" onclick="submitScore(false)" class="ios-glass-btn ios-glass-danger min-h-[50px] rounded-2xl text-sm sm:text-base font-black">➖ 扣分</button>
+                <button type="button" id="btn-submit-plus" onclick="submitScore(true)" class="ios-glass-btn ios-glass-success min-h-[50px] rounded-2xl text-sm sm:text-base font-black">➕ 加分</button>
             </div>
-            <button type="button" onclick="closeModal('scoreModal')" class="w-full mt-3 py-2 text-xs font-bold text-slate-400 hover:text-slate-200">取消返回</button>
+            <button type="button" id="btn-cancel-score-modal" onclick="closeModal('scoreModal')" class="w-full mt-3 py-2 text-xs font-bold text-slate-400 hover:text-slate-200">取消返回</button>
         </div>
     </div>
 
+    <!-- 歷史卷宗彈窗 -->
     <div id="historyModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
         <div class="modal-card-static rounded-3xl w-full max-w-[92vw] sm:max-w-md max-h-[82vh] flex flex-col overflow-hidden relative">
             <div class="p-4 bg-slate-900/80 backdrop-blur-xl text-white flex justify-between items-center border-b border-slate-700/50">
@@ -758,6 +847,7 @@
         </div>
     </div>
 
+    <!-- 改名彈窗 -->
     <div id="renameModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
         <div class="modal-card-static rounded-3xl w-full max-w-[92vw] sm:max-w-sm p-5 sm:p-6">
             <h3 class="text-base sm:text-lg font-black text-center mb-3 text-[#1e3a8a] dark:text-sky-400">✏️ 修改戰隊名稱</h3>
@@ -769,6 +859,7 @@
         </div>
     </div>
 
+    <!-- 歸零彈窗 -->
     <div id="resetModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
         <div class="modal-card-static rounded-3xl w-full max-w-[92vw] sm:max-w-sm p-5 sm:p-6 text-center border-2 border-red-500/50">
             <div class="text-3xl text-red-500 mb-2 animate-bounce"><i class="fa-solid fa-triangle-exclamation"></i></div>
@@ -782,6 +873,7 @@
         </div>
     </div>
 
+    <!-- 外部戰報接收彈窗 -->
     <div id="import-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
         <div class="modal-card-static rounded-3xl w-full max-w-[92vw] sm:max-w-sm p-5 text-center relative overflow-hidden border-2 border-amber-500">
             <div class="bg-amber-500 text-slate-900 py-1 absolute top-0 left-0 w-full font-black tracking-widest text-[10px]">🌐 系統戰術連線偵測</div>
@@ -823,11 +915,16 @@
         let logs = []; 
         let pendingRequests = []; 
         let alertMsg = "";
+        
+        // 結算模式狀態
+        let isFinalMode = false;
+        let revealedRankCount = 0; // 0~6: 目前公布到倒數第幾名
 
         let previousScores = null; 
         let pendingUpdateIndex = null; 
         let pendingRenameIndex = null; 
         let pendingImportScores = []; 
+        let autoBackupTimer = null;
 
         function applyThemeMode(isDark) {
             const btn = document.getElementById('themeBtn');
@@ -864,12 +961,6 @@
                 initAutoTheme();
             }
         });
-
-        setInterval(() => {
-            if (!localStorage.getItem('g5_theme')) {
-                initAutoTheme();
-            }
-        }, 5 * 60 * 1000);
 
         let audioCtx = null;
 
@@ -999,21 +1090,6 @@
             setTimeout(() => { toast.classList.remove('show', 'swiping-up'); }, 300);
         };
 
-        const toastEl = document.getElementById('network-toast');
-        toastEl.addEventListener('touchstart', (e) => {
-            touchStartY = e.touches[0].clientY;
-        }, { passive: true });
-
-        toastEl.addEventListener('touchend', (e) => {
-            const touchEndY = e.changedTouches[0].clientY;
-            if (touchStartY - touchEndY > 30) {
-                window.dismissNetworkToast();
-            }
-        }, { passive: true });
-
-        window.addEventListener('online', () => { showNetworkToast('online'); });
-        window.addEventListener('offline', () => { showNetworkToast('offline'); });
-
         function checkOnlineAction(actionName) {
             if (!navigator.onLine) {
                 showNetworkToast('blocked', `處於離線狀態，無法執行【${actionName}】！`);
@@ -1124,6 +1200,175 @@
             }
         }
 
+        // ================= 💾 備份核心系統 =================
+        function saveLocalSnapshot(data) {
+            try {
+                const snapshot = {
+                    timestamp: new Date().toISOString(),
+                    scores: data.scores || scores,
+                    teamNames: data.teamNames || teamNames,
+                    logs: data.logs || logs
+                };
+                localStorage.setItem('camp_score_snapshot', JSON.stringify(snapshot));
+            } catch (e) {
+                console.warn('LocalStorage 備份失敗:', e);
+            }
+        }
+
+        window.exportCSV = () => {
+            triggerHaptic('light');
+            let csvContent = "\uFEFF"; // UTF-8 BOM 防止 Excel 亂碼
+            
+            // 1. 各隊目前積分表
+            csvContent += "小隊戰力總表\n隊伍,目前總分\n";
+            teamNames.forEach((name, i) => {
+                csvContent += `"${name}",${scores[i]}\n`;
+            });
+
+            // 2. 詳細紀錄
+            csvContent += "\n加扣分詳細歷史卷宗\n時間,小隊,變動點數,事由\n";
+            logs.forEach(l => {
+                csvContent += `"${l.time}","${l.team}",${l.change},"${(l.reason || '').replace(/"/g, '""')}"\n`;
+            });
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
+            a.href = url;
+            a.download = `東勢林場宿營計分備份_${dateStr}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        };
+
+        window.toggleAutoBackup = () => {
+            const checkbox = document.getElementById('autoBackupCheckbox');
+            if (checkbox.checked) {
+                localStorage.setItem('camp_auto_backup', 'true');
+                if (autoBackupTimer) clearInterval(autoBackupTimer);
+                autoBackupTimer = setInterval(() => {
+                    exportCSV();
+                }, 10 * 60 * 1000);
+                alert('✅ 已開啟：每 10 分鐘自動下載一份 CSV 備份檔案！');
+            } else {
+                localStorage.setItem('camp_auto_backup', 'false');
+                if (autoBackupTimer) clearInterval(autoBackupTimer);
+                alert('🛑 已關閉每 10 分鐘自動備份。');
+            }
+        };
+
+        // ================= 🏆 結算模式控制邏輯 =================
+        function updateRevealControlUI() {
+            const badge = document.getElementById('reveal-status-badge');
+            const nextBtn = document.getElementById('btn-next-reveal');
+            const stepText = document.getElementById('reveal-step-text');
+
+            if (!badge || !nextBtn || !stepText) return;
+
+            stepText.innerText = `${revealedRankCount}/6`;
+
+            if (isFinalMode) {
+                badge.className = "ios-glass-btn ios-glass-danger text-xs font-black px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-red-400 animate-ping"></span> 🔒 結算保密進行中`;
+                nextBtn.disabled = revealedRankCount >= 6;
+            } else {
+                badge.className = "ios-glass-btn text-xs font-black px-3.5 py-1.5 rounded-full inline-flex items-center gap-1.5";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span> 正常即時顯示中`;
+                nextBtn.disabled = true;
+            }
+        }
+
+        window.startRevealMode = async () => {
+            if (!checkOnlineAction("開啟結算保密模式")) return;
+            if (!confirm("確定要開啟【戰績結算模式】嗎？\n開啟後學員端畫面將全部隱藏為「🔒 保密中」，準備依序開獎！")) return;
+
+            try {
+                await updateDoc(docRef, {
+                    isFinalMode: true,
+                    revealedRankCount: 0
+                });
+                alert('🔒 結算模式已啟動！全場學員端分數已切換為保密模式。');
+            } catch (e) {
+                console.error("啟動結算模式失敗:", e);
+            }
+        };
+
+        window.revealNextTeam = async () => {
+            if (!checkOnlineAction("公布下一名")) return;
+            if (!isFinalMode) return;
+
+            const nextCount = revealedRankCount + 1;
+            if (nextCount > 6) return;
+
+            try {
+                await updateDoc(docRef, {
+                    revealedRankCount: nextCount
+                });
+
+                // 本機立即彈出大字報特效
+                triggerRevealPopup(nextCount);
+            } catch (e) {
+                console.error("揭曉下一名失敗:", e);
+            }
+        };
+
+        window.resetRevealMode = async () => {
+            if (!checkOnlineAction("重置結算模式")) return;
+            if (!confirm("確定要重置並恢復正常即時分數顯示嗎？")) return;
+
+            try {
+                await updateDoc(docRef, {
+                    isFinalMode: false,
+                    revealedRankCount: 0
+                });
+                alert('🔄 結算狀態已重置，全場恢復正常顯示。');
+            } catch (e) {
+                console.error("重置結算模式失敗:", e);
+            }
+        };
+
+        function triggerRevealPopup(step) {
+            const scoreSorted = scores.map((s, idx) => ({ id: idx, score: s }));
+            scoreSorted.sort((a, b) => a.score - b.score); // 升冪：第 0 個是最後一名 (第6名)
+
+            const target = scoreSorted[step - 1]; // 依序揭曉：step 1 是倒數第一(第6名)，step 6 是第一名
+            const actualRank = 6 - (step - 1);
+
+            const modal = document.getElementById('reveal-popup-modal');
+            const badgeTag = document.getElementById('reveal-badge-tag');
+            const title = document.getElementById('reveal-team-title');
+            const scoreEl = document.getElementById('reveal-team-score');
+
+            if (actualRank === 1) {
+                badgeTag.className = "ios-glass-btn ios-glass-gold text-base sm:text-2xl font-black px-8 py-3 rounded-full mb-4 shadow-2xl animate-bounce";
+                badgeTag.innerHTML = `👑 榮耀總冠軍 👑`;
+            } else if (actualRank === 2) {
+                badgeTag.className = "ios-glass-btn ios-glass-primary text-sm sm:text-xl font-black px-7 py-2.5 rounded-full mb-4 shadow-xl";
+                badgeTag.innerHTML = `🥈 宿營亞軍 (第 2 名)`;
+            } else if (actualRank === 3) {
+                badgeTag.className = "ios-glass-btn ios-glass-bronze text-sm sm:text-xl font-black px-7 py-2.5 rounded-full mb-4 shadow-xl";
+                badgeTag.innerHTML = `🥉 宿營季軍 (第 3 名)`;
+            } else {
+                badgeTag.className = "ios-glass-btn text-sm sm:text-lg font-black px-6 py-2 rounded-full mb-4 shadow-lg";
+                badgeTag.innerHTML = `第 ${actualRank} 名揭曉`;
+            }
+
+            title.innerText = teamNames[target.id];
+            scoreEl.innerText = target.score.toLocaleString();
+            modal.classList.remove('hidden');
+
+            playTacticalAlertSound();
+            triggerHaptic('jump');
+        }
+
+        window.closeRevealPopup = () => {
+            document.getElementById('reveal-popup-modal').classList.add('hidden');
+        };
+
+        // ================= Firebase 初始化與監聽 =================
         function initApp() {
             onSnapshot(docRef, (snap) => {
                 if (snap.exists()) {
@@ -1134,6 +1379,12 @@
                     pendingRequests = data.pendingRequests || [];
                     alertMsg = data.alertMsg || "";
                     
+                    isFinalMode = data.isFinalMode || false;
+                    revealedRankCount = data.revealedRankCount || 0;
+
+                    // 儲存本機備份
+                    saveLocalSnapshot(data);
+
                     const banner = document.getElementById('announcement-banner');
 
                     if (alertMsg.trim() !== "") {
@@ -1149,7 +1400,6 @@
                         hideBroadcastDetail();
                     }
 
-                    // 🌟 核心防護：精確比對分數，初次載入絕不觸發任何滾動與跳動
                     let changedIndex = -1;
                     if (previousScores !== null) {
                         for (let i = 0; i < newScores.length; i++) {
@@ -1169,13 +1419,21 @@
 
                     renderPendingList(); 
                     updateBadges(); 
+                    updateRevealControlUI();
 
-                    // 只有在非初次載入，且有明確分數變更時才觸發聚焦
                     if (!isFirstTime && changedIndex !== -1) {
                         triggerTargetCardFocus(changedIndex);
                     }
                 } else {
-                    setDoc(docRef, { scores, teamNames, logs, pendingRequests: [], alertMsg: "" });
+                    setDoc(docRef, { 
+                        scores, 
+                        teamNames, 
+                        logs, 
+                        pendingRequests: [], 
+                        alertMsg: "",
+                        isFinalMode: false,
+                        revealedRankCount: 0
+                    });
                 }
 
                 const loader = document.getElementById('loadingScreen');
@@ -1223,6 +1481,7 @@
                 rankMap[item.id] = rIdx + 1; 
             });
 
+            // 1. 前台卡片
             squadGrid.innerHTML = renderScores.map((score, idx) => {
                 const rank = rankMap[idx];
                 let rankClass = '';
@@ -1267,6 +1526,7 @@
                 `;
             }).join('');
 
+            // 2. 後台小隊管理卡片
             adminGrid.innerHTML = renderScores.map((score, idx) => `
                 <div class="card-shadow rounded-3xl p-4 flex flex-col justify-between" id="admin-card-${idx}">
                     <div class="flex justify-between items-center mb-1.5 gap-2">
@@ -1564,6 +1824,15 @@
             document.getElementById('scoreModalTitle').innerText = `⚡ 調整 ${teamNames[idx]}`;
             document.getElementById('scoreModalDesc').innerText = `目前戰力值: ${scores[idx].toLocaleString()}`;
             document.getElementById('scoreInput').value = '100';
+            
+            // 重置按鈕狀態
+            const btnPlus = document.getElementById('btn-submit-plus');
+            const btnMinus = document.getElementById('btn-submit-minus');
+            const btnCancel = document.getElementById('btn-cancel-score-modal');
+            if (btnPlus) { btnPlus.disabled = false; btnPlus.innerText = '➕ 加分'; }
+            if (btnMinus) { btnMinus.disabled = false; btnMinus.innerText = '➖ 扣分'; }
+            if (btnCancel) btnCancel.disabled = false;
+
             document.getElementById('scoreModal').classList.remove('hidden');
         };
 
@@ -1573,6 +1842,7 @@
             if (input) input.value = val; 
         };
 
+        // 🌟 加分防連點安全鎖定機制
         window.submitScore = async (isPlus) => {
             if (!checkOnlineAction("手動調整分數")) return;
 
@@ -1585,12 +1855,27 @@
                 return;
             }
 
+            const btnPlus = document.getElementById('btn-submit-plus');
+            const btnMinus = document.getElementById('btn-submit-minus');
+            const btnCancel = document.getElementById('btn-cancel-score-modal');
+
+            // 1. 立即鎖定按鈕並更新文字提示
+            if (btnPlus && btnMinus && btnCancel) {
+                btnPlus.disabled = true;
+                btnMinus.disabled = true;
+                btnCancel.disabled = true;
+                if (isPlus) {
+                    btnPlus.innerText = '⏳ 處理中，分數進帳中...';
+                } else {
+                    btnMinus.innerText = '⏳ 處理中，扣分進行中...';
+                }
+            }
+
             const change = isPlus ? val : -val;
             const targetIdx = pendingUpdateIndex;
-            closeModal('scoreModal');
-            triggerScoreEffect(targetIdx, change);
 
             try {
+                // 2. 嚴格等待 Firebase Transaction 成功寫入
                 await runTransaction(db, async (transaction) => {
                     const sfDoc = await transaction.get(docRef);
                     if (!sfDoc.exists()) return;
@@ -1613,8 +1898,16 @@
                         logs: currentLogs
                     });
                 });
+
+                // 3. 確定寫入成功後，觸發視覺特效並關閉彈窗
+                triggerScoreEffect(targetIdx, change);
+                closeModal('scoreModal');
             } catch (e) {
                 console.error("更新失敗: ", e);
+                alert("更新失敗，請檢查網路連線後重試！");
+                if (btnPlus) { btnPlus.disabled = false; btnPlus.innerText = '➕ 加分'; }
+                if (btnMinus) { btnMinus.disabled = false; btnMinus.innerText = '➖ 扣分'; }
+                if (btnCancel) btnCancel.disabled = false;
             }
         };
 
@@ -1633,7 +1926,7 @@
                             <div class="text-[10px] text-slate-400 timer-font font-bold">[${l.time}]</div>
                             <div class="font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 truncate">${l.reason}</div>
                         </div>
-                        <div class="font-black timer-font text-sm sm:text-base px-2.5 py-0.5 rounded-lg shrink-0 ${l.change > 0 ? 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/30' : 'text-rose-500 bg-rose-500/10 border border-rose-500/30'}">
+                        <div class="font-black timer-font text-xs sm:text-sm px-2.5 py-0.5 rounded-lg shrink-0 ${l.change > 0 ? 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/30' : 'text-rose-500 bg-rose-500/10 border border-rose-500/30'}">
                             ${l.change > 0 ? '+' : ''}${l.change}
                         </div>
                     </div>
@@ -1688,7 +1981,9 @@
                         teamNames: teamNames,
                         logs: [],
                         pendingRequests: [],
-                        alertMsg: ""
+                        alertMsg: "",
+                        isFinalMode: false,
+                        revealedRankCount: 0
                     });
                     alert('✅ 戰力值已全數歸零！');
                 } catch(e) {
@@ -1702,13 +1997,6 @@
         window.closeModal = (id) => { 
             triggerHaptic('light');
             document.getElementById(id).classList.add('hidden'); 
-        };
-
-        window.toggleTheme = () => {
-            triggerHaptic('light');
-            const isDark = document.body.classList.contains('dark-mode');
-            applyThemeMode(!isDark);
-            localStorage.setItem('g5_theme', !isDark ? 'dark' : 'light');
         };
 
         window.toggleAdminView = () => {
@@ -1729,6 +2017,15 @@
         };
 
         initAutoTheme();
+
+        // 讀取自動備份設定
+        if (localStorage.getItem('camp_auto_backup') === 'true') {
+            const checkbox = document.getElementById('autoBackupCheckbox');
+            if (checkbox) checkbox.checked = true;
+            autoBackupTimer = setInterval(() => {
+                exportCSV();
+            }, 10 * 60 * 1000);
+        }
 
         window.approveRequest = approveRequest;
         window.rejectRequest = rejectRequest;
