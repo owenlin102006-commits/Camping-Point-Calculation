@@ -252,7 +252,7 @@
         }
 
         .ios-glass-success {
-            background: linear-gradient(135deg, rgba(220, 38, 38, 0.85), rgba(185, 28, 28, 0.75)) !important;
+            background: linear-gradient(135deg, rgba(22, 163, 74, 0.85), rgba(13, 148, 136, 0.75)) !important;
             color: #ffffff !important;
             border: 1px solid rgba(74, 222, 128, 0.5) !important;
             box-shadow: 0 10px 24px -4px rgba(22, 163, 74, 0.35), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6) !important;
@@ -805,7 +805,7 @@
         </div>
     </div>
 
-    <!-- 調整分數彈窗 (含防連點鎖定) -->
+    <!-- 調整分數彈窗 -->
     <div id="scoreModal" class="fixed inset-0 bg-black/70 backdrop-blur-md z-50 hidden flex items-center justify-center p-3 sm:p-4">
         <div class="modal-card-static rounded-3xl w-full max-w-[92vw] sm:max-w-sm max-h-[90vh] overflow-y-auto p-5 sm:p-6 relative">
             <h3 class="text-lg sm:text-xl font-black text-center mb-0.5 text-[#1e3a8a] dark:text-sky-400" id="scoreModalTitle">調整分數</h3>
@@ -916,7 +916,6 @@
         let pendingRequests = []; 
         let alertMsg = "";
         
-        // 結算模式狀態
         let isFinalMode = false;
         let revealedRankCount = 0;
 
@@ -925,7 +924,6 @@
         let pendingRenameIndex = null; 
         let pendingImportScores = []; 
 
-        // 🌟 10分鐘自動資料夾備份系統狀態
         let autoFolderDirectoryHandle = null;
         let autoBackupTimer = null;
         let hasPendingChangesToBackup = false;
@@ -941,8 +939,14 @@
             }
         }
 
-        // 🌟 日出(06:00)至日落(18:00)預設日間，其餘時間預設夜間模式
+        // 🌟 手動優先，未手動則自動依 06:00~18:00 切換
         function initAutoTheme() {
+            const manualOverride = localStorage.getItem('manual_theme_override');
+            if (manualOverride) {
+                applyThemeMode(manualOverride === 'dark');
+                return;
+            }
+
             const currentHour = new Date().getHours();
             const isDayTime = currentHour >= 6 && currentHour < 18;
             applyThemeMode(!isDayTime);
@@ -951,19 +955,22 @@
         window.toggleTheme = () => {
             triggerHaptic('light');
             const isCurrentlyDark = document.body.classList.contains('dark-mode');
-            applyThemeMode(!isCurrentlyDark);
+            const willBeDark = !isCurrentlyDark;
+            applyThemeMode(willBeDark);
+            // 記錄使用者手動覆蓋
+            localStorage.setItem('manual_theme_override', willBeDark ? 'dark' : 'light');
         };
 
-        // 頁面喚醒時依當前時間重新校正預設模式
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
+            if (document.visibilityState === 'visible' && !localStorage.getItem('manual_theme_override')) {
                 initAutoTheme();
             }
         });
 
-        // 每 5 分鐘自動依時間檢查切換
         setInterval(() => {
-            initAutoTheme();
+            if (!localStorage.getItem('manual_theme_override')) {
+                initAutoTheme();
+            }
         }, 5 * 60 * 1000);
 
         let audioCtx = null;
@@ -1204,7 +1211,6 @@
             }
         }
 
-        // ================= 💾 CSV 內容產生與備份模組 =================
         function generateCSVString() {
             let csvContent = "\uFEFF";
             csvContent += "小隊戰力總表\n隊伍,目前總分\n";
@@ -1320,7 +1326,6 @@
             }
         };
 
-        // ================= 🏆 結算模式控制邏輯 =================
         function updateRevealControlUI() {
             const badge = document.getElementById('reveal-status-badge');
             const nextBtn = document.getElementById('btn-next-reveal');
@@ -1429,7 +1434,6 @@
             document.getElementById('reveal-popup-modal').classList.add('hidden');
         };
 
-        // ================= Firebase 初始化與監聽 =================
         function initApp() {
             onSnapshot(docRef, (snap) => {
                 if (snap.exists()) {
@@ -1541,7 +1545,6 @@
                 rankMap[item.id] = rIdx + 1; 
             });
 
-            // 1. 前台卡片
             squadGrid.innerHTML = renderScores.map((score, idx) => {
                 const rank = rankMap[idx];
                 let rankClass = '';
@@ -1586,7 +1589,6 @@
                 `;
             }).join('');
 
-            // 2. 後台小隊管理卡片
             adminGrid.innerHTML = renderScores.map((score, idx) => `
                 <div class="card-shadow rounded-3xl p-4 flex flex-col justify-between" id="admin-card-${idx}">
                     <div class="flex justify-between items-center mb-1.5 gap-2">
@@ -1623,6 +1625,7 @@
             renderLogs();
         }
 
+        // 🌟 修正日誌顏色：加分為翡翠綠、扣分為玫瑰紅
         function renderLogs() {
             const mainLogs = document.getElementById('mainLogs');
             if (!mainLogs) return;
