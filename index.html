@@ -252,7 +252,7 @@
         }
 
         .ios-glass-success {
-            background: linear-gradient(135deg, rgba(22, 163, 74, 0.85), rgba(13, 148, 136, 0.75)) !important;
+            background: linear-gradient(135deg, rgba(220, 38, 38, 0.85), rgba(185, 28, 28, 0.75)) !important;
             color: #ffffff !important;
             border: 1px solid rgba(74, 222, 128, 0.5) !important;
             box-shadow: 0 10px 24px -4px rgba(22, 163, 74, 0.35), inset 0 1px 1px 0 rgba(255, 255, 255, 0.6) !important;
@@ -664,24 +664,24 @@
                 </div>
             </div>
 
-            <!-- 💾 CSV 資料備份中樞 -->
+            <!-- 💾 CSV 資料自動備份中樞 -->
             <div class="card-shadow rounded-3xl p-4 sm:p-5 mb-5 border-2 border-emerald-500/40">
                 <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                     <div>
                         <h3 class="text-sm sm:text-base font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                            <i class="fa-solid fa-file-csv"></i> CSV 資料備份與匯出中樞
+                            <i class="fa-solid fa-file-csv"></i> CSV 資料備份中樞
                         </h3>
                         <p class="text-[11px] text-[#64748b] dark:text-slate-400 font-bold mt-0.5">
-                            即時匯出 Excel/CSV 檔案，每次雲端變更自動同步儲存至本機快照。
+                            勾選後自動建立「計分表.csvy」資料夾，10分鐘內有資料更動即自動儲存備份檔。
                         </p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
-                        <button onclick="exportCSV()" class="ios-glass-btn ios-glass-success min-h-[44px] px-4 py-2 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-1.5">
-                            <i class="fa-solid fa-download"></i> 立即匯出 CSV 報表
+                        <button onclick="exportCSVDirect()" class="ios-glass-btn ios-glass-success min-h-[44px] px-4 py-2 rounded-2xl text-xs sm:text-sm font-black flex items-center gap-1.5">
+                            <i class="fa-solid fa-download"></i> 手動下載 CSV
                         </button>
                         <label class="ios-glass-btn flex items-center gap-2 text-xs font-bold px-3.5 py-2.5 rounded-2xl cursor-pointer">
-                            <input type="checkbox" id="autoBackupCheckbox" onchange="toggleAutoBackup()" class="accent-emerald-500 w-4 h-4 cursor-pointer">
-                            <span>每 10 分鐘自動備份</span>
+                            <input type="checkbox" id="autoBackupCheckbox" onchange="toggleAutoFolderBackup()" class="accent-emerald-500 w-4 h-4 cursor-pointer">
+                            <span id="autoBackupLabelText">啟用 10分鐘自動資料夾備份</span>
                         </label>
                     </div>
                 </div>
@@ -918,13 +918,17 @@
         
         // 結算模式狀態
         let isFinalMode = false;
-        let revealedRankCount = 0; // 0~6: 目前公布到倒數第幾名
+        let revealedRankCount = 0;
 
         let previousScores = null; 
         let pendingUpdateIndex = null; 
         let pendingRenameIndex = null; 
         let pendingImportScores = []; 
+
+        // 🌟 10分鐘自動資料夾備份系統狀態
+        let autoFolderDirectoryHandle = null;
         let autoBackupTimer = null;
+        let hasPendingChangesToBackup = false;
 
         function applyThemeMode(isDark) {
             const btn = document.getElementById('themeBtn');
@@ -937,30 +941,30 @@
             }
         }
 
+        // 🌟 日出(06:00)至日落(18:00)預設日間，其餘時間預設夜間模式
         function initAutoTheme() {
-            const savedTheme = localStorage.getItem('g5_theme');
-            if (savedTheme) {
-                applyThemeMode(savedTheme === 'dark');
-                return;
-            }
-
             const currentHour = new Date().getHours();
-            const isNight = currentHour >= 18 || currentHour < 6;
-            applyThemeMode(isNight);
+            const isDayTime = currentHour >= 6 && currentHour < 18;
+            applyThemeMode(!isDayTime);
         }
 
         window.toggleTheme = () => {
             triggerHaptic('light');
-            const willBeDark = !document.body.classList.contains('dark-mode');
-            applyThemeMode(willBeDark);
-            localStorage.setItem('g5_theme', willBeDark ? 'dark' : 'light');
+            const isCurrentlyDark = document.body.classList.contains('dark-mode');
+            applyThemeMode(!isCurrentlyDark);
         };
 
+        // 頁面喚醒時依當前時間重新校正預設模式
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible' && !localStorage.getItem('g5_theme')) {
+            if (document.visibilityState === 'visible') {
                 initAutoTheme();
             }
         });
+
+        // 每 5 分鐘自動依時間檢查切換
+        setInterval(() => {
+            initAutoTheme();
+        }, 5 * 60 * 1000);
 
         let audioCtx = null;
 
@@ -1200,7 +1204,21 @@
             }
         }
 
-        // ================= 💾 備份核心系統 =================
+        // ================= 💾 CSV 內容產生與備份模組 =================
+        function generateCSVString() {
+            let csvContent = "\uFEFF";
+            csvContent += "小隊戰力總表\n隊伍,目前總分\n";
+            teamNames.forEach((name, i) => {
+                csvContent += `"${name}",${scores[i]}\n`;
+            });
+
+            csvContent += "\n加扣分詳細歷史卷宗\n時間,小隊,變動點數,事由\n";
+            logs.forEach(l => {
+                csvContent += `"${l.time}","${l.team}",${l.change},"${(l.reason || '').replace(/"/g, '""')}"\n`;
+            });
+            return csvContent;
+        }
+
         function saveLocalSnapshot(data) {
             try {
                 const snapshot = {
@@ -1215,22 +1233,9 @@
             }
         }
 
-        window.exportCSV = () => {
+        window.exportCSVDirect = () => {
             triggerHaptic('light');
-            let csvContent = "\uFEFF"; // UTF-8 BOM 防止 Excel 亂碼
-            
-            // 1. 各隊目前積分表
-            csvContent += "小隊戰力總表\n隊伍,目前總分\n";
-            teamNames.forEach((name, i) => {
-                csvContent += `"${name}",${scores[i]}\n`;
-            });
-
-            // 2. 詳細紀錄
-            csvContent += "\n加扣分詳細歷史卷宗\n時間,小隊,變動點數,事由\n";
-            logs.forEach(l => {
-                csvContent += `"${l.time}","${l.team}",${l.change},"${(l.reason || '').replace(/"/g, '""')}"\n`;
-            });
-
+            const csvContent = generateCSVString();
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -1244,19 +1249,74 @@
             URL.revokeObjectURL(url);
         };
 
-        window.toggleAutoBackup = () => {
+        async function performAutoFolderBackup() {
+            if (!hasPendingChangesToBackup) {
+                console.log("ℹ️ 過去 10 分鐘內無資料庫更動，跳過本期 CSV 備份。");
+                return;
+            }
+
+            const now = new Date();
+            const dateStr = `${now.getFullYear()}${(now.getMonth()+1).toString().padStart(2,'0')}${now.getDate().toString().padStart(2,'0')}_${now.getHours().toString().padStart(2,'0')}${now.getMinutes().toString().padStart(2,'0')}`;
+            const fileName = `宿營備份_${dateStr}.csv`;
+            const csvContent = generateCSVString();
+
+            try {
+                if (autoFolderDirectoryHandle) {
+                    const subDirHandle = await autoFolderDirectoryHandle.getDirectoryHandle('計分表.csvy', { create: true });
+                    const fileHandle = await subDirHandle.getFileHandle(fileName, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(csvContent);
+                    await writable.close();
+                    
+                    hasPendingChangesToBackup = false;
+                    console.log(`✅ [10分鐘自動備份成功] 檔案已寫入至 計分表.csvy/${fileName}`);
+                    return;
+                }
+            } catch (err) {
+                console.warn("自動寫入資料夾失敗，改用瀏覽器常規下載備份:", err);
+            }
+
+            exportCSVDirect();
+            hasPendingChangesToBackup = false;
+        }
+
+        window.toggleAutoFolderBackup = async () => {
             const checkbox = document.getElementById('autoBackupCheckbox');
+            const labelText = document.getElementById('autoBackupLabelText');
+
             if (checkbox.checked) {
-                localStorage.setItem('camp_auto_backup', 'true');
+                if ('showDirectoryPicker' in window) {
+                    try {
+                        alert('📁 請在接下來的視窗中，選擇你要儲存備份的「電腦資料夾」：\n系統將自動在該處建立「計分表.csvy」資料夾並每 10 分鐘自動存檔！');
+                        autoFolderDirectoryHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+                        
+                        const subDirHandle = await autoFolderDirectoryHandle.getDirectoryHandle('計分表.csvy', { create: true });
+                        const initialFile = await subDirHandle.getFileHandle(`宿營初始備份_${Date.now()}.csv`, { create: true });
+                        const writable = await initialFile.createWritable();
+                        await writable.write(generateCSVString());
+                        await writable.close();
+
+                        labelText.innerText = "✅ 已鎖定「計分表.csvy」資料夾 (10分自動更動備份)";
+                    } catch (err) {
+                        console.warn('使用者取消選取目錄或權限不足:', err);
+                        checkbox.checked = false;
+                        labelText.innerText = "啟用 10分鐘自動資料夾備份";
+                        alert('⚠️ 未選取儲存資料夾，自動備份已取消。');
+                        return;
+                    }
+                } else {
+                    alert('ℹ️ 你的瀏覽器不支援直接建立本機資料夾，系統將採用「10分鐘自動下載」模式！');
+                    labelText.innerText = "✅ 10分鐘自動下載模式";
+                }
+
                 if (autoBackupTimer) clearInterval(autoBackupTimer);
-                autoBackupTimer = setInterval(() => {
-                    exportCSV();
-                }, 10 * 60 * 1000);
-                alert('✅ 已開啟：每 10 分鐘自動下載一份 CSV 備份檔案！');
+                autoBackupTimer = setInterval(performAutoFolderBackup, 10 * 60 * 1000);
+                alert('🚀 10分鐘自動備份已啟動！若 10 分鐘內有資料庫儲存或加扣分，將自動備份一次！');
             } else {
-                localStorage.setItem('camp_auto_backup', 'false');
                 if (autoBackupTimer) clearInterval(autoBackupTimer);
-                alert('🛑 已關閉每 10 分鐘自動備份。');
+                autoFolderDirectoryHandle = null;
+                labelText.innerText = "啟用 10分鐘自動資料夾備份";
+                alert('🛑 已停止自動資料夾備份。');
             }
         };
 
@@ -1290,6 +1350,7 @@
                     isFinalMode: true,
                     revealedRankCount: 0
                 });
+                hasPendingChangesToBackup = true;
                 alert('🔒 結算模式已啟動！全場學員端分數已切換為保密模式。');
             } catch (e) {
                 console.error("啟動結算模式失敗:", e);
@@ -1307,8 +1368,7 @@
                 await updateDoc(docRef, {
                     revealedRankCount: nextCount
                 });
-
-                // 本機立即彈出大字報特效
+                hasPendingChangesToBackup = true;
                 triggerRevealPopup(nextCount);
             } catch (e) {
                 console.error("揭曉下一名失敗:", e);
@@ -1324,6 +1384,7 @@
                     isFinalMode: false,
                     revealedRankCount: 0
                 });
+                hasPendingChangesToBackup = true;
                 alert('🔄 結算狀態已重置，全場恢復正常顯示。');
             } catch (e) {
                 console.error("重置結算模式失敗:", e);
@@ -1332,9 +1393,9 @@
 
         function triggerRevealPopup(step) {
             const scoreSorted = scores.map((s, idx) => ({ id: idx, score: s }));
-            scoreSorted.sort((a, b) => a.score - b.score); // 升冪：第 0 個是最後一名 (第6名)
+            scoreSorted.sort((a, b) => a.score - b.score);
 
-            const target = scoreSorted[step - 1]; // 依序揭曉：step 1 是倒數第一(第6名)，step 6 是第一名
+            const target = scoreSorted[step - 1];
             const actualRank = 6 - (step - 1);
 
             const modal = document.getElementById('reveal-popup-modal');
@@ -1382,7 +1443,6 @@
                     isFinalMode = data.isFinalMode || false;
                     revealedRankCount = data.revealedRankCount || 0;
 
-                    // 儲存本機備份
                     saveLocalSnapshot(data);
 
                     const banner = document.getElementById('announcement-banner');
@@ -1661,6 +1721,8 @@
                         pendingRequests: currentPending
                     });
                 });
+
+                hasPendingChangesToBackup = true;
             } catch (e) {
                 console.error("核准失敗: ", e);
                 alert("核准失敗，請檢查網路。");
@@ -1679,6 +1741,7 @@
                     let currentPending = (data.pendingRequests || []).filter(r => r.id !== reqId);
                     transaction.update(docRef, { pendingRequests: currentPending });
                 });
+                hasPendingChangesToBackup = true;
             } catch (e) {
                 console.error("退回失敗: ", e);
             }
@@ -1706,6 +1769,7 @@
                 try {
                     await updateDoc(docRef, { alertMsg: msg });
                     input.value = '';
+                    hasPendingChangesToBackup = true;
                     alert('✅ 廣播通報已同步推播至全域大螢幕！');
                 } catch(e) {
                     console.error("廣播失敗: ", e);
@@ -1718,6 +1782,7 @@
 
             try {
                 await updateDoc(docRef, { alertMsg: "" });
+                hasPendingChangesToBackup = true;
             } catch(e) {
                 console.error("清除廣播失敗: ", e);
             }
@@ -1785,6 +1850,7 @@
                         logs: currentLogs
                     });
                 });
+                hasPendingChangesToBackup = true;
                 alert("✅ 據點戰分數已全數匯入！");
             } catch(e) {
                 console.error("匯入失敗: ", e);
@@ -1825,7 +1891,6 @@
             document.getElementById('scoreModalDesc').innerText = `目前戰力值: ${scores[idx].toLocaleString()}`;
             document.getElementById('scoreInput').value = '100';
             
-            // 重置按鈕狀態
             const btnPlus = document.getElementById('btn-submit-plus');
             const btnMinus = document.getElementById('btn-submit-minus');
             const btnCancel = document.getElementById('btn-cancel-score-modal');
@@ -1842,7 +1907,6 @@
             if (input) input.value = val; 
         };
 
-        // 🌟 加分防連點安全鎖定機制
         window.submitScore = async (isPlus) => {
             if (!checkOnlineAction("手動調整分數")) return;
 
@@ -1859,7 +1923,6 @@
             const btnMinus = document.getElementById('btn-submit-minus');
             const btnCancel = document.getElementById('btn-cancel-score-modal');
 
-            // 1. 立即鎖定按鈕並更新文字提示
             if (btnPlus && btnMinus && btnCancel) {
                 btnPlus.disabled = true;
                 btnMinus.disabled = true;
@@ -1875,7 +1938,6 @@
             const targetIdx = pendingUpdateIndex;
 
             try {
-                // 2. 嚴格等待 Firebase Transaction 成功寫入
                 await runTransaction(db, async (transaction) => {
                     const sfDoc = await transaction.get(docRef);
                     if (!sfDoc.exists()) return;
@@ -1899,7 +1961,7 @@
                     });
                 });
 
-                // 3. 確定寫入成功後，觸發視覺特效並關閉彈窗
+                hasPendingChangesToBackup = true;
                 triggerScoreEffect(targetIdx, change);
                 closeModal('scoreModal');
             } catch (e) {
@@ -1957,6 +2019,7 @@
                         currentNames[targetIdx] = val;
                         transaction.update(docRef, { teamNames: currentNames });
                     });
+                    hasPendingChangesToBackup = true;
                 } catch(e) {
                     console.error("更名失敗: ", e);
                 }
@@ -1985,6 +2048,7 @@
                         isFinalMode: false,
                         revealedRankCount: 0
                     });
+                    hasPendingChangesToBackup = true;
                     alert('✅ 戰力值已全數歸零！');
                 } catch(e) {
                     console.error("歸零失敗: ", e);
@@ -2017,15 +2081,6 @@
         };
 
         initAutoTheme();
-
-        // 讀取自動備份設定
-        if (localStorage.getItem('camp_auto_backup') === 'true') {
-            const checkbox = document.getElementById('autoBackupCheckbox');
-            if (checkbox) checkbox.checked = true;
-            autoBackupTimer = setInterval(() => {
-                exportCSV();
-            }, 10 * 60 * 1000);
-        }
 
         window.approveRequest = approveRequest;
         window.rejectRequest = rejectRequest;
