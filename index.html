@@ -195,8 +195,12 @@
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             border: 1px solid rgba(148, 163, 184, 0.2);
-            transition: none !important;
-            transform: none !important;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        .history-item:hover {
+            border-color: rgba(56, 189, 248, 0.5);
+            background-color: rgba(255, 255, 255, 0.05);
         }
 
         .ios-glass-btn {
@@ -399,23 +403,6 @@
             animation: zoomInCenter 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; 
         }
 
-        @keyframes floatUp {
-            0% { opacity: 0; transform: translate(-50%, 10px) scale(0.8); }
-            30% { opacity: 1; transform: translate(-50%, -15px) scale(1.15); }
-            80% { opacity: 0.9; transform: translate(-50%, -35px) scale(1); }
-            100% { opacity: 0; transform: translate(-50%, -50px); }
-        }
-        .floating-score {
-            position: absolute;
-            top: 45%;
-            left: 50%;
-            pointer-events: none;
-            z-index: 30;
-            font-family: 'Space Mono', monospace;
-            text-shadow: 0 0 12px rgba(0,0,0,0.8);
-            animation: floatUp 1.2s forwards cubic-bezier(0.2, 0.8, 0.2, 1);
-        }
-
         .side-floating-dock {
             position: fixed;
             right: 16px;
@@ -583,7 +570,7 @@
                     <i class="fa-solid fa-user-secret text-2xl sm:text-3xl text-amber-400"></i>
                 </div>
                 <div class="absolute -bottom-1.5 -right-1.5 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full border-2 border-slate-900 shadow-lg z-20">
-                    APA
+                    AP
                 </div>
             </div>
             <div>
@@ -621,12 +608,13 @@
 
             <div id="squadGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5 md:gap-6 mb-6"></div>
 
+            <!-- 📜 最新搜查記錄日誌 (含日期，點擊展開事由) -->
             <div class="card-shadow static-log-panel rounded-3xl p-4 sm:p-5 mb-6">
                 <div class="flex items-center justify-between mb-3 border-b border-slate-300/30 dark:border-slate-800/60 pb-2.5">
                     <h3 class="font-black text-sm sm:text-base md:text-lg flex items-center gap-2 text-[#1e3a8a] dark:text-sky-400">
                         <i class="fa-solid fa-file-waveform"></i> 最新搜查記錄日誌 (TACTICAL LOGS)
                     </h3>
-                    <span class="text-[10px] sm:text-xs text-slate-400 font-mono font-bold tracking-widest hidden sm:inline">LIVE FEED</span>
+                    <span class="text-[10px] text-slate-400 font-bold">💡 點擊紀錄可展開/收合原因</span>
                 </div>
                 <div id="mainLogs" class="space-y-2 max-h-60 overflow-y-auto pr-1"></div>
             </div>
@@ -939,7 +927,7 @@
             }
         }
 
-        // 🌟 手動優先，未手動則自動依 06:00~18:00 切換
+        // 手動優先，未手動則自動依 06:00~18:00 切換
         function initAutoTheme() {
             const manualOverride = localStorage.getItem('manual_theme_override');
             if (manualOverride) {
@@ -957,7 +945,6 @@
             const isCurrentlyDark = document.body.classList.contains('dark-mode');
             const willBeDark = !isCurrentlyDark;
             applyThemeMode(willBeDark);
-            // 記錄使用者手動覆蓋
             localStorage.setItem('manual_theme_override', willBeDark ? 'dark' : 'light');
         };
 
@@ -1218,9 +1205,10 @@
                 csvContent += `"${name}",${scores[i]}\n`;
             });
 
-            csvContent += "\n加扣分詳細歷史卷宗\n時間,小隊,變動點數,事由\n";
+            csvContent += "\n加扣分詳細歷史卷宗\n日期,時間,小隊,變動點數,事由\n";
             logs.forEach(l => {
-                csvContent += `"${l.time}","${l.team}",${l.change},"${(l.reason || '').replace(/"/g, '""')}"\n`;
+                const d = l.date || '';
+                csvContent += `"${d}","${l.time}","${l.team}",${l.change},"${(l.reason || '').replace(/"/g, '""')}"\n`;
             });
             return csvContent;
         }
@@ -1545,6 +1533,7 @@
                 rankMap[item.id] = rIdx + 1; 
             });
 
+            // 1. 前台卡片
             squadGrid.innerHTML = renderScores.map((score, idx) => {
                 const rank = rankMap[idx];
                 let rankClass = '';
@@ -1589,6 +1578,7 @@
                 `;
             }).join('');
 
+            // 2. 後台小隊管理卡片
             adminGrid.innerHTML = renderScores.map((score, idx) => `
                 <div class="card-shadow rounded-3xl p-4 flex flex-col justify-between" id="admin-card-${idx}">
                     <div class="flex justify-between items-center mb-1.5 gap-2">
@@ -1625,7 +1615,24 @@
             renderLogs();
         }
 
-        // 🌟 修正日誌顏色：加分為翡翠綠、扣分為玫瑰紅
+        // 🌟 點擊切換展開/收合詳細事由
+        window.toggleLogDetail = (id) => {
+            triggerHaptic('light');
+            const el = document.getElementById(id);
+            const icon = document.getElementById(`icon-${id}`);
+            if (el) {
+                const isHidden = el.classList.contains('hidden');
+                if (isHidden) {
+                    el.classList.remove('hidden');
+                    if (icon) icon.className = "fa-solid fa-chevron-up text-[10px] text-sky-400 transition transform";
+                } else {
+                    el.classList.add('hidden');
+                    if (icon) icon.className = "fa-solid fa-chevron-down text-[10px] text-slate-400 transition transform";
+                }
+            }
+        };
+
+        // 🌟 渲染最新搜查記錄日誌 (含日期、小隊、分數，點擊展開事由)
         function renderLogs() {
             const mainLogs = document.getElementById('mainLogs');
             if (!mainLogs) return;
@@ -1633,18 +1640,29 @@
                 mainLogs.innerHTML = '<div class="text-slate-400 text-xs italic py-4 text-center">目前尚無作戰回報紀錄...</div>';
                 return;
             }
-            mainLogs.innerHTML = logs.slice(-10).reverse().map(l => `
-                <div class="history-item p-2.5 sm:p-3 rounded-2xl flex justify-between items-center text-xs shadow-sm">
-                    <div class="truncate mr-2 flex items-center min-w-0">
-                        <span class="text-slate-400 timer-font mr-2 text-[11px] shrink-0 font-bold">[${l.time}]</span>
-                        <span class="font-black text-[#1e3a8a] dark:text-sky-400 mr-2 shrink-0">${l.team}</span>
-                        <span class="text-slate-600 dark:text-slate-300 font-bold truncate">(${l.reason})</span>
+            mainLogs.innerHTML = logs.slice(-12).reverse().map((l, i) => {
+                const dateDisplay = l.date || new Date().toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' });
+                const timeDisplay = l.time || '';
+                const logId = `admin-main-log-reason-${i}`;
+
+                return `
+                    <div class="history-item p-2.5 sm:p-3 rounded-2xl flex flex-col gap-1.5 shadow-sm" onclick="toggleLogDetail('${logId}')">
+                        <div class="flex justify-between items-center text-xs">
+                            <div class="truncate mr-2 flex items-center min-w-0 gap-1.5">
+                                <span class="text-slate-400 timer-font text-[11px] shrink-0 font-bold">[${dateDisplay} ${timeDisplay}]</span>
+                                <span class="font-black text-[#1e3a8a] dark:text-sky-400 shrink-0">${l.team}</span>
+                                <i id="icon-${logId}" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition"></i>
+                            </div>
+                            <span class="font-black timer-font shrink-0 text-xs sm:text-sm px-2.5 py-0.5 rounded-lg ${l.change > 0 ? 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/30' : 'text-rose-500 bg-rose-500/10 border border-rose-500/30'}">
+                                ${l.change > 0 ? '+' : ''}${l.change}
+                            </span>
+                        </div>
+                        <div id="${logId}" class="hidden pt-1.5 mt-1 border-t border-slate-300/30 dark:border-slate-800/60 text-slate-600 dark:text-slate-300 font-bold text-xs bg-black/5 dark:bg-white/5 p-2 rounded-xl">
+                            📝 事由：<span class="text-amber-500">${l.reason || '常規作戰指令'}</span>
+                        </div>
                     </div>
-                    <span class="font-black timer-font shrink-0 text-xs sm:text-sm px-2.5 py-0.5 rounded-lg ${l.change > 0 ? 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/30' : 'text-rose-500 bg-rose-500/10 border border-rose-500/30'}">
-                        ${l.change > 0 ? '+' : ''}${l.change}
-                    </span>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function renderPendingList() {
@@ -1706,11 +1724,13 @@
                     const targetIndex = currentTeamNames.indexOf(targetReq.team);
                     if (targetIndex !== -1) {
                         currentScores[targetIndex] += targetReq.score;
+                        const now = new Date();
                         currentLogs.push({
                             team: targetReq.team,
                             change: targetReq.score,
                             reason: targetReq.reason + " (營本部已核准)",
-                            time: targetReq.time || new Date().toLocaleTimeString()
+                            date: now.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' }),
+                            time: targetReq.time || now.toLocaleTimeString()
                         });
                         if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
                         triggerScoreEffect(targetIndex, targetReq.score);
@@ -1835,13 +1855,17 @@
                     let currentLogs = data.logs || [];
                     let currentTeamNames = data.teamNames || teamNames;
                     
+                    const now = new Date();
+                    const dateStr = now.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' });
+
                     pendingImportScores.forEach(item => {
                         currentScores[item.index] += item.score;
                         currentLogs.push({
                             team: currentTeamNames[item.index],
                             change: item.score,
                             reason: "東勢林場據點戰結算匯入",
-                            time: new Date().toLocaleTimeString()
+                            date: dateStr,
+                            time: now.toLocaleTimeString()
                         });
                         triggerScoreEffect(item.index, item.score);
                     });
@@ -1950,11 +1974,13 @@
                     let currentTeamNames = data.teamNames || teamNames;
 
                     currentScores[targetIdx] = Math.max(0, currentScores[targetIdx] + change);
+                    const now = new Date();
                     currentLogs.push({
                         team: currentTeamNames[targetIdx],
                         change: change,
                         reason: reason,
-                        time: new Date().toLocaleTimeString()
+                        date: now.toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' }),
+                        time: now.toLocaleTimeString()
                     });
                     if (currentLogs.length > 500) currentLogs = currentLogs.slice(-500);
                     
@@ -1976,6 +2002,7 @@
             }
         };
 
+        // 🌟 開啟小隊歷史卷宗 (含日期，點擊展開事由)
         window.openHistoryModal = (idx) => {
             triggerHaptic('light');
             document.getElementById('historyModalTitle').innerText = `📜 ${teamNames[idx]} 歷史卷宗`;
@@ -1985,17 +2012,28 @@
             if (sqLogs.length === 0) {
                 container.innerHTML = '<div class="text-center text-slate-400 py-6 text-xs italic">此小隊尚無任何加扣分紀錄。</div>';
             } else {
-                container.innerHTML = sqLogs.map(l => `
-                    <div class="history-item p-3 rounded-2xl border-l-4 ${l.change > 0 ? 'border-emerald-500' : 'border-rose-500'} flex justify-between items-center shadow-sm">
-                        <div class="min-w-0 pr-2">
-                            <div class="text-[10px] text-slate-400 timer-font font-bold">[${l.time}]</div>
-                            <div class="font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-200 truncate">${l.reason}</div>
+                container.innerHTML = sqLogs.map((l, i) => {
+                    const dateDisplay = l.date || new Date().toLocaleDateString('zh-TW', { month: '2-digit', day: '2-digit' });
+                    const timeDisplay = l.time || '';
+                    const modalLogId = `admin-modal-log-reason-${i}`;
+
+                    return `
+                        <div class="history-item p-3 rounded-2xl border-l-4 ${l.change > 0 ? 'border-emerald-500' : 'border-rose-500'} flex flex-col gap-1.5 shadow-sm" onclick="toggleLogDetail('${modalLogId}')">
+                            <div class="flex justify-between items-center">
+                                <div class="min-w-0 pr-2 flex items-center gap-1.5">
+                                    <span class="text-[11px] text-slate-400 timer-font font-bold">[${dateDisplay} ${timeDisplay}]</span>
+                                    <i id="icon-${modalLogId}" class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition"></i>
+                                </div>
+                                <div class="font-black timer-font text-xs sm:text-sm px-2.5 py-0.5 rounded-lg shrink-0 ${l.change > 0 ? 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/30' : 'text-rose-500 bg-rose-500/10 border border-rose-500/30'}">
+                                    ${l.change > 0 ? '+' : ''}${l.change}
+                                </div>
+                            </div>
+                            <div id="${modalLogId}" class="hidden pt-1.5 mt-1 border-t border-slate-300/30 dark:border-slate-800/60 text-slate-600 dark:text-slate-300 font-bold text-xs bg-black/5 dark:bg-white/5 p-2 rounded-xl">
+                                📝 事由：<span class="text-amber-500">${l.reason || '常規作戰指令'}</span>
+                            </div>
                         </div>
-                        <div class="font-black timer-font text-xs sm:text-sm px-2.5 py-0.5 rounded-lg shrink-0 ${l.change > 0 ? 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/30' : 'text-rose-500 bg-rose-500/10 border border-rose-500/30'}">
-                            ${l.change > 0 ? '+' : ''}${l.change}
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
             document.getElementById('historyModal').classList.remove('hidden');
         };
